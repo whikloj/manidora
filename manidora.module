@@ -1,5 +1,5 @@
 <?php
 
-function manidora_print_insert_link($path, $label = NULL) {
-  return l();
+function manidora_print_insert_link($path) {
+  return l("Printer Friendly Version", $path);
 }
