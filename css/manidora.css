@@ -1,0 +1,26 @@
+/*
+    Document   : manidora
+    Created on : Jan 8, 2013, 11:10:27 AM
+    Author     : dgi
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+.manidora-metadata {
+   list-style: none;
+   padding-left: 0;
+ }
+
+.manidora-metadata li {
+  margin-bottom: 0.25em;
+}
+
+.manidora-metadata li:nth-child(odd) {
+  background-color: #EAEAE9;
+}
+
+.manidora-commons-license {
+  margin-top: 1em;
+  font-size: 90%;
+  margin-bottom: 1em;
+}

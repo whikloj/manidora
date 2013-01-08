@@ -25,4 +25,66 @@ function manidora_preprocess_print(&$variables) {
       $found = true;
     }
   }
+
+function manidora_menu() {
+  $items = array();
+  $items['islandora/object/%islandora_object/metadata'] = array(
+    'title' => 'Metadata',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'manidora_retrieve_metadata_form',
+    'page arguments' => array(2),
+    'access callback' => array('manidora_access'),
+    'access arguments' => array(2)
+  );
+  return $items;
+}
+
+function manidora_retrieve_metadata_form($object) {
+ drupal_add_css(drupal_get_path('module', 'manidora') . '/css/manidora.css');
+ $output = manidora_mods_transform($object);
+
+  if ($output) {
+    $form = array(
+      '#type' => 'item',
+      '#markup' => $output,
+    );
+  }
+  else {
+    drupal_set_message(t('A transformation error has occured!'), 'error');
+  }
+  return $form;
+}
+
+function manidora_access($object) {
+  // @TODO: Add the specific CModels for newspaper and any others we are supporting.
+  if (array_intersect(array('islandora:sp_basic_image', 'islandora:sp_large_image_cmodel'), $object->models) && user_access('view fedora repository')) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+function manidora_mods_transform($object) {
+  $mods_text = $object->repository->api->a->getDatastreamDissemination($object->id, 'MODS');
+
+  if ($mods_text) {
+    $xslt_processor = new XSLTProcessor();
+    $xsl = new DOMDocument();
+    $file = drupal_get_path('module', 'manidora') . '/xsl/manidora_mods2html.xsl';
+    $xsl->load($file);
+    $input = new DOMDocument();
+
+    $did_load = $input->loadXML($mods_text);
+
+    if ($did_load) {
+      $xslt_processor->importStylesheet($xsl);
+      $mods_transformed = $xslt_processor->transformToXml($input);
+      return $mods_transformed;
+    }
+    else {
+      return FALSE;
+    }
+  }
+  else {
+    return FALSE;
+  }
 }
