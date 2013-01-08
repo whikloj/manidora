@@ -25,6 +25,7 @@ function manidora_preprocess_print(&$variables) {
       $found = true;
     }
   }
+}
 
 function manidora_menu() {
   $items = array();
