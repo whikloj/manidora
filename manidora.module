@@ -3,3 +3,26 @@
 function manidora_print_insert_link($path) {
   return l("Printer Friendly Version", $path);
 }
+
+function manidora_preprocess_print(&$variables) {
+  // Get the DOM
+  $content_dom = new DOMDocument();
+  $content_dom->loadHTML($variables["print"]["content"]);
+
+  //
+  // Get just the content we want.
+  // We're looking for the 'content' divs.
+  //
+  $divs = $content_dom->getElementsByTagName("div");
+  $found = false;
+  for ($i = 0; $i < $divs->length && !$found; $i++) {
+    if ( $divs->item($i)->hasAttribute("class") && 
+         ($divs->item($i)->getAttribute("class") == "islandora-basic-image-content" ||
+          $divs->item($i)->getAttribute("class") == "islandora-large-image-content") 
+       ) {
+      // Replace original content with just the stripped out 'content' div
+      $variables["print"]["content"] = $content_dom->saveHTML($divs->item($i));
+      $found = true;
+    }
+  }
+}
