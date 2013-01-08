@@ -25,6 +25,30 @@ function manidora_preprocess_print(&$variables) {
       $found = true;
     }
   }
+
+  // 
+  // Append the MODS metadata to the end of the content
+  //
+  if ($found) {
+    // Hack out the PID from the URL
+    $url = $variables["print"]["url"];
+    $explode_results = explode("/islandora/object/", $url);
+
+    if (count($explode_results) > 1) {
+      $pid = $explode_results[1];
+    }
+    else {
+      $pid = $explode_results[0];
+    }
+
+    $pid = urldecode($pid);
+
+    // Use the PID to get the Islandora object
+    $islandora_object = islandora_object_load($pid);
+
+    // Append the MODS metadata list to the end of the content to be themed by the printer friendly module
+    $variables["print"]["content"] .= "<br/>" . drupal_render(manidora_retrieve_metadata_form($islandora_object));
+  }
 }
 
 function manidora_menu() {
