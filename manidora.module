@@ -115,7 +115,7 @@ function manidora_access($object) {
 }
 
 /**
- *  Utility function that runs an xsl transfrom on MODS metadata.
+ *  Utility function that runs an xslt on MODS metadata.
  *  The transform was straight jacked from U of M's D6 site.
  *
  *  @param IslandoraObject $object
