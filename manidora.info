@@ -3,3 +3,4 @@ description = University of Manitoba customizations for Islandora
 package = Islandora
 version = 7.x-dev
 core = 7.x
+stylesheets[all][] = css/manidora.css
