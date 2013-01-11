@@ -11,7 +11,7 @@ function manidora_print_insert_link($path) {
 }
 
 /**
- *  Implements hook_preprocess for the print_theme.  Strips out unneccessary 
+ *  Implements hook_preprocess for the print_theme.  Strips out unneccessary
  *  content and adds MODS metadata below the object.
  *
  *  @param array &$variables
@@ -29,9 +29,9 @@ function manidora_preprocess_print(&$variables) {
   $divs = $content_dom->getElementsByTagName("div");
   $found = false;
   for ($i = 0; $i < $divs->length && !$found; $i++) {
-    if ( $divs->item($i)->hasAttribute("class") && 
+    if ( $divs->item($i)->hasAttribute("class") &&
          ($divs->item($i)->getAttribute("class") == "islandora-basic-image-content" ||
-          $divs->item($i)->getAttribute("class") == "islandora-large-image-content") 
+          $divs->item($i)->getAttribute("class") == "islandora-large-image-content")
        ) {
       // Replace original content with just the stripped out 'content' div
       $variables["print"]["content"] = $content_dom->saveHTML($divs->item($i));
@@ -39,7 +39,7 @@ function manidora_preprocess_print(&$variables) {
     }
   }
 
-  // 
+  //
   // Append the MODS metadata to the end of the content
   //
   if ($found) {
@@ -107,8 +107,7 @@ function manidora_retrieve_metadata_form($object) {
  *  Implements hook_access
  */
 function manidora_access($object) {
-  // @TODO: Add the specific CModels for newspaper and any others we are supporting.
-  if (array_intersect(array('islandora:sp_basic_image', 'islandora:sp_large_image_cmodel'), $object->models) && user_access('view fedora repository')) {
+  if (!in_array('islandora:collectionCModel', $object->models)) {
     return TRUE;
   }
   return FALSE;
