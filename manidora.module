@@ -1,5 +1,73 @@
 <?php
 
+/**
+ *  API call to insert a link to a printer friendly version of something.
+ *
+ *  @param string $path
+ *    path to page we want a printer friendly version of
+ */
+function manidora_print_insert_link($path) {
+  return l("Printer Friendly Version", $path);
+}
+
+/**
+ *  Implements hook_preprocess for the print_theme.  Strips out unneccessary 
+ *  content and adds MODS metadata below the object.
+ *
+ *  @param array &$variables
+ *    reference to the array of variables used by the theme call
+ */
+function manidora_preprocess_print(&$variables) {
+  // Get the DOM
+  $content_dom = new DOMDocument();
+  $content_dom->loadHTML($variables["print"]["content"]);
+
+  //
+  // Get just the content we want.
+  // We're looking for the 'content' divs.
+  //
+  $divs = $content_dom->getElementsByTagName("div");
+  $found = false;
+  for ($i = 0; $i < $divs->length && !$found; $i++) {
+    if ( $divs->item($i)->hasAttribute("class") && 
+         ($divs->item($i)->getAttribute("class") == "islandora-basic-image-content" ||
+          $divs->item($i)->getAttribute("class") == "islandora-large-image-content") 
+       ) {
+      // Replace original content with just the stripped out 'content' div
+      $variables["print"]["content"] = $content_dom->saveHTML($divs->item($i));
+      $found = true;
+    }
+  }
+
+  // 
+  // Append the MODS metadata to the end of the content
+  //
+  if ($found) {
+    // Hack out the PID from the URL
+    $url = $variables["print"]["url"];
+    $explode_results = explode("/islandora/object/", $url);
+
+    if (count($explode_results) > 1) {
+      $pid = $explode_results[1];
+    }
+    else {
+      $pid = $explode_results[0];
+    }
+
+    $pid = urldecode($pid);
+
+    // Use the PID to get the Islandora object
+    $islandora_object = islandora_object_load($pid);
+
+    // Append the MODS metadata list to the end of the content to be themed by the printer friendly module
+    $metadata = manidora_retrieve_metadata_form($islandora_object);
+    $variables["print"]["content"] .= "<br/>" . drupal_render($metadata);
+  }
+}
+
+/**
+ *  Implements hook_menu.
+ */
 function manidora_menu() {
   $items = array();
   $items['islandora/object/%islandora_object/metadata'] = array(
@@ -13,9 +81,15 @@ function manidora_menu() {
   return $items;
 }
 
+/**
+ *  Utility function that returns an associative form array of markup
+ *  containing the MODS metadata for an Islandora object.
+ *
+ *  @param IslandoraObject $object
+ *    The object you wish to retrive formatted metadata from
+ */
 function manidora_retrieve_metadata_form($object) {
- drupal_add_css(drupal_get_path('module', 'manidora') . '/css/manidora.css');
- $output = manidora_mods_transform($object);
+  $output = manidora_mods_transform($object);
 
   if ($output) {
     $form = array(
@@ -29,6 +103,9 @@ function manidora_retrieve_metadata_form($object) {
   return $form;
 }
 
+/**
+ *  Implements hook_access
+ */
 function manidora_access($object) {
   // @TODO: Add the specific CModels for newspaper and any others we are supporting.
   if (array_intersect(array('islandora:sp_basic_image', 'islandora:sp_large_image_cmodel'), $object->models) && user_access('view fedora repository')) {
@@ -37,6 +114,13 @@ function manidora_access($object) {
   return FALSE;
 }
 
+/**
+ *  Utility function that runs an xslt on MODS metadata.
+ *  The transform was straight jacked from U of M's D6 site.
+ *
+ *  @param IslandoraObject $object
+ *    The IslandoraObject whose MODS metadata you wish to transform.
+ */
 function manidora_mods_transform($object) {
   $mods_text = $object->repository->api->a->getDatastreamDissemination($object->id, 'MODS');
 
@@ -61,8 +145,4 @@ function manidora_mods_transform($object) {
   else {
     return FALSE;
   }
-}
-
-function manidora_print_insert_link($path) {
-  return l("Printer Friendly Version", $path);
 }
