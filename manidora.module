@@ -70,13 +70,23 @@ function manidora_preprocess_print(&$variables) {
  */
 function manidora_menu() {
   $items = array();
-  $items['islandora/object/%islandora_object/metadata'] = array(
+  $items['islandora/object/%islandora_object/manitoba_metadata'] = array(
     'title' => 'Metadata',
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_retrieve_metadata_form',
     'page arguments' => array(2),
-    'access callback' => array('manidora_access'),
-    'access arguments' => array(2)
+    'access callback' => 'manidora_metadata_access',
+    'access arguments' => array(2),
+    'weight' => 1
+  );
+  $items['islandora/object/%islandora_object/manitoba_download'] = array(
+    'title' => 'Download',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'manidora_download_table',
+    'page arguments' => array(2),
+    'access callback' => 'manidora_download_access',
+    'access arguments' => array(2),
+    'weight' => 2
   );
   return $items;
 }
@@ -104,15 +114,25 @@ function manidora_retrieve_metadata_form($object) {
 }
 
 /**
- *  Implements hook_access
+ *  Implements hook_access().
  */
-function manidora_access($object) {
+function manidora_metadata_access($object) {
   if (!in_array('islandora:collectionCModel', $object->models)) {
     return TRUE;
   }
   return FALSE;
 }
 
+/**
+ * Implements hook_access().
+ * @TODO: Expand on the restriction?
+ */
+function manidora_download_access($object) {
+  if (!in_array('islandora:collectionCModel', $object->models)) {
+    return TRUE;
+  }
+  return FALSE;
+}
 /**
  *  Utility function that runs an xslt on MODS metadata.
  *  The transform was straight jacked from U of M's D6 site.
@@ -144,4 +164,41 @@ function manidora_mods_transform($object) {
   else {
     return FALSE;
   }
+}
+/**
+ * Generates a table containing all the datastreams of an IslandoraObject
+ * available to download for use in the "Download" tab.
+ *
+ * @param IslandoraObject $islandora_object
+ *
+ * @return type
+ *   Returns a table containing all the datastreams.
+ */
+function manidora_download_table($islandora_object) {
+  module_load_include('inc', 'islandora', 'includes/datastream');
+  module_load_include('inc', 'islandora', 'includes/utilities');
+  $headers = array(
+    'ID' => t('ID'),
+    'label' => t('Label'),
+    'mime' => t('Mime type'),
+    'size' => t('Size'),
+    'download' => t('Download')
+  );
+
+  foreach ($islandora_object as $ds) {
+    $rows[] = array(
+      'ID' => l($ds->id, islandora_datastream_get_url($ds, 'view')),
+      'label' => $ds->label,
+      'mime' => $ds->mimeType,
+      'size' => islandora_datastream_get_human_readable_size($ds),
+      'download' => l(t('download'), islandora_datastream_get_url($ds, 'download'))
+    );
+  }
+
+  $table = array(
+    '#theme' => 'table',
+    '#header' => $headers,
+    '#rows' => $rows,
+  );
+  return $table;
 }
