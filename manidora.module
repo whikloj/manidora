@@ -75,7 +75,7 @@ function manidora_menu() {
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_retrieve_metadata_form',
     'page arguments' => array(2),
-    'access callback' => array('manidora_metadata_access'),
+    'access callback' => 'manidora_metadata_access',
     'access arguments' => array(2),
     'weight' => 1
   );
@@ -84,7 +84,7 @@ function manidora_menu() {
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_download_table',
     'page arguments' => array(2),
-    'access callback' => array('manidora_download_access'),
+    'access callback' => 'manidora_download_access',
     'access arguments' => array(2),
     'weight' => 2
   );
