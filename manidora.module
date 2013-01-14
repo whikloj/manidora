@@ -99,6 +99,7 @@ function manidora_menu() {
  *    The object you wish to retrive formatted metadata from
  */
 function manidora_retrieve_metadata_form($object) {
+  drupal_set_title(t("@label Metadata", array('@label' => $object->label)));
   $output = manidora_mods_transform($object);
 
   if ($output) {
@@ -177,6 +178,9 @@ function manidora_mods_transform($object) {
 function manidora_download_table($islandora_object) {
   module_load_include('inc', 'islandora', 'includes/datastream');
   module_load_include('inc', 'islandora', 'includes/utilities');
+
+  drupal_set_title(t("@label Downloads", array('@label' => $islandora_object->label)));
+
   $headers = array(
     'ID' => t('ID'),
     'label' => t('Label'),
