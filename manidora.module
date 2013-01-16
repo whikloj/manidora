@@ -92,6 +92,24 @@ function manidora_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ *
+ * Do the ol' switcharooney on the menu entry for the islandora_fits
+ * module so that UofM can continue their tabish lifestyles.
+ *
+ * @param type $items
+ */
+function manidora_menu_alter(&$items) {
+  if (module_exists('islandora_fits')) {
+    $fits_tab = $items['islandora/object/%islandora_object/manage/fits_metadata'];
+    $items['islandora/object/%islandora_object/fits_metadata'] = $fits_tab;
+    $items['islandora/object/%islandora_object/fits_metadata']['weight'] = 3;
+    $items['islandora/object/%islandora_object/fits_metadata']['access callback'] = 'manidora_technical_metadata_access';
+    unset($items['islandora/object/%islandora_object/manage/fits_metadata']);
+  }
+}
+
+/**
  *  Utility function that returns an associative form array of markup
  *  containing the MODS metadata for an Islandora object.
  *
@@ -125,6 +143,26 @@ function manidora_metadata_access($object) {
 }
 
 /**
+ * Overwrites the islandora_fits_access() function for use in Manidora.
+ *
+ * @param IslandoraObject $object
+ *   An instansiated IslandoraObject.
+ *
+ * @return boolean
+ *   Access or not.
+ */
+function manidora_technical_metadata_access($object) {
+  $allowed_models = array('islandora:sp_basic_image', 'islandora:sp_large_image_cmodel');
+  
+  if ($object['TECHMD'] && user_access('view technical metadata') && count(array_intersect($allowed_models, $object->models))) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
  * Implements hook_access().
  * @TODO: Expand on the restriction?
  */
@@ -134,6 +172,7 @@ function manidora_download_access($object) {
   }
   return FALSE;
 }
+
 /**
  *  Utility function that runs an xslt on MODS metadata.
  *  The transform was straight jacked from U of M's D6 site.
