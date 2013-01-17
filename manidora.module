@@ -153,8 +153,8 @@ function manidora_metadata_access($object) {
  */
 function manidora_technical_metadata_access($object) {
   $allowed_models = array('islandora:sp_basic_image', 'islandora:sp_large_image_cmodel');
-  
-  if ($object['TECHMD'] && user_access('view technical metadata') && count(array_intersect($allowed_models, $object->models))) {
+
+  if ($object[variable_get('islandora_fits_techmd_dsid', 'TECHMD')] && user_access('view technical metadata') && count(array_intersect($allowed_models, $object->models))) {
     return TRUE;
   }
   else {
