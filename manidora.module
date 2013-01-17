@@ -60,8 +60,10 @@ function manidora_preprocess_print(&$variables) {
     $islandora_object = islandora_object_load($pid);
 
     // Append the MODS metadata list to the end of the content to be themed by the printer friendly module
-    $metadata = manidora_retrieve_metadata_form($islandora_object);
-    $variables["print"]["content"] .= "<br/>" . drupal_render($metadata);
+    if ($islandora_object['MODS']) {
+      $metadata = manidora_retrieve_metadata_form($islandora_object);
+      $variables["print"]["content"] .= "<br/>" . drupal_render($metadata);
+    }
   }
 }
 
@@ -136,7 +138,7 @@ function manidora_retrieve_metadata_form($object) {
  *  Implements hook_access().
  */
 function manidora_metadata_access($object) {
-  if (!in_array('islandora:collectionCModel', $object->models)) {
+  if (!in_array('islandora:collectionCModel', $object->models) && $object['MODS']) {
     return TRUE;
   }
   return FALSE;
