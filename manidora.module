@@ -73,7 +73,7 @@ function manidora_preprocess_print(&$variables) {
 function manidora_menu() {
   $items = array();
   $items['islandora/object/%islandora_object/manitoba_metadata'] = array(
-    'title' => 'Metadata',
+    'title' => t('Metadata'),
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_retrieve_metadata_form',
     'page arguments' => array(2),
@@ -82,13 +82,20 @@ function manidora_menu() {
     'weight' => 1
   );
   $items['islandora/object/%islandora_object/manitoba_download'] = array(
-    'title' => 'Download',
+    'title' => t('Download'),
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_download_table',
     'page arguments' => array(2),
     'access callback' => 'manidora_download_access',
     'access arguments' => array(2),
     'weight' => 2
+  );
+  $items['islandora/manitoba/newspaper_search'] = array(
+    'title' => t('Manitoba Advanced Newspaper Search'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('manidora_newspaper_search_form'),
+    'access arguments' => array(FEDORA_VIEW_OBJECTS)
   );
   return $items;
 }
@@ -247,3 +254,125 @@ function manidora_download_table($islandora_object) {
   );
   return $table;
 }
+
+/**
+ * Creates the custom search form used for searching Manitoba's
+ * newspaper collection(s).
+ *
+ * @TODO: Limit searches based upon newspapers only.
+ *
+ * @param array $form
+ * @param array $form_state
+ * @return array
+ */
+function manidora_newspaper_search_form($form, &$form_state) {
+  $form = array(
+    'all_words' => array(
+      '#type' => 'textfield',
+      '#title' => t('With all of the words')
+    ),
+    'exact_phrase' => array(
+      '#type' => 'textfield',
+      '#title' => t('With the exact phrase')
+    ),
+    'least_one' => array(
+      '#type' => 'textfield',
+      '#title' => t('With at least one of the words'),
+    ),
+    'without_words' => array(
+      '#type' => 'textfield',
+      '#title' => t('Without the words'),
+    ),
+    'submit' => array(
+      '#type' => 'submit',
+      '#value' => t('Search'),
+      '#submit' => array('manidora_newspaper_search_form_submit')
+    )
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for the manidora_newspaper_search_form.
+ * Redirects to the islandora/solr/search menupath to execute the
+ * given query.
+ *
+ * @param array $form
+ * @param array $form_state
+ */
+function manidora_newspaper_search_form_submit($form, &$form_state) {
+  $query_string = '';
+
+  if (strlen($form_state['values']['all_words']) > 0) {
+    $all_words = $form_state['values']['all_words'];
+    $all_array = explode(' ', $all_words);
+
+    $count = 0;
+    foreach ($all_array as $word) {
+      if ($count == 0) {
+        $query_string .= '(' . $word;
+      }
+      else {
+        $query_string .= ' AND ' . $word;
+      }
+      $count++;
+    }
+    $query_string .= ')';
+  }
+
+  if (strlen($form_state['values']['exact_phrase']) > 0) {
+    $exact_phrase = $form_state['values']['exact_phrase'];
+    $exact_phrase = '"' . $exact_phrase . '"';
+
+    if (!strlen($query_string)) {
+      $query_string .= '(' . $exact_phrase . ')';
+    }
+    else {
+      $query_string .= ' AND (' . $exact_phrase . ')';
+    }
+  }
+
+  // "x" or field:"y" or field:"z"
+  if (strlen($form_state['values']['least_one']) > 0) {
+    $least_one = $form_state['values']['least_one'];
+    $least_array = explode(' ', $least_one);
+    $count = 0;
+    if (strlen($query_string)) {
+      $query_string .= ' AND ';
+    }
+    foreach ($least_array as $word) {
+      if ($count == 0) {
+        $query_string .= '(' . $word;
+      }
+      else {
+        $query_string .= ' OR ' . $word;
+      }
+      $count++;
+    }
+    $query_string .= ')';
+  }
+
+  // Negative of "with all of the words"
+  if (strlen($form_state['values']['without_words']) > 0) {
+    $without_words = $form_state['values']['without_words'];
+    $without_array = explode(' ', $without_words);
+    $count = 0;
+    if (strlen($query_string)) {
+      $query_string .= ' AND ';
+    }
+    foreach ($without_array as $word) {
+      if ($count == 0) {
+        $query_string .= '-(' . $word;
+      }
+      else {
+        $query_string .= ' OR ' . $word;
+      }
+      $count++;
+    }
+    $query_string .= ')';
+  }
+  $query_string = str_replace('/', '~slsh~', $query_string);
+  $query = array('type' => 'edismax');
+  drupal_goto('islandora/search/' . $query_string, array('query' => $query));
+}
+
