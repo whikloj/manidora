@@ -73,7 +73,7 @@ function manidora_preprocess_print(&$variables) {
 function manidora_menu() {
   $items = array();
   $items['islandora/object/%islandora_object/manitoba_metadata'] = array(
-    'title' => 'Metadata',
+    'title' => t('Metadata'),
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_retrieve_metadata_form',
     'page arguments' => array(2),
@@ -82,13 +82,20 @@ function manidora_menu() {
     'weight' => 1
   );
   $items['islandora/object/%islandora_object/manitoba_download'] = array(
-    'title' => 'Download',
+    'title' => t('Download'),
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_download_table',
     'page arguments' => array(2),
     'access callback' => 'manidora_download_access',
     'access arguments' => array(2),
     'weight' => 2
+  );
+  $items['islandora/manitoba/newspaper_search'] = array(
+    'title' => t('Manitoba Advanced Newspaper Search'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('manidora_newspaper_search_form'),
+    'access arguments' => array(FEDORA_VIEW_OBJECTS)
   );
   return $items;
 }
@@ -249,39 +256,15 @@ function manidora_download_table($islandora_object) {
 }
 
 /**
- * Implements hook_block_info().
+ * Creates the custom search form used for searching Manitoba's
+ * newspaper collection(s).
+ *
+ * @TODO: Limit searches based upon newspapers only.
+ *
+ * @param array $form
+ * @param array $form_state
+ * @return array
  */
-function manidora_block_info() {
-  $blocks['manidora_newspaper_search'] = array(
-    'info' => t('Manidora Newspaper Search'),
-    'cache' => DRUPAL_NO_CACHE,
-  );
-  return $blocks;
-}
-
-/**
- * Implements hook_block_view().
- */
-function manidora_block_view($delta = '') {
-  $block = array();
-
-  switch ($delta) {
-    case 'manidora_newspaper_search':
-      if (arg(0) == 'islandora' AND arg(1) == 'object') {
-        if (arg(2)) {
-          $pid = arg(2);
-        }
-        else {
-          $pid = variable_get('islandora_repository_pid', 'islandora:root');
-        }
-        $block['subject'] = t('Manidora Newspaper Search');
-        $block['content'] = drupal_get_form('manidora_newspaper_search_form');
-      }
-      break;
-  }
-  return $block;
-}
-
 function manidora_newspaper_search_form($form, &$form_state) {
   $form = array(
     'all_words' => array(
@@ -309,8 +292,15 @@ function manidora_newspaper_search_form($form, &$form_state) {
   return $form;
 }
 
+/**
+ * Submit handler for the manidora_newspaper_search_form.
+ * Redirects to the islandora/solr/search menupath to execute the
+ * given query.
+ *
+ * @param array $form
+ * @param array $form_state
+ */
 function manidora_newspaper_search_form_submit($form, &$form_state) {
-  dsm($form_state['values']);
   $query_string = '';
 
   if (strlen($form_state['values']['all_words']) > 0) {
@@ -381,7 +371,8 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     }
     $query_string .= ')';
   }
-  dsm($query_string, 'query string');
-  drupal_goto('islandora/search/' . $query_string . '?type=edismax');
+  $query_string = str_replace('/', '~slsh~', $query_string);
+  $query = array('type' => 'edismax');
+  drupal_goto('islandora/search/' . $query_string, array('query' => $query));
 }
 
