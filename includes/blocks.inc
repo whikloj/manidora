@@ -69,12 +69,14 @@ function manidora_simple_search_form($form, &$form_state) {
   $form['simple']['hidden_filter'] = array(
     '#type' => 'hidden',
     '#value' => $hidden_filter,
-  );  
-  $form['simple']['collection_select'] = array(
-    '#type' => 'select',
-    '#options' => $options,
-    '#default_value' => (!empty($hidden_filter)) ? 1 : 0,
   );
+  if (!empty($hidden_filter)) {
+    $form['simple']['collection_select'] = array(
+      '#type' => 'select',
+      '#options' => $options,
+      '#default_value' => (!empty($hidden_filter)) ? 1 : 0,
+    );
+  }
   $form['simple']["islandora_simple_search_query"] = array(
     '#size' => '15',
     '#type' => 'textfield',
@@ -97,11 +99,13 @@ function manidora_simple_search_form_submit($form, &$form_state) {
   $search_string = $form_state['values']['islandora_simple_search_query'];
   $search_string = str_replace('/', '~slsh~', $search_string); //replace the slash so url doesn't break
   $hidden_filter = $form_state['values']['hidden_filter'];
-  $collection_select = $form_state['values']['collection_select'];
+  if (isset($form_state['values']['collection_select'])) {
+    $collection_select = $form_state['values']['collection_select'];    
+  }
 
   // using edismax by default for manidora
   $query = array('type' => 'edismax');
-  if (!empty($hidden_filter) && $collection_select == 1) {
+  if (!empty($hidden_filter) && isset($collection_select) && $collection_select == 1) {
     $query['f'][] = $hidden_filter;
   }
 
