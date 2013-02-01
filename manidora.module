@@ -258,6 +258,16 @@ function manidora_download_table($islandora_object) {
   return $table;
 }
 
+/**
+ * Creates the custom search form used for searching Manitoba's
+ * newspaper collection(s).
+ *
+ * @TODO: Limit searches based upon newspapers only.
+ *
+ * @param array $form
+ * @param array $form_state
+ * @return array
+ */
 function manidora_newspaper_search_form($form, &$form_state) {
   $form = array(
     'all_words' => array(
@@ -285,6 +295,14 @@ function manidora_newspaper_search_form($form, &$form_state) {
   return $form;
 }
 
+/**
+ * Submit handler for the manidora_newspaper_search_form.
+ * Redirects to the islandora/solr/search menupath to execute the
+ * given query.
+ *
+ * @param array $form
+ * @param array $form_state
+ */
 function manidora_newspaper_search_form_submit($form, &$form_state) {
   $query_string = '';
 
