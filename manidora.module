@@ -416,3 +416,14 @@ function manidora_admin($form, &$form_state) {
   
   return system_settings_form($form);
 }
+
+/**
+ * Preprocessor for newspaper_page, removes some controls.
+ */
+function manidora_preprocess_islandora_newspaper_page(&$variables) {
+  
+  unset($variables['newspaper_controls_array']['jp2_download']);
+  unset($variables['newspaper_controls_array']['view']);
+  
+  $variables['newspaper_controls'] = theme('item_list', array('items' => $variables['newspaper_controls_array'], NULL, 'ul', 'attributes' => array('class' => array('items', 'inline'))));
+}
