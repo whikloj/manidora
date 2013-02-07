@@ -100,6 +100,14 @@ function manidora_menu() {
     'page arguments' => array('manidora_newspaper_search_form'),
     'access arguments' => array(FEDORA_VIEW_OBJECTS)
   );
+  $items['admin/islandora/manidora'] = array(
+    'title' => 'Manidora',
+    'description' => 'Configure the UofM customization module.',
+    'page callback' => 'drupal_get_form',
+    'access arguments' => array('administer site configuration'),
+    'page arguments' => array('manidora_admin'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   return $items;
 }
 
@@ -379,3 +387,43 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
   drupal_goto('islandora/search/' . $query_string, array('query' => $query));
 }
 
+/**
+ * Implements hook_CMODEL_PID_islandora_solr_object_result_alter().
+ * Links all collection results to solr results rather than directly to the objects.
+ */
+function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(&$search_results, $query_processor) {
+  // http://192.168.168.84/drupal/islandora/search/PID%3A%28*%29?f[0]=RELS_EXT_isMemberOfCollection_uri_ms:%22info:fedora/islandora:root%22
+  // We are using this strange hackish URL to get around a bug in the solr
+  // module https://jira.duraspace.org/browse/ISLANDORA-840 
+  // UofM's collection field has been hacked to not be a URI.
+  $search_results['object_url'] = 'islandora/search/PID:(*)';
+  $search_results['object_url_params']['f[0]'] = variable_get('manidora_collection_solr_field','RELS_EXT_isMemberOfCollection_uri_ms')
+    . ':"' . $search_results['solr_doc']['PID'] . '"';
+}
+
+/**
+ * Admin form definition.
+ */
+function manidora_admin($form, &$form_state) {
+  $form = array();
+  
+  $form['manidora_collection_solr_field'] = array(
+    '#type' => 'textfield',
+    '#description' => t("Holds the collection Solr field."),
+    '#default_value' => variable_get('manidora_collection_solr_field','RELS_EXT_isMemberOfCollection_uri_ms'),
+    '#size' => 30,
+  );
+  
+  return system_settings_form($form);
+}
+
+/**
+ * Preprocessor for newspaper_page, removes some controls.
+ */
+function manidora_preprocess_islandora_newspaper_page(&$variables) {
+  
+  unset($variables['newspaper_controls_array']['jp2_download']);
+  unset($variables['newspaper_controls_array']['view']);
+  
+  $variables['newspaper_controls'] = theme('item_list', array('items' => $variables['newspaper_controls_array'], NULL, 'ul', 'attributes' => array('class' => array('items', 'inline'))));
+}
