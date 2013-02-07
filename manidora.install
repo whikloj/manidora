@@ -1,0 +1,19 @@
+<?php
+/*
+ * @file
+ *   Holds manidora uninstall.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function manidora_uninstall() {
+
+  // Removing variables.
+  $variables = array(
+    'manidora_collection_solr_field',
+  );
+  foreach ($variables as $variable) {
+    variable_del($variable);
+  }
+}
