@@ -34,7 +34,8 @@ function manidora_preprocess_print(&$variables) {
   for ($i = 0; $i < $divs->length && !$found; $i++) {
     if ( $divs->item($i)->hasAttribute("class") &&
          ($divs->item($i)->getAttribute("class") == "islandora-basic-image-content" ||
-          $divs->item($i)->getAttribute("class") == "islandora-large-image-content")
+          $divs->item($i)->getAttribute("class") == "islandora-large-image-content" ||
+          $divs->item($i)->getAttribute("class") == "islandora-newspaper-content")
        ) {
       // Replace original content with just the stripped out 'content' div
       $variables["print"]["content"] = $content_dom->saveHTML($divs->item($i));
