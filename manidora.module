@@ -395,7 +395,7 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
 function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(&$search_results, $query_processor) {
   // http://192.168.168.84/drupal/islandora/search/PID%3A%28*%29?f[0]=RELS_EXT_isMemberOfCollection_uri_ms:%22info:fedora/islandora:root%22
   // We are using this strange hackish URL to get around a bug in the solr
-  // module https://jira.duraspace.org/browse/ISLANDORA-840 
+  // module https://jira.duraspace.org/browse/ISLANDORA-840
   // UofM's collection field has been hacked to not be a URI.
   $search_results['object_url'] = 'islandora/search/PID:(*)';
   $search_results['object_url_params']['f[0]'] = variable_get('manidora_collection_solr_field','RELS_EXT_isMemberOfCollection_uri_ms')
@@ -403,18 +403,46 @@ function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(
 }
 
 /**
+ * Implements hook_CMODEL_PID_islandora_solr_object_result_alter().
+ * Replaces the url for the search result to be the book's url, not the page.
+ * The page is added as a fragment at the end of the book url.
+ *
+ * @param array $search_results
+ * @param IslandoraSolrQueryProcessor $query_processor
+ */
+function manidora_islandora_pageCModel_islandora_solr_object_result_alter(&$search_results, $query_processor) {
+    //  IF:
+    //      there's an object url AND
+    //      there's a solr doc AND
+    //      the solr doc contains the parent book AND
+    //      the solr doc contains the page number
+    if (isset($search_results['object_url']) &&
+        isset($search_results['solr_doc']) &&
+        isset($search_results['solr_doc']['RELS_EXT_isPageOf_uri_ms']) &&
+        count($search_results['solr_doc']['RELS_EXT_isPageOf_uri_ms']) &&
+        isset($search_results['solr_doc']['RELS_EXT_isPageNumber_literal_ms']) &&
+        count($search_results['solr_doc']['RELS_EXT_isPageNumber_literal_ms'])) {
+    // Replace the result url with that of the parent book and add the page number as a fragment
+    $book_pid = preg_replace('/info\:fedora\//', '', $search_results['solr_doc']['RELS_EXT_isPageOf_uri_ms'][0], 1);
+    $page_number = $search_results['solr_doc']['RELS_EXT_isPageNumber_literal_ms'][0];
+    $search_results['object_url'] = "islandora/object/$book_pid";
+    $search_results['object_url_fragment'] = "page/$page_number/mode/1up";
+  }
+}
+
+/**
  * Admin form definition.
  */
 function manidora_admin($form, &$form_state) {
   $form = array();
-  
+
   $form['manidora_collection_solr_field'] = array(
     '#type' => 'textfield',
     '#description' => t("Holds the collection Solr field."),
     '#default_value' => variable_get('manidora_collection_solr_field','RELS_EXT_isMemberOfCollection_uri_ms'),
     '#size' => 30,
   );
-  
+
   return system_settings_form($form);
 }
 
@@ -422,9 +450,9 @@ function manidora_admin($form, &$form_state) {
  * Preprocessor for newspaper_page, removes some controls.
  */
 function manidora_preprocess_islandora_newspaper_page(&$variables) {
-  
+
   unset($variables['newspaper_controls_array']['jp2_download']);
   unset($variables['newspaper_controls_array']['view']);
-  
+
   $variables['newspaper_controls'] = theme('item_list', array('items' => $variables['newspaper_controls_array'], NULL, 'ul', 'attributes' => array('class' => array('items', 'inline'))));
 }
