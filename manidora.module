@@ -477,7 +477,7 @@ function manidora_printable_pdf($pid) {
   // Extend the TCPDF class to create custom Header and Footer
 
   class MYPDF extends TCPDF {
-    public function __construct($pid, $orientation='P', $unit='mm', $format='A4', $unicode=true, $encoding='UTF-8', $diskcache=false, $pdfa=false) {
+    public function __construct($pid, $orientation='P', $unit='mm', $format='A4', $unicode=TRUE, $encoding='UTF-8', $diskcache=false, $pdfa=false) {
       $this->pid = $pid;
       parent::__construct($orientation, $unit, $format, $unicode, $encoding, $diskcache);
     }
@@ -588,3 +588,4 @@ function manidora_retrieve_header_text($pid) {
   else {
     return FALSE;
   }
+}
