@@ -109,6 +109,11 @@ function manidora_menu() {
     'page arguments' => array('manidora_admin'),
     'type' => MENU_NORMAL_ITEM,
   );
+  $items['islandora/manitoba/pdf/print'] = array(
+    'page callback' => 'manidora_printable_pdf',
+    'page arguments' => array(4),
+    'access arguments' => array(FEDORA_VIEW_OBJECTS),
+  );
   return $items;
 }
 
@@ -395,7 +400,7 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
 function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(&$search_results, $query_processor) {
   // http://192.168.168.84/drupal/islandora/search/PID%3A%28*%29?f[0]=RELS_EXT_isMemberOfCollection_uri_ms:%22info:fedora/islandora:root%22
   // We are using this strange hackish URL to get around a bug in the solr
-  // module https://jira.duraspace.org/browse/ISLANDORA-840 
+  // module https://jira.duraspace.org/browse/ISLANDORA-840
   // UofM's collection field has been hacked to not be a URI.
   $search_results['object_url'] = 'islandora/search/PID:(*)';
   $search_results['object_url_params']['f[0]'] = variable_get('manidora_collection_solr_field','RELS_EXT_isMemberOfCollection_uri_ms')
@@ -407,14 +412,14 @@ function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(
  */
 function manidora_admin($form, &$form_state) {
   $form = array();
-  
+
   $form['manidora_collection_solr_field'] = array(
     '#type' => 'textfield',
     '#description' => t("Holds the collection Solr field."),
     '#default_value' => variable_get('manidora_collection_solr_field','RELS_EXT_isMemberOfCollection_uri_ms'),
     '#size' => 30,
   );
-  
+
   return system_settings_form($form);
 }
 
@@ -422,9 +427,138 @@ function manidora_admin($form, &$form_state) {
  * Preprocessor for newspaper_page, removes some controls.
  */
 function manidora_preprocess_islandora_newspaper_page(&$variables) {
-  
+
   unset($variables['newspaper_controls_array']['jp2_download']);
   unset($variables['newspaper_controls_array']['view']);
-  
+
   $variables['newspaper_controls'] = theme('item_list', array('items' => $variables['newspaper_controls_array'], NULL, 'ul', 'attributes' => array('class' => array('items', 'inline'))));
+}
+
+/**
+ * Constructs a printable PDF from the JPG datastream with header content.
+ *
+ * @param string $pid
+ *   A PID representing a Fedora object.
+ * @return
+ *   Download link containing our created PDF.
+ */
+function manidora_printable_pdf($pid) {
+  @include_once 'sites/all/libraries/tcpdf/config/lang/eng.php';
+  @include_once 'sites/all/libraries/tcpdf/tcpdf.php';
+
+  // Extend the TCPDF class to create custom Header and Footer
+
+  class MYPDF extends TCPDF {
+    public function __construct($pid, $orientation='P', $unit='mm', $format='A4', $unicode=true, $encoding='UTF-8', $diskcache=false, $pdfa=false) {
+      $this->pid = $pid;
+      parent::__construct($orientation, $unit, $format, $unicode, $encoding, $diskcache);
+    }
+    //Page header
+    public function Header() {
+        $string = manidora_retrieve_header_text($this->pid);
+        if ($string) {
+          $this->Cell(0, 15, $string, 0, FALSE, 'C', 0, '', 0, FALSE, 'M', 'M');
+        }
+    }
+  }
+
+  // create new PDF document
+  $pdf = new MYPDF($pid, PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, TRUE, 'UTF-8', FALSE);
+
+  $header_text = manidora_retrieve_header_text($pid);
+  if ($header_text) {
+    // Parse a bit for use below
+    $header_parts = explode(',', $header_text);
+    $title = $header_parts[0];
+  }
+  else {
+    $title = $pid;
+    $header_text = $pid;
+  }
+  // set document information
+  $pdf->SetTitle($title);
+  $pdf->SetSubject($title);
+
+  // set default monospaced font
+  $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+  //set margins
+  $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+  $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+
+  //set auto page breaks
+  $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+  //set image scale factor
+  $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+  //set some language-dependent strings
+  $pdf->setLanguageArray($l);
+
+  // set font
+  $pdf->SetFont('times', 'BI', 12);
+
+  // add a page
+  $pdf->AddPage();
+  $pdf->Image(variable_get('islandora_base_url', 'http://localhost:8080/fedora') . '/objects/' . $pid . '/datastreams/JPG/content', '0', '15', '', '', '', '', '', 2);
+
+  //Close and output PDF document
+  $pdf->Output($header_text . '.pdf', 'D');
+}
+
+/**
+ * Constructs the text used in the header of the PDF.
+ *
+ * @param type $pid
+ *   A PID representing a Fedora object.
+ * @return string
+ *   Formatted string for output display.
+ */
+function manidora_retrieve_header_text($pid) {
+  $object = islandora_object_load($pid);
+  if (isset($object['MODS'])) {
+    $mods = $object['MODS']->content;
+    $xml = new SimpleXMLElement($mods);
+
+    $title = '';
+    $date = '';
+    $page = '';
+
+    if (isset($xml->titleInfo)) {
+      if (isset($xml->titleInfo->title)) {
+        $title = (string) $xml->titleInfo->title;
+        $title = preg_replace('/:(.*)/', '', $title);
+      }
+    }
+    if (empty($title)) {
+      $title = t('Unknown');
+    }
+
+    if (isset($xml->relatedItem)) {
+      if (isset($xml->relatedItem->part)) {
+        if (isset($xml->relatedItem->part->date)) {
+          $date = $xml->relatedItem->part->date;
+        }
+        if (isset($xml->relatedItem->part->extent)) {
+          if (isset($xml->relatedItem->part->extent->start)) {
+            $page = $xml->relatedItem->part->extent->start;
+          }
+        }
+      }
+    }
+
+    if (empty($date)) {
+      $date = t('Unknown');
+    }
+
+    if (empty($page)) {
+      $page = t('Unknown');
+    }
+    $text = $title . ', ' . $date . ' (Page ' . $page . ')';
+    return $text;
+  }
+  else {
+    return FALSE;
+  }
+
 }
