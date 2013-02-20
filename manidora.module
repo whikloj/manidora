@@ -478,25 +478,31 @@ function manidora_printable_pdf($pid) {
 
   class MYPDF extends TCPDF {
     public function __construct($pid, $orientation='P', $unit='mm', $format='A4', $unicode=true, $encoding='UTF-8', $diskcache=false, $pdfa=false) {
-      dd($pid, 'constructor pid');
       $this->pid = $pid;
       parent::__construct($orientation, $unit, $format, $unicode, $encoding, $diskcache);
     }
     //Page header
     public function Header() {
         $string = manidora_retrieve_header_text($this->pid);
-        $this->Cell(0, 15, $string, 0, false, 'C', 0, '', 0, false, 'M', 'M');
+        if ($string) {
+          $this->Cell(0, 15, $string, 0, FALSE, 'C', 0, '', 0, FALSE, 'M', 'M');
+        }
     }
   }
 
   // create new PDF document
-  $pdf = new MYPDF($pid, PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+  $pdf = new MYPDF($pid, PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, TRUE, 'UTF-8', FALSE);
 
   $header_text = manidora_retrieve_header_text($pid);
-  // Parse a bit for use below
-  $header_parts = explode(',', $header_text);
-  $title = $header_parts[0];
-
+  if ($header_text) {
+    // Parse a bit for use below
+    $header_parts = explode(',', $header_text);
+    $title = $header_parts[0];
+  }
+  else {
+    $title = $pid;
+    $header_text = $pid;
+  }
   // set document information
   $pdf->SetTitle($title);
   $pdf->SetSubject($title);
@@ -576,8 +582,9 @@ function manidora_retrieve_header_text($pid) {
     if (empty($page)) {
       $page = t('Unknown');
     }
-
+    $text = $title . ', ' . $date . ' (Page ' . $page . ')';
+    return $text;
   }
-  $text = $title . ', ' . $date . ' (Page ' . $page . ')';
-  return $text;
-}
+  else {
+    return FALSE;
+  }
