@@ -426,6 +426,10 @@ function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(
  * The page is added as a fragment at the end of the book url.
  */
 function manidora_islandora_pageCModel_islandora_solr_object_result_alter(&$search_results, $query_processor) {
+  // Grab the names of the appropriate solr fields from the db.
+  $parent_book_field_name = variable_get('manidora_parent_book_solr_field', 'RELS_EXT_isPageOf_uri_ms');
+  $page_number_field_name = variable_get('manidora_page_number_solr_field', 'RELS_EXT_isPageNumber_literal_ms');
+
   // If:
   // there's an object url AND
   // there's a solr doc AND
@@ -433,10 +437,10 @@ function manidora_islandora_pageCModel_islandora_solr_object_result_alter(&$sear
   // the solr doc contains the page number...
   if (isset($search_results['object_url']) &&
       isset($search_results['solr_doc']) &&
-      isset($search_results['solr_doc']['RELS_EXT_isPageOf_uri_ms']) &&
-      count($search_results['solr_doc']['RELS_EXT_isPageOf_uri_ms']) &&
-      isset($search_results['solr_doc']['RELS_EXT_isPageNumber_literal_ms']) &&
-      count($search_results['solr_doc']['RELS_EXT_isPageNumber_literal_ms'])) {
+      isset($search_results['solr_doc'][$parent_book_field_name]) &&
+      count($search_results['solr_doc'][$parent_book_field_name]) &&
+      isset($search_results['solr_doc'][$page_number_field_name]) &&
+      count($search_results['solr_doc'][$page_number_field_name])) {
     // Replace the result url with that of the parent book and add the page
     // number as a fragment.
     $book_pid = preg_replace('/info\:fedora\//', '', $search_results['solr_doc']['RELS_EXT_isPageOf_uri_ms'][0], 1);
@@ -454,8 +458,25 @@ function manidora_admin($form, &$form_state) {
 
   $form['manidora_collection_solr_field'] = array(
     '#type' => 'textfield',
+    '#title' => t('Collection Solr Field'),
     '#description' => t("Holds the collection Solr field."),
     '#default_value' => variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
+    '#size' => 30,
+  );
+
+  $form['manidora_parent_book_solr_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Parent Solr Field'),
+    '#description' => t("Holds the Solr field that contains the parent book's PID."),
+    '#default_value' => variable_get('manidora_parent_book_solr_field', 'RELS_EXT_isPageOf_uri_ms'),
+    '#size' => 30,
+  );
+
+  $form['manidora_page_number_solr_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Page Number Solr Field'),
+    '#description' => t("Holds the Solr field that contains the page number of the current object."),
+    '#default_value' => variable_get('manidora_page_number_solr_field', 'RELS_EXT_isPageNumber_literal_ms'),
     '#size' => 30,
   );
 
