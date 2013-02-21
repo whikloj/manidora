@@ -1,27 +1,30 @@
 <?php
 
+/**
+ * @file
+ * Custom University of Manitoba hacks for Islandora.
+ */
+
 // Includes functions for blocks.
 require_once dirname(__FILE__) . '/includes/blocks.inc';
 
 /**
- *  API call to insert a link to a printer friendly version of something.
+ * API call to insert a link to a printer friendly version of something.
  *
- *  @param string $path
- *    path to page we want a printer friendly version of
+ * @param string $path
+ *   path to page we want a printer friendly version of
  */
 function manidora_print_insert_link($path) {
-  return l("Printer Friendly Version", $path);
+  return l(t("Printer Friendly Version"), $path);
 }
 
 /**
- *  Implements hook_preprocess for the print_theme.  Strips out unneccessary
- *  content and adds MODS metadata below the object.
+ * Implements hook_preprocess_print().
  *
- *  @param array &$variables
- *    reference to the array of variables used by the theme call
+ * Strips out unneccessary content and adds MODS metadata below the object.
  */
 function manidora_preprocess_print(&$variables) {
-  // Get the DOM
+  // Get the DOM.
   $content_dom = new DOMDocument();
   $content_dom->loadHTML($variables["print"]["content"]);
 
@@ -30,24 +33,24 @@ function manidora_preprocess_print(&$variables) {
   // We're looking for the 'content' divs.
   //
   $divs = $content_dom->getElementsByTagName("div");
-  $found = false;
+  $found = FALSE;
   for ($i = 0; $i < $divs->length && !$found; $i++) {
-    if ( $divs->item($i)->hasAttribute("class") &&
+    if ($divs->item($i)->hasAttribute("class") &&
          ($divs->item($i)->getAttribute("class") == "islandora-basic-image-content" ||
           $divs->item($i)->getAttribute("class") == "islandora-large-image-content" ||
           $divs->item($i)->getAttribute("class") == "islandora-newspaper-content")
        ) {
-      // Replace original content with just the stripped out 'content' div
+      // Replace original content with just the stripped out 'content' div.
       $variables["print"]["content"] = $content_dom->saveHTML($divs->item($i));
-      $found = true;
+      $found = TRUE;
     }
   }
 
   //
-  // Append the MODS metadata to the end of the content
+  // Append the MODS metadata to the end of the content.
   //
   if ($found) {
-    // Hack out the PID from the URL
+    // Hack out the PID from the URL.
     $url = $variables["print"]["url"];
     $explode_results = explode("/islandora/object/", $url);
 
@@ -60,10 +63,11 @@ function manidora_preprocess_print(&$variables) {
 
     $pid = urldecode($pid);
 
-    // Use the PID to get the Islandora object
+    // Use the PID to get the Islandora object.
     $islandora_object = islandora_object_load($pid);
 
-    // Append the MODS metadata list to the end of the content to be themed by the printer friendly module
+    // Append the MODS metadata list to the end of the content to be themed by
+    // the printer friendly module.
     if ($islandora_object['MODS']) {
       $metadata = manidora_retrieve_metadata_form($islandora_object);
       $variables["print"]["content"] .= "<br/>" . drupal_render($metadata);
@@ -72,34 +76,34 @@ function manidora_preprocess_print(&$variables) {
 }
 
 /**
- *  Implements hook_menu.
+ * Implements hook_menu().
  */
 function manidora_menu() {
   $items = array();
   $items['islandora/object/%islandora_object/manitoba_metadata'] = array(
-    'title' => t('Metadata'),
+    'title' => 'Metadata',
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_retrieve_metadata_form',
     'page arguments' => array(2),
     'access callback' => 'manidora_metadata_access',
     'access arguments' => array(2),
-    'weight' => 1
+    'weight' => 1,
   );
   $items['islandora/object/%islandora_object/manitoba_download'] = array(
-    'title' => t('Download'),
+    'title' => 'Download',
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_download_table',
     'page arguments' => array(2),
     'access callback' => 'manidora_download_access',
     'access arguments' => array(2),
-    'weight' => 2
+    'weight' => 2,
   );
   $items['islandora/manitoba/newspaper_search'] = array(
-    'title' => t('Manitoba Advanced Newspaper Search'),
+    'title' => 'Manitoba Advanced Newspaper Search',
     'type' => MENU_CALLBACK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('manidora_newspaper_search_form'),
-    'access arguments' => array(FEDORA_VIEW_OBJECTS)
+    'access arguments' => array(FEDORA_VIEW_OBJECTS),
   );
   $items['admin/islandora/manidora'] = array(
     'title' => 'Manidora',
@@ -122,8 +126,6 @@ function manidora_menu() {
  *
  * Do the ol' switcharooney on the menu entry for the islandora_fits
  * module so that UofM can continue their tabish lifestyles.
- *
- * @param type $items
  */
 function manidora_menu_alter(&$items) {
   if (module_exists('islandora_fits')) {
@@ -136,11 +138,10 @@ function manidora_menu_alter(&$items) {
 }
 
 /**
- *  Utility function that returns an associative form array of markup
- *  containing the MODS metadata for an Islandora object.
+ * Fetches MODS metadata as form encoded markup.
  *
- *  @param IslandoraObject $object
- *    The object you wish to retrive formatted metadata from
+ * @param IslandoraObject $object
+ *   The object you wish to retrive formatted metadata from
  */
 function manidora_retrieve_metadata_form($object) {
   drupal_set_title(t("@label Metadata", array('@label' => $object->label)));
@@ -159,7 +160,7 @@ function manidora_retrieve_metadata_form($object) {
 }
 
 /**
- *  Implements hook_access().
+ * Implements hook_access().
  */
 function manidora_metadata_access($object) {
   if (!in_array('islandora:collectionCModel', $object->models) && $object['MODS']) {
@@ -174,7 +175,7 @@ function manidora_metadata_access($object) {
  * @param IslandoraObject $object
  *   An instansiated IslandoraObject.
  *
- * @return boolean
+ * @return bool
  *   Access or not.
  */
 function manidora_technical_metadata_access($object) {
@@ -200,11 +201,12 @@ function manidora_download_access($object) {
 }
 
 /**
- *  Utility function that runs an xslt on MODS metadata.
- *  The transform was straight jacked from U of M's D6 site.
+ * Utility function that runs an xslt on MODS metadata.
  *
- *  @param IslandoraObject $object
- *    The IslandoraObject whose MODS metadata you wish to transform.
+ * The transform was straight jacked from U of M's D6 site.
+ *
+ * @param IslandoraObject $object
+ *   The IslandoraObject whose MODS metadata you wish to transform.
  */
 function manidora_mods_transform($object) {
   $mods_text = $object->repository->api->a->getDatastreamDissemination($object->id, 'MODS');
@@ -232,12 +234,14 @@ function manidora_mods_transform($object) {
   }
 }
 /**
- * Generates a table containing all the datastreams of an IslandoraObject
- * available to download for use in the "Download" tab.
+ * Generates a table of all downloadable datastreams for an IslandoraObject.
+ *
+ * Used in the "Download" tab.
  *
  * @param IslandoraObject $islandora_object
+ *   The object whose datastreams you wish to download.
  *
- * @return type
+ * @return array
  *   Returns a table containing all the datastreams.
  */
 function manidora_download_table($islandora_object) {
@@ -251,7 +255,7 @@ function manidora_download_table($islandora_object) {
     'label' => t('Label'),
     'mime' => t('Mime type'),
     'size' => t('Size'),
-    'download' => t('Download')
+    'download' => t('Download'),
   );
 
   foreach ($islandora_object as $ds) {
@@ -260,7 +264,7 @@ function manidora_download_table($islandora_object) {
       'label' => $ds->label,
       'mime' => $ds->mimeType,
       'size' => islandora_datastream_get_human_readable_size($ds),
-      'download' => l(t('download'), islandora_datastream_get_url($ds, 'download'))
+      'download' => l(t('download'), islandora_datastream_get_url($ds, 'download')),
     );
   }
 
@@ -273,24 +277,28 @@ function manidora_download_table($islandora_object) {
 }
 
 /**
- * Creates the custom search form used for searching Manitoba's
- * newspaper collection(s).
+ * Creates the custom search form for searching Manitoba's newspapers.
  *
  * @TODO: Limit searches based upon newspapers only.
  *
  * @param array $form
+ *   The form to construct
+ *
  * @param array $form_state
+ *   Its state
+ *
  * @return array
+ *   The constructed form
  */
 function manidora_newspaper_search_form($form, &$form_state) {
   $form = array(
     'all_words' => array(
       '#type' => 'textfield',
-      '#title' => t('With all of the words')
+      '#title' => t('With all of the words'),
     ),
     'exact_phrase' => array(
       '#type' => 'textfield',
-      '#title' => t('With the exact phrase')
+      '#title' => t('With the exact phrase'),
     ),
     'least_one' => array(
       '#type' => 'textfield',
@@ -303,19 +311,22 @@ function manidora_newspaper_search_form($form, &$form_state) {
     'submit' => array(
       '#type' => 'submit',
       '#value' => t('Search'),
-      '#submit' => array('manidora_newspaper_search_form_submit')
-    )
+      '#submit' => array('manidora_newspaper_search_form_submit'),
+    ),
   );
   return $form;
 }
 
 /**
  * Submit handler for the manidora_newspaper_search_form.
+ *
  * Redirects to the islandora/solr/search menupath to execute the
  * given query.
  *
  * @param array $form
+ *   The form to submit
  * @param array $form_state
+ *   Its state
  */
 function manidora_newspaper_search_form_submit($form, &$form_state) {
   $query_string = '';
@@ -395,15 +406,16 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
 
 /**
  * Implements hook_CMODEL_PID_islandora_solr_object_result_alter().
- * Links all collection results to solr results rather than directly to the objects.
+ *
+ * Links all collection results to solr results rather than directly to the
+ * objects.
  */
 function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(&$search_results, $query_processor) {
-  // http://192.168.168.84/drupal/islandora/search/PID%3A%28*%29?f[0]=RELS_EXT_isMemberOfCollection_uri_ms:%22info:fedora/islandora:root%22
   // We are using this strange hackish URL to get around a bug in the solr
   // module https://jira.duraspace.org/browse/ISLANDORA-840
   // UofM's collection field has been hacked to not be a URI.
   $search_results['object_url'] = 'islandora/search/PID:(*)';
-  $search_results['object_url_params']['f[0]'] = variable_get('manidora_collection_solr_field','RELS_EXT_isMemberOfCollection_uri_ms')
+  $search_results['object_url_params']['f[0]'] = variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms')
     . ':"' . $search_results['solr_doc']['PID'] . '"';
 }
 
@@ -415,8 +427,9 @@ function manidora_admin($form, &$form_state) {
 
   $form['manidora_collection_solr_field'] = array(
     '#type' => 'textfield',
+    '#title' => t('Collection Solr Field'),
     '#description' => t("Holds the collection Solr field."),
-    '#default_value' => variable_get('manidora_collection_solr_field','RELS_EXT_isMemberOfCollection_uri_ms'),
+    '#default_value' => variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
     '#size' => 30,
   );
 
@@ -431,7 +444,12 @@ function manidora_preprocess_islandora_newspaper_page(&$variables) {
   unset($variables['newspaper_controls_array']['jp2_download']);
   unset($variables['newspaper_controls_array']['view']);
 
-  $variables['newspaper_controls'] = theme('item_list', array('items' => $variables['newspaper_controls_array'], NULL, 'ul', 'attributes' => array('class' => array('items', 'inline'))));
+  $variables['newspaper_controls'] = theme('item_list',
+    array(
+      'items' => $variables['newspaper_controls_array'],
+      NULL,
+      'ul',
+      'attributes' => array('class' => array('items', 'inline'))));
 }
 
 /**
@@ -439,35 +457,40 @@ function manidora_preprocess_islandora_newspaper_page(&$variables) {
  *
  * @param string $pid
  *   A PID representing a Fedora object.
- * @return
+ *
+ * @return string
  *   Download link containing our created PDF.
  */
 function manidora_printable_pdf($pid) {
   @include_once 'sites/all/libraries/tcpdf/config/lang/eng.php';
   @include_once 'sites/all/libraries/tcpdf/tcpdf.php';
 
-  // Extend the TCPDF class to create custom Header and Footer
-
+  // Extend the TCPDF class to create custom Header and Footer.
   class MYPDF extends TCPDF {
-    public function __construct($pid, $orientation='P', $unit='mm', $format='A4', $unicode=true, $encoding='UTF-8', $diskcache=false, $pdfa=false) {
+    /**
+     * Constructor.
+     */
+    public function __construct($pid, $orientation = 'P', $unit = 'mm', $format = 'A4', $unicode = TRUE, $encoding = 'UTF-8', $diskcache = FALSE, $pdfa = FALSE) {
       $this->pid = $pid;
       parent::__construct($orientation, $unit, $format, $unicode, $encoding, $diskcache);
     }
-    //Page header
+    /**
+     * Page header.
+     */
     public function Header() {
-        $string = manidora_retrieve_header_text($this->pid);
-        if ($string) {
-          $this->Cell(0, 15, $string, 0, FALSE, 'C', 0, '', 0, FALSE, 'M', 'M');
-        }
+      $string = manidora_retrieve_header_text($this->pid);
+      if ($string) {
+        $this->Cell(0, 15, $string, 0, FALSE, 'C', 0, '', 0, FALSE, 'M', 'M');
+      }
     }
   }
 
-  // create new PDF document
+  // Create new PDF document.
   $pdf = new MYPDF($pid, PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, TRUE, 'UTF-8', FALSE);
 
   $header_text = manidora_retrieve_header_text($pid);
   if ($header_text) {
-    // Parse a bit for use below
+    // Parse a bit for use below.
     $header_parts = explode(',', $header_text);
     $title = $header_parts[0];
   }
@@ -475,42 +498,43 @@ function manidora_printable_pdf($pid) {
     $title = $pid;
     $header_text = $pid;
   }
-  // set document information
+  // Set document information.
   $pdf->SetTitle($title);
   $pdf->SetSubject($title);
 
-  // set default monospaced font
+  // Set default monospaced font.
   $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
 
-  //set margins
+  // Set margins.
   $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
   $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
 
-  //set auto page breaks
+  // Set auto page breaks.
   $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
 
-  //set image scale factor
+  // Set image scale factor.
   $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 
-  //set some language-dependent strings
+  // Set some language-dependent strings.
   $pdf->setLanguageArray($l);
 
-  // set font
+  // Set font.
   $pdf->SetFont('times', 'BI', 12);
 
-  // add a page
+  // Add a page.
   $pdf->AddPage();
   $pdf->Image(variable_get('islandora_base_url', 'http://localhost:8080/fedora') . '/objects/' . $pid . '/datastreams/JPG/content', '0', '15', '', '', '', '', '', 2);
 
-  //Close and output PDF document
+  // Close and output PDF document.
   $pdf->Output($header_text . '.pdf', 'D');
 }
 
 /**
  * Constructs the text used in the header of the PDF.
  *
- * @param type $pid
+ * @param string $pid
  *   A PID representing a Fedora object.
+ *
  * @return string
  *   Formatted string for output display.
  */
@@ -560,5 +584,4 @@ function manidora_retrieve_header_text($pid) {
   else {
     return FALSE;
   }
-
 }
