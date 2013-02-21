@@ -443,8 +443,8 @@ function manidora_islandora_pageCModel_islandora_solr_object_result_alter(&$sear
       count($search_results['solr_doc'][$page_number_field_name])) {
     // Replace the result url with that of the parent book and add the page
     // number as a fragment.
-    $book_pid = preg_replace('/info\:fedora\//', '', $search_results['solr_doc']['RELS_EXT_isPageOf_uri_ms'][0], 1);
-    $page_number = $search_results['solr_doc']['RELS_EXT_isPageNumber_literal_ms'][0];
+    $book_pid = preg_replace('/info\:fedora\//', '', $search_results['solr_doc'][$parent_book_field_name][0], 1);
+    $page_number = $search_results['solr_doc'][$page_number_field_name][0];
     $search_results['object_url'] = "islandora/object/$book_pid";
     $search_results['object_url_fragment'] = "page/$page_number/mode/1up";
   }
