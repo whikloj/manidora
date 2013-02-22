@@ -143,7 +143,7 @@ function manidora_menu_alter(&$items) {
  * Add a link to view the content div in a colorbox.
  */
 function manidora_block_view_alter(&$data, $block) {
-  if ($block->delta == 'compound_navigation') {
+  if ($block->delta == 'compound_navigation' && !empty($data['content']['#markup'])) {
     drupal_add_js(drupal_get_path('module', 'manidora') . '/js/manidora.js');
     $data['content']['#markup'] .= '<a class="manidora-colorbox" href="#content">' . t('Full Screen') . '</a>';
   }
