@@ -7,3 +7,4 @@ stylesheets[all][] = css/manidora.css
 dependencies[] = islandora
 dependencies[] = islandora_solr
 dependencies[] = print
+dependencies[] = colorbox

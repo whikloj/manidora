@@ -138,6 +138,18 @@ function manidora_menu_alter(&$items) {
 }
 
 /**
+ * Implements hook_block_view_alter().
+ *
+ * Add a link to view the content div in a colorbox.
+ */
+function manidora_block_view_alter(&$data, $block) {
+  if ($block->delta == 'compound_navigation') {
+    drupal_add_js(drupal_get_path('module', 'manidora') . '/js/manidora.js');
+    $data['content']['#markup'] .= '<a class="manidora-colorbox" href="#content">' . t('Full Screen') . '</a>';
+  }
+}
+
+/**
  * Fetches MODS metadata as form encoded markup.
  *
  * @param IslandoraObject $object
