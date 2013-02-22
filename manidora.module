@@ -114,6 +114,7 @@ function manidora_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
   $items['islandora/manitoba/pdf/print'] = array(
+    'type' => MENU_CALLBACK,
     'page callback' => 'manidora_printable_pdf',
     'page arguments' => array(4),
     'access arguments' => array(FEDORA_VIEW_OBJECTS),
