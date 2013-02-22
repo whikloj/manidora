@@ -427,7 +427,7 @@ function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(
   // We are using this strange hackish URL to get around a bug in the solr
   // module https://jira.duraspace.org/browse/ISLANDORA-840
   // UofM's collection field has been hacked to not be a URI.
-  $search_results['object_url'] = 'islandora/search/PID:(*)';
+  $search_results['object_url'] = 'islandora/search/';
   $search_results['object_url_params']['f[0]'] = variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms')
     . ':"' . $search_results['solr_doc']['PID'] . '"';
 }
