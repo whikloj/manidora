@@ -354,7 +354,7 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
         $query_string .= '(' . $word;
       }
       else {
-        $query_string .= ' AND ' . $word;
+        $query_string .= ' && ' . $word;
       }
       $count++;
     }
@@ -369,7 +369,7 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
       $query_string .= '(' . $exact_phrase . ')';
     }
     else {
-      $query_string .= ' AND (' . $exact_phrase . ')';
+      $query_string .= ' && (' . $exact_phrase . ')';
     }
   }
 
@@ -379,14 +379,14 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     $least_array = explode(' ', $least_one);
     $count = 0;
     if (strlen($query_string)) {
-      $query_string .= ' AND ';
+      $query_string .= ' && ';
     }
     foreach ($least_array as $word) {
       if ($count == 0) {
         $query_string .= '(' . $word;
       }
       else {
-        $query_string .= ' OR ' . $word;
+        $query_string .= ' || ' . $word;
       }
       $count++;
     }
@@ -399,14 +399,14 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     $without_array = explode(' ', $without_words);
     $count = 0;
     if (strlen($query_string)) {
-      $query_string .= ' AND ';
+      $query_string .= ' && ';
     }
     foreach ($without_array as $word) {
       if ($count == 0) {
         $query_string .= '-(' . $word;
       }
       else {
-        $query_string .= ' OR ' . $word;
+        $query_string .= ' || ' . $word;
       }
       $count++;
     }
