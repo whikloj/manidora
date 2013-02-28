@@ -598,3 +598,17 @@ function manidora_retrieve_header_text($pid) {
     return FALSE;
   }
 }
+
+/**
+ * Implements hook_islandora_view_object().
+ */
+function manidora_islandora_view_object_alter(FedoraObject $object) {
+  if (in_array('islandora:newspaperPageCModel', $object->models)) {
+    $results = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'isPageOf');
+    $parent = islandora_object_load($results[0]['object']['value']);
+    drupal_set_title(manidora_retrieve_header_text($parent->id));
+  }
+  elseif (in_array('islandora:newspaperCModel', $object->models)) {
+    drupal_set_title(manidora_retrieve_header_text($object->id));
+  }
+}
