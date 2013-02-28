@@ -600,9 +600,9 @@ function manidora_retrieve_header_text($pid) {
 }
 
 /**
- * Implements hook_islandora_view_object().
+ * Gets the title to display for the given newspaper page or newspaper.
  */
-function manidora_islandora_view_object_alter(FedoraObject $object) {
+function manidora_set_title(FedoraObject $object) {
   if (in_array('islandora:newspaperPageCModel', $object->models)) {
     $results = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'isPageOf');
     $parent = islandora_object_load($results[0]['object']['value']);
@@ -611,4 +611,19 @@ function manidora_islandora_view_object_alter(FedoraObject $object) {
   elseif (in_array('islandora:newspaperCModel', $object->models)) {
     drupal_set_title(manidora_retrieve_header_text($object->id));
   }
+}
+
+/**
+ * Implements hook_islandora_view_object().
+ */
+function manidora_islandora_view_object_alter(FedoraObject $object) {
+  manidora_set_title($object);
+}
+
+/**
+ * Implements hook_process_theme().
+ */
+function manidora_preprocess_islandora_datastream_print(array &$variables) {
+  $object = $variables['object'];
+  manidora_set_title($object);
 }
