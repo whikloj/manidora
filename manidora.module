@@ -116,11 +116,19 @@ function manidora_menu() {
   $items['islandora/manitoba/pdf/print'] = array(
     'type' => MENU_CALLBACK,
     'page callback' => 'manidora_printable_pdf',
-    'page arguments' => array(4),
+    'page arguments' => array(4, NULL),
     'access arguments' => array(FEDORA_VIEW_OBJECTS),
   );
   $items['islandora/object/%islandora_object/manidora_download_clip'] = array(
     'page callback' => 'manidora_download_clip',
+    'page arguments' => array(2),
+    'type' => MENU_CALLBACK,
+    'access callback' => 'islandora_object_access_callback',
+    'access arguments' => array(FEDORA_VIEW_OBJECTS, 2),
+    'load arguments' => array(2),
+  );
+  $items['islandora/object/%islandora_object/manidora_download_clip_pdf'] = array(
+    'page callback' => 'manidora_download_clip_pdf',
     'page arguments' => array(2),
     'type' => MENU_CALLBACK,
     'access callback' => 'islandora_object_access_callback',
@@ -480,7 +488,7 @@ function manidora_preprocess_islandora_newspaper_page(&$variables) {
  * @return string
  *   Download link containing our created PDF.
  */
-function manidora_printable_pdf($pid) {
+function manidora_printable_pdf($pid, $url = NULL) {
   @include_once 'sites/all/libraries/tcpdf/config/lang/eng.php';
   @include_once 'sites/all/libraries/tcpdf/tcpdf.php';
 
@@ -542,7 +550,8 @@ function manidora_printable_pdf($pid) {
 
   // Add a page.
   $pdf->AddPage();
-  $pdf->Image(variable_get('islandora_base_url', 'http://localhost:8080/fedora') . '/objects/' . $pid . '/datastreams/JPG/content', '0', '15', '', '', '', '', '', 2);
+  $url = isset($url) ? $url : variable_get('islandora_base_url', 'http://localhost:8080/fedora') . '/objects/' . $pid . '/datastreams/JPG/content';
+  $pdf->Image($url, '0', '15', '', '', '', '', '', 2);
 
   // Close and output PDF document.
   $pdf->Output($header_text . '.pdf', 'D');
@@ -653,15 +662,24 @@ function manidora_process_islandora_object_print(array &$variables) {
     '#suffix' => '</div></br>',
     'print' => array(
       '#prefix' => '<strong>',
-      '#markup' => l(t('Print this image'), 'javascript:window.print();', array('external' => TRUE)),
+      '#markup' => l(t('Print'), 'javascript:window.print();', array('external' => TRUE)),
       '#suffix' => '</strong>',
     ),
-    'split' => array(
+    array(
       '#markup' => ' | ',
     ),
-    'download' => array(
+    'download_clip' => array(
       '#prefix' => '<strong>',
-      '#markup' => l(t('Download this image'), "islandora/object/{$object->id}/manidora_download_clip", array(
+      '#markup' => l(t('Download Image'), "islandora/object/{$object->id}/manidora_download_clip", array(
+                   'query' => array('clip' => $clip))),
+      '#suffix' => '</strong>',
+    ),
+    array(
+      '#markup' => ' | ',
+    ),
+    'download_pdf' => array(
+      '#prefix' => '<strong>',
+      '#markup' => l(t('Download PDF'), "islandora/object/{$object->id}/manidora_download_clip_pdf", array(
                    'query' => array('clip' => $clip))),
       '#suffix' => '</strong>',
     ),
@@ -685,6 +703,18 @@ function manidora_download_clip(FedoraObject $object) {
     curl_setopt($ch, CURLOPT_URL, $url);
     $response = curl_exec ($ch);
     curl_close($ch);
+  }
+  exit();
+}
+
+/**
+ * Menu callback downloads the given clip.
+ */
+function manidora_download_clip_pdf(FedoraObject $object) {
+  if (isset($_GET['clip'])) {
+    global $base_url;
+    $url = $base_url . $_GET['clip'];
+    manidora_printable_pdf($object->id, $url);
   }
   exit();
 }
