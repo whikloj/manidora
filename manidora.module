@@ -116,9 +116,26 @@ function manidora_menu() {
   $items['islandora/manitoba/pdf/print'] = array(
     'type' => MENU_CALLBACK,
     'page callback' => 'manidora_printable_pdf',
-    'page arguments' => array(4),
+    'page arguments' => array(4, NULL),
     'access arguments' => array(FEDORA_VIEW_OBJECTS),
   );
+  $items['islandora/object/%islandora_object/manidora_download_clip'] = array(
+    'page callback' => 'manidora_download_clip',
+    'page arguments' => array(2),
+    'type' => MENU_CALLBACK,
+    'access callback' => 'islandora_object_access_callback',
+    'access arguments' => array(FEDORA_VIEW_OBJECTS, 2),
+    'load arguments' => array(2),
+  );
+  $items['islandora/object/%islandora_object/manidora_download_clip_pdf'] = array(
+    'page callback' => 'manidora_download_clip_pdf',
+    'page arguments' => array(2),
+    'type' => MENU_CALLBACK,
+    'access callback' => 'islandora_object_access_callback',
+    'access arguments' => array(FEDORA_VIEW_OBJECTS, 2),
+    'load arguments' => array(2),
+  );
+
   return $items;
 }
 
@@ -453,12 +470,9 @@ function manidora_admin($form, &$form_state) {
  * Preprocessor for newspaper_page, removes some controls.
  */
 function manidora_preprocess_islandora_newspaper_page(&$variables) {
-
   unset($variables['newspaper_controls_array']['jp2_download']);
   unset($variables['newspaper_controls_array']['view']);
-
-  $variables['newspaper_controls'] = theme('item_list',
-    array(
+  $variables['newspaper_controls'] = theme('item_list', array(
       'items' => $variables['newspaper_controls_array'],
       NULL,
       'ul',
@@ -474,7 +488,7 @@ function manidora_preprocess_islandora_newspaper_page(&$variables) {
  * @return string
  *   Download link containing our created PDF.
  */
-function manidora_printable_pdf($pid) {
+function manidora_printable_pdf($pid, $url = NULL) {
   @include_once 'sites/all/libraries/tcpdf/config/lang/eng.php';
   @include_once 'sites/all/libraries/tcpdf/tcpdf.php';
 
@@ -536,7 +550,8 @@ function manidora_printable_pdf($pid) {
 
   // Add a page.
   $pdf->AddPage();
-  $pdf->Image(variable_get('islandora_base_url', 'http://localhost:8080/fedora') . '/objects/' . $pid . '/datastreams/JPG/content', '0', '15', '', '', '', '', '', 2);
+  $url = isset($url) ? $url : variable_get('islandora_base_url', 'http://localhost:8080/fedora') . '/objects/' . $pid . '/datastreams/JPG/content';
+  $pdf->Image($url, '0', '15', '', '', '', '', '', 2);
 
   // Close and output PDF document.
   $pdf->Output($header_text . '.pdf', 'D');
@@ -597,4 +612,109 @@ function manidora_retrieve_header_text($pid) {
   else {
     return FALSE;
   }
+}
+
+/**
+ * Gets the title of the object for display.
+ *
+ * Newspapers have specialized titles.
+ *
+ * @param FedoraObject $object
+ *   The object from which to derive the title.
+ */
+function manidora_get_title(FedoraObject $object) {
+  if (in_array('islandora:newspaperPageCModel', $object->models)) {
+    $results = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'isPageOf');
+    $parent = islandora_object_load($results[0]['object']['value']);
+    return manidora_retrieve_header_text($parent->id);
+  }
+  elseif (in_array('islandora:newspaperCModel', $object->models)) {
+    return manidora_retrieve_header_text($object->id);
+  }
+  return $object->label;
+}
+
+/**
+ * Gets the title to display for the given newspaper page or newspaper.
+ */
+function manidora_set_title(FedoraObject $object) {
+  drupal_set_title(manidora_get_title($object));
+}
+
+/**
+ * Implements hook_islandora_view_object().
+ */
+function manidora_islandora_view_object_alter(FedoraObject $object) {
+  manidora_set_title($object);
+}
+
+/**
+ * Implements hook_process_theme().
+ */
+function manidora_process_islandora_object_print(array &$variables) {
+  drupal_add_css(drupal_get_path('module', 'manidora') . '/css/manidora.print.css');
+  $object = $variables['object'];
+  manidora_set_title($object);
+  $clip = isset($variables['clip']) ? $variables['clip'] : NULL;
+  $variables['content']['buttons'] = array(
+    '#access' => isset($clip),
+    '#prefix' => '<div>',
+    '#suffix' => '</div></br>',
+    'print' => array(
+      '#prefix' => '<strong>',
+      '#markup' => l(t('Print'), 'javascript:window.print();', array('external' => TRUE)),
+      '#suffix' => '</strong>',
+    ),
+    array(
+      '#markup' => ' | ',
+    ),
+    'download_clip' => array(
+      '#prefix' => '<strong>',
+      '#markup' => l(t('Download Image'), "islandora/object/{$object->id}/manidora_download_clip", array(
+                   'query' => array('clip' => $clip))),
+      '#suffix' => '</strong>',
+    ),
+    array(
+      '#markup' => ' | ',
+    ),
+    'download_pdf' => array(
+      '#prefix' => '<strong>',
+      '#markup' => l(t('Download PDF'), "islandora/object/{$object->id}/manidora_download_clip_pdf", array(
+                   'query' => array('clip' => $clip))),
+      '#suffix' => '</strong>',
+    ),
+  );
+}
+
+/**
+ * Menu callback downloads the given clip.
+ */
+function manidora_download_clip(FedoraObject $object) {
+  if (isset($_GET['clip'])) {
+    global $base_url;
+    $url = $base_url . $_GET['clip'];
+    $filename = manidora_get_title($object);
+    header("Content-Disposition: attachment; filename=\"{$filename}.jpg\"");
+    header("Content-type: image/jpeg");
+    header("Content-Transfer-Encoding: binary");
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    $response = curl_exec ($ch);
+    curl_close($ch);
+  }
+  exit();
+}
+
+/**
+ * Menu callback downloads the given clip.
+ */
+function manidora_download_clip_pdf(FedoraObject $object) {
+  if (isset($_GET['clip'])) {
+    global $base_url;
+    $url = $base_url . $_GET['clip'];
+    manidora_printable_pdf($object->id, $url);
+  }
+  exit();
 }
