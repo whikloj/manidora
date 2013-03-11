@@ -624,7 +624,7 @@ function manidora_retrieve_header_text($pid) {
  */
 function manidora_get_title(FedoraObject $object) {
   if (in_array('islandora:newspaperPageCModel', $object->models)) {
-    $results = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'isPageOf');
+    $results = $object->relationships->get(FEDORA_RELS_EXT_URI, 'isMemberOf');
     $parent = islandora_object_load($results[0]['object']['value']);
     return manidora_retrieve_header_text($parent->id);
   }
