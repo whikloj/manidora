@@ -623,15 +623,10 @@ function manidora_retrieve_header_text($pid) {
  *   The object from which to derive the title.
  */
 function manidora_get_title(FedoraObject $object) {
-  if (in_array('islandora:newspaperPageCModel', $object->models)) {
-    $results = $object->relationships->get(FEDORA_RELS_EXT_URI, 'isMemberOf');
-    $parent = islandora_object_load($results[0]['object']['value']);
-    return manidora_retrieve_header_text($parent->id);
-  }
-  elseif (in_array('islandora:newspaperCModel', $object->models)) {
-    return manidora_retrieve_header_text($object->id);
-  }
-  return $object->label;
+  $models = $object->models;
+  $retrieve_title = in_array('islandora:newspaperPageCModel', $models);
+  $retrieve_title |= in_array('islandora:newspaperCModel', $models);
+  return $retrieve_title ? manidora_retrieve_header_text($object->id) : $object->label;
 }
 
 /**
