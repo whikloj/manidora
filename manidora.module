@@ -720,3 +720,4 @@ function manidora_download_clip_pdf(FedoraObject $object) {
   }
   exit();
 }
+
