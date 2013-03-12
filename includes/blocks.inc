@@ -113,7 +113,7 @@ function manidora_simple_search_form_submit($form, &$form_state) {
     $collection_pids = manidora_get_descendant_collections($collection_pid);
 
     foreach ($collection_pids as $collection_pid) {
-      $hidden_filter .= 'or RELS_EXT_isMemberOfCollection_uri_ms:"' . $collection_pid . '"';
+      $hidden_filter .= ' or RELS_EXT_isMemberOfCollection_uri_ms:"info:feedora/' . $collection_pid . '"';
     }
     $query['f'][] = $hidden_filter;
   }
