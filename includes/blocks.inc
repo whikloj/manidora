@@ -38,7 +38,6 @@ function manidora_block_view($delta = '') {
 function manidora_simple_search_form($form, &$form_state) {
   $params = $_GET;
   $hidden_filter = NULL;
-  $params['f'][] = 'RELS_EXT_isMemberOfCollection_uri_ms%3A"islandora%3Aauthorities"';
   $rels_ext = array(
     'RELS_EXT_isMemberOfCollection_uri_ms',
     'RELS_EXT_isMemberOf_uri_ms',
@@ -109,19 +108,21 @@ function manidora_simple_search_form_submit($form, &$form_state) {
 
   // Using edismax by default for manidora.
 
-  $query = array('type' => 'edismax');
+  $query = array('type' => 'dismax');
   if (!empty($hidden_filter) && isset($collection_select) && $collection_select == 1) {
     $collection_pids = manidora_get_descendant_collections($collection_pid);
-    $pid_string = "info:fedora/" . array_shift($collection_pids);
+    $pid_string = '"' . array_shift($collection_pids) . '"';
+    $pid_string2 = '"info:fedora/' . array_shift($collection_pids) . '"';
     if (!empty($collection_pids)) {
       foreach ($collection_pids as $collection_pid) {
-        $pid_string .= " OR info:fedora/$collection_pid";
+        $pid_string .= ' OR "' . $collection_pid . '"';
+        $pid_string2 .= ' OR "info:fedora/' . $collection_pid . '"';
       }
     }
     $hidden_filter = "RELS_EXT_isMemberOfCollection_uri_ms:($pid_string)";
+    $hidden_filter .= " OR RELS_EXT_isMemberOf_uri_ms:($pid_string2)";
     $query['f'][] = $hidden_filter;
   }
-
   drupal_goto('islandora/search/' . $search_string, array('query' => $query));
 }
 
