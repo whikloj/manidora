@@ -145,8 +145,7 @@ function manidora_get_descendant_collections($collection_pid) {
     $dirs_to_process = array();
     $ri_query = "select \$pid from <#ri>
   $where
-    and  \$pid <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
-    and  \$pid <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:collectionCModel>";
+    and  \$pid <fedora-model:state> <info:fedora/fedora-system:def/model#Active>";
     $objects = $fedora_object->repository->ri->itqlQuery($ri_query, 'unlimited'); // for itql
     foreach ($objects as $object) {
       $dirs_to_search[] = $object['pid']['value'];
