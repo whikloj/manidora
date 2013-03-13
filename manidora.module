@@ -775,3 +775,16 @@ function manidora_islandora_datastream_ingested($object, $datastream) {
   }
 }
 
+/**
+ * Implements hook_CMODEL_PID_islandora_solr_object_result_alter().
+ *
+ * Puts the Solr query terms into the object URL so that viewers can use them
+ * for highlighting.
+ */
+function manidora_islandora_sp_large_image_cmodel_islandora_solr_object_result_alter(&$search_results, $query_processor) {
+  $search_results['object_url_params']['solr'] = array(
+    'query' => $query_processor->solrQuery,
+    'params' => $query_processor->solrParams,
+  );
+}
+
