@@ -108,11 +108,12 @@ function manidora_simple_search_form_submit($form, &$form_state) {
 
   // Using edismax by default for manidora.
 
-  $query = array('type' => 'dismax');
+  $query = array('type' => 'edismax');
   if (!empty($hidden_filter) && isset($collection_select) && $collection_select == 1) {
     $collection_pids = manidora_get_descendant_collections($collection_pid);
-    $pid_string = '"' . array_shift($collection_pids) . '"';
-    $pid_string2 = '"info:fedora/' . array_shift($collection_pids) . '"';
+    $current_pid = array_shift($collection_pids);
+    $pid_string = '"' . $current_pid . '"';
+    $pid_string2 = '"info:fedora/' . $current_pid . '"';
     if (!empty($collection_pids)) {
       foreach ($collection_pids as $collection_pid) {
         $pid_string .= ' OR "' . $collection_pid . '"';
@@ -121,8 +122,7 @@ function manidora_simple_search_form_submit($form, &$form_state) {
     }
     $hidden_filter = "RELS_EXT_isMemberOfCollection_uri_ms:($pid_string)";
     $hidden_filter .= " OR RELS_EXT_isMemberOf_uri_ms:($pid_string2)";
-   
-    $query['hidden_filter'][]=$hidden_filter;;
+    $query['hidden_filter'][] = $hidden_filter;
   }
   drupal_goto('islandora/search/' . $search_string, array('query' => $query));
 }
