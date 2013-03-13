@@ -121,7 +121,8 @@ function manidora_simple_search_form_submit($form, &$form_state) {
     }
     $hidden_filter = "RELS_EXT_isMemberOfCollection_uri_ms:($pid_string)";
     $hidden_filter .= " OR RELS_EXT_isMemberOf_uri_ms:($pid_string2)";
-    $query['f'][] = $hidden_filter;
+   
+    $query['hidden_filter'][]=$hidden_filter;;
   }
   drupal_goto('islandora/search/' . $search_string, array('query' => $query));
 }
