@@ -626,7 +626,6 @@ function manidora_retrieve_header_text($pid) {
 function manidora_get_title(FedoraObject $object) {
   $models = $object->models;
   $retrieve_title = in_array('islandora:newspaperPageCModel', $models);
-  $retrieve_title |= in_array('islandora:newspaperCModel', $models);
   return $retrieve_title ? manidora_retrieve_header_text($object->id) : $object->label;
 }
 
