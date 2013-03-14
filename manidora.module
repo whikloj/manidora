@@ -472,6 +472,7 @@ function manidora_admin($form, &$form_state) {
 function manidora_preprocess_islandora_newspaper_page(&$variables) {
   unset($variables['newspaper_controls_array']['jp2_download']);
   unset($variables['newspaper_controls_array']['view']);
+  unset($variables['newspaper_controls_array']['pdf_download']);
   $variables['newspaper_controls'] = theme('item_list', array(
       'items' => $variables['newspaper_controls_array'],
       NULL,
