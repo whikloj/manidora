@@ -445,10 +445,6 @@ function manidora_download_table($islandora_object) {
  */
 function manidora_newspaper_search_form($form, &$form_state) {
   $form = array(
-    'all_words' => array(
-      '#type' => 'textfield',
-      '#title' => t('With all of the words'),
-    ),
     'exact_phrase' => array(
       '#type' => 'textfield',
       '#title' => t('With the exact phrase'),
@@ -460,6 +456,10 @@ function manidora_newspaper_search_form($form, &$form_state) {
     'without_words' => array(
       '#type' => 'textfield',
       '#title' => t('Without the words'),
+    ),
+    'all_words' => array(
+      '#type' => 'textfield',
+      '#title' => t('With all of the words'),
     ),
     'submit' => array(
       '#type' => 'submit',
