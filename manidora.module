@@ -470,14 +470,19 @@ function manidora_admin($form, &$form_state) {
  * Preprocessor for newspaper_page, removes some controls.
  */
 function manidora_preprocess_islandora_newspaper_page(&$variables) {
+    dsm($variables);
   unset($variables['newspaper_controls_array']['jp2_download']);
   unset($variables['newspaper_controls_array']['view']);
+  unset($variables['newspaper_controls_array']['pdf_download']);
   $variables['newspaper_controls'] = theme('item_list', array(
       'items' => $variables['newspaper_controls_array'],
       NULL,
       'ul',
       'attributes' => array('class' => array('items', 'inline'))));
 }
+
+
+
 
 /**
  * Constructs a printable PDF from the JPG datastream with header content.
