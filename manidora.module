@@ -455,7 +455,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
     ),
     'without_words' => array(
       '#type' => 'textfield',
-      '#title' => t('Without the words'),
+      '#title' => t('Without all the words'),
     ),
     'all_words' => array(
       '#type' => 'textfield',
@@ -546,7 +546,7 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
         $query_string .= '-(' . $word;
       }
       else {
-        $query_string .= ' || ' . $word;
+        $query_string .= ' && ' . $word;
       }
       $count++;
     }
