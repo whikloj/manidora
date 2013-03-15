@@ -315,7 +315,7 @@ function manidora_mods_transform($object) {
       $publisher = (string) reset($publisher_results);
 
       if (!empty($publisher)) {
-
+        $rows[] = array(t('Publisher'), $publisher);
       }
 
       // physicalDescription
