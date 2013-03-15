@@ -289,13 +289,15 @@ function manidora_download_table($islandora_object) {
   );
 
   foreach ($islandora_object as $ds) {
-    $rows[] = array(
-      'ID' => l($ds->id, islandora_datastream_get_url($ds, 'view')),
-      'label' => $ds->label,
-      'mime' => $ds->mimeType,
-      'size' => islandora_datastream_get_human_readable_size($ds),
-      'download' => l(t('download'), islandora_datastream_get_url($ds, 'download')),
-    );
+    if ($ds->size > 0) {
+      $rows[] = array(
+        'ID' => l($ds->id, islandora_datastream_get_url($ds, 'view')),
+        'label' => $ds->label,
+        'mime' => $ds->mimeType,
+        'size' => islandora_datastream_get_human_readable_size($ds),
+        'download' => l(t('download'), islandora_datastream_get_url($ds, 'download')),
+      );
+    }
   }
 
   $table = array(
@@ -697,7 +699,7 @@ function manidora_download_clip(FedoraObject $object) {
     curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
     curl_setopt($ch, CURLOPT_HEADER, 0);
     curl_setopt($ch, CURLOPT_URL, $url);
-    $response = curl_exec ($ch);
+    $response = curl_exec($ch);
     curl_close($ch);
   }
   exit();
