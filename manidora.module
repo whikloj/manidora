@@ -242,27 +242,150 @@ function manidora_mods_transform($object) {
   $mods_text = $object->repository->api->a->getDatastreamDissemination($object->id, 'MODS');
 
   if ($mods_text) {
-    $xslt_processor = new XSLTProcessor();
-    $xsl = new DOMDocument();
-    $file = drupal_get_path('module', 'manidora') . '/xsl/manidora_mods2html.xsl';
-    $xsl->load($file);
-    $input = new DOMDocument();
+    if (in_array('islandora:bookCModel', $object->models)) {
+      $rows = array();
+      $mods_xml = new SimpleXMLElement($mods_text);
 
-    $did_load = $input->loadXML($mods_text);
+      $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
 
-    if ($did_load) {
-      $xslt_processor->importStylesheet($xsl);
-      $mods_transformed = $xslt_processor->transformToXml($input);
-      return $mods_transformed;
+      // titleInfo
+      $title_results = $mods_xml->xpath('/mods:mods/mods:titleInfo/mods:title');
+      $title = (string) reset($title_results);
+
+      if (!empty($title)) {
+        $rows[] = array('Field' => t('Title'), 'Value' => $title);
+      }
+
+      $subtitle_results = $mods_xml->xpath('/mods:mods/mods:titleInfo/mods:subTitle');
+      $subtitle = (string) reset($subtitle_results);
+
+      if (!empty($subtitle)) {
+        $rows[] = array(t('Subtitle'), $subtitle);
+      }
+
+      $authors = array();
+
+      // Authors
+      foreach ($mods_xml->name as $name_xml) {
+        $name_parts = array();
+        $role = (string) @$name_xml->role->roleTerm;
+        if ($role) {
+          if ($role == 'author') {
+            foreach ($name_xml->namePart as $name_part) {
+              if ((string) $name_part != '') {
+                 // Strip periods off the end.
+                $np = (string) rtrim($name_part, '.');
+                if ($name_part['type'] == 'given') {
+                  $name_parts['first_name'] = (string) $name_part;
+                }
+                if ($name_part['type'] == 'family') {
+                  $name_parts['last_name'] = $np;
+                }
+              }
+            }
+          }
+          if (isset($names_parts['last_name']) && isset($name_parts['first_name'])) {
+            $authors[] = $name_parts['first_name'] . ' ' . $name_parts['last_name'];
+          }
+        }
+      }
+      $author_markup = '';
+      foreach ($authors as $author) {
+        if (empty($author)) {
+          $author_markup = $author;
+        }
+        else {
+          $author_markup .= '<br>' . $author;
+        }
+      }
+
+      if (!empty($author_markup)) {
+        $rows[] = array(t('Author'), $author_markup);
+      }
+
+      // originInfo
+      $place_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:place/mods:placeTerm');
+      $place = (string) reset($place_results);
+
+      if (!empty($place)) {
+        $rows[] = array(t('Place'), $place);
+      }
+
+      $publisher_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:publisher');
+      $publisher = (string) reset($publisher_results);
+
+      if (!empty($publisher)) {
+        $rows[] = array(t('Publisher'), $publisher);
+      }
+
+      // physicalDescription
+      $physical_results = $mods_xml->xpath('/mods:mods/mods:physicalDescription/mods:extent');
+      $physical = (string) reset($physical_results);
+
+      if (!empty($physical)) {
+        $rows[] = array(t('Physical Description'), $physical);
+      }
+
+      // recordInfo
+      $record_id_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:recordIdentifier');
+      $record_id = (string) reset($record_id_results);
+
+      if (!empty($record_id)) {
+        $rows[] = array(t('Record ID'), $record_id);
+      }
+
+      $content_source_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:recordContentSource');
+      $content_source = (string) reset($content_source_results);
+
+      if (!empty($content_source)) {
+        $rows[] = array(t('Content Source'), $content_source);
+      }
+
+      $language_results = $mods_xml->xpath('/mods:mods/mods:languageofCataloging');
+      $language = (string) reset($language_results);
+
+      if (!empty($language)) {
+        $rows[] = array(t('Language'), $language);
+      }
+
+      // identifier
+      $identifier_results = $mods_xml->xpath('/mods:mods/mods:identifier');
+      $identifier = (string) reset($identifier_results);
+
+      if (!empty($identifier)) {
+        $rows[] = array(t('Identifier'), $identifier);
+      }
+
+      // Table markup
+      $headers = array('Field' => t('Field'), 'Value' => t('Value'));
+      $markup = theme_table(array('header' => $headers, 'rows' => $rows, 'attributes' => array(),
+      'caption' => '', 'colgroups' => array(), 'sticky' => TRUE, 'empty' => t('No MODS present!')));
+      return $markup;
     }
     else {
-      return FALSE;
+      $xslt_processor = new XSLTProcessor();
+      $xsl = new DOMDocument();
+      $file = drupal_get_path('module', 'manidora') . '/xsl/manidora_mods2html.xsl';
+      $xsl->load($file);
+      $input = new DOMDocument();
+
+      $did_load = $input->loadXML($mods_text);
+
+      if ($did_load) {
+        $xslt_processor->importStylesheet($xsl);
+        $mods_transformed = $xslt_processor->transformToXml($input);
+        return $mods_transformed;
+      }
+      else {
+        return FALSE;
+      }
     }
   }
   else {
     return FALSE;
   }
 }
+
 /**
  * Generates a table of all downloadable datastreams for an IslandoraObject.
  *
@@ -324,10 +447,6 @@ function manidora_download_table($islandora_object) {
  */
 function manidora_newspaper_search_form($form, &$form_state) {
   $form = array(
-    'all_words' => array(
-      '#type' => 'textfield',
-      '#title' => t('With all of the words'),
-    ),
     'exact_phrase' => array(
       '#type' => 'textfield',
       '#title' => t('With the exact phrase'),
@@ -338,7 +457,11 @@ function manidora_newspaper_search_form($form, &$form_state) {
     ),
     'without_words' => array(
       '#type' => 'textfield',
-      '#title' => t('Without the words'),
+      '#title' => t('Without all the words'),
+    ),
+    'all_words' => array(
+      '#type' => 'textfield',
+      '#title' => t('With all of the words'),
     ),
     'submit' => array(
       '#type' => 'submit',
@@ -425,7 +548,7 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
         $query_string .= '-(' . $word;
       }
       else {
-        $query_string .= ' || ' . $word;
+        $query_string .= ' && ' . $word;
       }
       $count++;
     }
