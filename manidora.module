@@ -318,6 +318,14 @@ function manidora_mods_transform($object) {
         $rows[] = array(t('Publisher'), $publisher);
       }
 
+      $date_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:dateIssued');
+      $date = (string) reset($date_results);
+
+      if (!empty($date)) {
+        $date_format = new DateTime($date);
+        $rows[] = array(t('Date Issued'), date_format($date_format, 'Y-m-d'));
+      }
+
       // physicalDescription
       $physical_results = $mods_xml->xpath('/mods:mods/mods:physicalDescription/mods:extent');
       $physical = (string) reset($physical_results);
@@ -341,7 +349,7 @@ function manidora_mods_transform($object) {
         $rows[] = array(t('Content Source'), $content_source);
       }
 
-      $language_results = $mods_xml->xpath('/mods:mods/mods:languageofCataloging');
+      $language_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:languageofCataloging');
       $language = (string) reset($language_results);
 
       if (!empty($language)) {
