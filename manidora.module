@@ -841,3 +841,70 @@ function manidora_download_clip_pdf(FedoraObject $object) {
   exit();
 }
 
+/**
+ * Alter the image upload forms, to allow a flag to be set for OCR.
+ */
+function manidora_form_alter(&$form, &$form_state, $form_id) {
+  $forms_to_modify = array(
+    'islandora_basic_image_image_upload_form',
+    'islandora_large_image_image_upload_form',
+  );
+  if (in_array($form_id, $forms_to_modify) && module_exists('islandora_ocr')) {
+    // XXX: Weighted form elements would be preferable to slicing... anyway.
+    $original_form = $form;
+    $form = array_slice($original_form, 0, -2);
+    $form += array(
+      'ocr_checkbox' => array(
+        '#type' => 'checkbox',
+        '#title' => t('OCR image'),
+        '#description' => t('Flag the image to be run through OCR during the ingest process.'),
+      ),
+    );
+    $form += array_slice($original_form, -2);
+
+    array_unshift($form['next']['#submit'], 'manidora_ocr_flag_submit');
+  }
+}
+
+/**
+ * Submit handler; add RELS-EXT statement if we should OCR an image.
+ */
+function manidora_ocr_flag_submit($form, &$form_state) {
+  if ($form_state['values']['ocr_checkbox']) {
+    $object = reset($form_state['islandora']['objects']);
+    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1);
+  }
+}
+
+/**
+ * Implements hook_CMODEL_PID_DSID_islandora_datastream_alter().
+ */
+function manidora_islandora_datastream_ingested($object, $datastream) {
+  $image_content_models = array(
+    'islandora:sp_large_image_cmodel',
+    'islandora:sp_basic_image',
+  );
+  if ($datastream->id == 'OBJ' && array_intersect($object->models, $image_content_models)) {
+    // We are changing an image...
+
+    if($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1)) {
+      // We have our flag set, let's go!
+      module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
+      islandora_ocr_derive_datastreams($datastream, array());
+    }
+  }
+}
+
+/**
+ * Implements hook_CMODEL_PID_islandora_solr_object_result_alter().
+ *
+ * Puts the Solr query terms into the object URL so that viewers can use them
+ * for highlighting.
+ */
+function manidora_islandora_sp_large_image_cmodel_islandora_solr_object_result_alter(&$search_results, $query_processor) {
+  $search_results['object_url_params']['solr'] = array(
+    'query' => $query_processor->solrQuery,
+    'params' => $query_processor->solrParams,
+  );
+}
+
