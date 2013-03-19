@@ -112,7 +112,6 @@ function manidora_simple_search_form_submit($form, &$form_state) {
   if (!empty($hidden_filter) && isset($collection_select) && $collection_select == 1) {
     $query['cp']= $collection_pid;
   }
-
   drupal_goto('islandora/search/' . $search_string, array('query' => $query));
 }
 
