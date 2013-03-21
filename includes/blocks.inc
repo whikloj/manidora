@@ -110,63 +110,10 @@ function manidora_simple_search_form_submit($form, &$form_state) {
 
   $query = array('type' => 'edismax');
   if (!empty($hidden_filter) && isset($collection_select) && $collection_select == 1) {
-    $collection_pids = manidora_get_descendant_collections($collection_pid);
-    $current_pid = array_shift($collection_pids);
-    $pid_string = '"' . $current_pid . '"';
-    $pid_string2 = '"info:fedora/' . $current_pid . '"';
-    if (!empty($collection_pids)) {
-      foreach ($collection_pids as $collection_pid) {
-        $pid_string .= ' OR "' . $collection_pid . '"';
-        $pid_string2 .= ' OR "info:fedora/' . $collection_pid . '"';
-      }
-    }
-    $hidden_filter = "RELS_EXT_isMemberOfCollection_uri_ms:($pid_string)";
-    $hidden_filter .= " OR RELS_EXT_isMemberOf_uri_ms:($pid_string2)";
-    $query['hidden_filter'][] = $hidden_filter;
+    $query['cp']= $collection_pid;
   }
   drupal_goto('islandora/search/' . $search_string, array('query' => $query));
 }
 
-/**
- * Get pids of all sub-collections of supplied collection pid
- * @param string $collection_pid
- *  pid of ancestor collection
- *
- */
-function manidora_get_descendant_collections($collection_pid) {
-  $fedora_object = islandora_object_load('islandora:root');
-
-  $dirs_to_process = array($collection_pid);
-  $dirs_to_search = array($collection_pid);
 
 
-  while (count($dirs_to_process) > 0) {
-    $where = manidora_build_query($dirs_to_process);
-    $dirs_to_process = array();
-    $ri_query = "select \$pid from <#ri>
-  $where
-    and  \$pid <fedora-model:state> <info:fedora/fedora-system:def/model#Active>";
-    $objects = $fedora_object->repository->ri->itqlQuery($ri_query, 'unlimited'); // for itql
-    foreach ($objects as $object) {
-      $dirs_to_search[] = $object['pid']['value'];
-      $dirs_to_process[] = $object['pid']['value'];
-    }
-  }
-  return $dirs_to_search;
-}
-
-/**
- * Builds itql string from collection pids
- * @param array $collection_pids
- * @return string
- */
-function manidora_build_query($collection_pids) {
-  $first_pid = array_shift($collection_pids);
-  $string = "\$pid  <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> <info:fedora/$first_pid>";
-  while (count($collection_pids) > 0) {
-    $next_pid = array_shift($collection_pids);
-    $string .= " or \$pid  <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> <info:fedora/$first_pid>";
-  }
-  $where_string = "where($string)";
-  return $where_string;
-}
