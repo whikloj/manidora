@@ -949,7 +949,7 @@ function manidora_preprocess_page(&$variables) {
   $arg0 = arg(0);
   $arg1 = arg(1);
   $arg2 = arg(2);
-  if ($arg0 == 'islandora' && $arg1 == 'object' && isset($arg2) && module_exists('islandora')) {
+  if ($arg0 == 'islandora' && $arg1 == 'object' && isset($arg2)) {
     if ($object = islandora_object_load($arg2)) {
       $rels = $object->models;
       if (in_array('islandora:compoundCModel', $rels)) {
