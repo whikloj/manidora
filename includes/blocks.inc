@@ -99,9 +99,9 @@ function manidora_simple_search_form_submit($form, &$form_state) {
   $search_string = $form_state['values']['islandora_simple_search_query'];
   // Replace the slash so url doesn't break.
   $search_string = str_replace('/', '~slsh~', $search_string);
-  $hidden_filter = urldecode($form_state['values']['hidden_filter']);
-  $collection_pid = str_replace('RELS_EXT_isMemberOfCollection_uri_ms:', '', $hidden_filter);
-  $collection_pid = str_replace(array('"', "'"), '', $collection_pid);
+  preg_match('/:"(.*?)"/', $form_state['values']['hidden_filter'], $hidden_match);
+  $hidden_filter = $hidden_match[1];
+  $collection_pid = $hidden_filter;
   if (isset($form_state['values']['collection_select'])) {
     $collection_select = $form_state['values']['collection_select'];
   }
