@@ -578,7 +578,7 @@ function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(
   // UofM's collection field has been hacked to not be a URI.
   $search_results['object_url'] = 'islandora/search/';
   $search_results['object_url_params']['f[0]'] = variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms')
-      . ':"' . $search_results['solr_doc']['PID'] . '"';
+      . ':"' . $search_results['solr_doc']['PID'] . '" OR RELS_EXT_isMemberOf_uri_ms:"info:fedora/' . $search_results['solr_doc']['PID'] . '"';
 }
 
 /**
