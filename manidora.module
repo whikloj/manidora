@@ -4,6 +4,7 @@
  * @file
  * Custom University of Manitoba hacks for Islandora.
  */
+
 // Includes functions for blocks.
 require_once dirname(__FILE__) . '/includes/blocks.inc';
 
@@ -247,7 +248,7 @@ function manidora_mods_transform($object) {
 
       $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
 
-      // titleInfo
+      // Title info.
       $title_results = $mods_xml->xpath('/mods:mods/mods:titleInfo/mods:title');
       $title = (string) reset($title_results);
 
@@ -264,7 +265,7 @@ function manidora_mods_transform($object) {
 
       $authors = array();
 
-      // Authors
+      // Authors.
       foreach ($mods_xml->name as $name_xml) {
         $name_parts = array();
         $role = (string) @$name_xml->role->roleTerm;
@@ -272,7 +273,7 @@ function manidora_mods_transform($object) {
           if ($role == 'author') {
             foreach ($name_xml->namePart as $name_part) {
               if ((string) $name_part != '') {
-                 // Strip periods off the end.
+                // Strip periods off the end.
                 $np = (string) rtrim($name_part, '.');
                 if ($name_part['type'] == 'given') {
                   $name_parts['first_name'] = (string) $name_part;
@@ -294,7 +295,7 @@ function manidora_mods_transform($object) {
           $author_markup = $author;
         }
         else {
-          $author_markup .= '<br>' . $author;
+          $author_markup .= '<br/>' . $author;
         }
       }
 
@@ -302,7 +303,7 @@ function manidora_mods_transform($object) {
         $rows[] = array(t('Author'), $author_markup);
       }
 
-      // originInfo
+      // Origin Info.
       $place_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:place/mods:placeTerm');
       $place = (string) reset($place_results);
 
@@ -325,7 +326,7 @@ function manidora_mods_transform($object) {
         $rows[] = array(t('Date Issued'), date_format($date_format, 'Y-m-d'));
       }
 
-      // physicalDescription
+      // Physical Description.
       $physical_results = $mods_xml->xpath('/mods:mods/mods:physicalDescription/mods:extent');
       $physical = (string) reset($physical_results);
 
@@ -333,7 +334,7 @@ function manidora_mods_transform($object) {
         $rows[] = array(t('Physical Description'), $physical);
       }
 
-      // recordInfo
+      // Record Info.
       $record_id_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:recordIdentifier');
       $record_id = (string) reset($record_id_results);
 
@@ -355,7 +356,7 @@ function manidora_mods_transform($object) {
         $rows[] = array(t('Language'), $language);
       }
 
-      // identifier
+      // Identifier.
       $identifier_results = $mods_xml->xpath('/mods:mods/mods:identifier');
       $identifier = (string) reset($identifier_results);
 
@@ -363,10 +364,16 @@ function manidora_mods_transform($object) {
         $rows[] = array(t('Identifier'), $identifier);
       }
 
-      // Table markup
+      // Table markup.
       $headers = array('Field' => t('Field'), 'Value' => t('Value'));
-      $markup = theme_table(array('header' => $headers, 'rows' => $rows, 'attributes' => array(),
-      'caption' => '', 'colgroups' => array(), 'sticky' => TRUE, 'empty' => t('No MODS present!')));
+      $markup = theme_table(array(
+                  'header' => $headers,
+                  'rows' => $rows,
+                  'attributes' => array(),
+                  'caption' => '',
+                  'colgroups' => array(),
+                  'sticky' => TRUE,
+                  'empty' => t('No MODS present!')));
       return $markup;
     }
     else {
@@ -601,15 +608,10 @@ function manidora_admin($form, &$form_state) {
 /**
  * Preprocessor for newspaper_page, removes some controls.
  */
-function manidora_preprocess_islandora_newspaper_page(&$variables) {
-  unset($variables['newspaper_controls_array']['jp2_download']);
-  unset($variables['newspaper_controls_array']['view']);
-  unset($variables['newspaper_controls_array']['pdf_download']);
-  $variables['newspaper_controls'] = theme('item_list', array(
-        'items' => $variables['newspaper_controls_array'],
-        NULL,
-        'ul',
-        'attributes' => array('class' => array('items', 'inline'))));
+function manidora_preprocess_islandora_newspaper_page_controls(&$variables) {
+  unset($variables['controls']['jp2_download']);
+  unset($variables['controls']['view']);
+  unset($variables['controls']['pdf_download']);
 }
 
 /**
@@ -795,7 +797,7 @@ function manidora_process_islandora_object_print(array &$variables) {
       '#markup' => l(t('Print'), 'javascript:window.print();', array('external' => TRUE)),
       '#suffix' => '</strong>',
     ),
-    array(
+    '0' => array(
       '#markup' => ' | ',
     ),
     'download_clip' => array(
@@ -804,7 +806,7 @@ function manidora_process_islandora_object_print(array &$variables) {
         'query' => array('clip' => $clip))),
       '#suffix' => '</strong>',
     ),
-    array(
+    '1' => array(
       '#markup' => ' | ',
     ),
     'download_pdf' => array(
@@ -851,8 +853,6 @@ function manidora_download_clip_pdf(FedoraObject $object) {
   exit();
 }
 
-
-
 /**
  * Alter the image upload forms, to allow a flag to be set for OCR.
  */
@@ -898,8 +898,7 @@ function manidora_islandora_datastream_ingested($object, $datastream) {
   );
   if ($datastream->id == 'OBJ' && array_intersect($object->models, $image_content_models)) {
     // We are changing an image...
-
-    if($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1)) {
+    if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1)) {
       // We have our flag set, let's go!
       module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
       islandora_ocr_derive_datastreams($datastream, array());
@@ -920,9 +919,12 @@ function manidora_islandora_sp_large_image_cmodel_islandora_solr_object_result_a
   );
 }
 
+/**
+ * Implements hook_islandora_solr_query().
+ */
 function manidora_islandora_solr_query($islandora_solr_query) {
   module_load_include('inc', 'manidora', 'includes/utilities');
-  if(!isset($_GET['cp'])){
+  if (!isset($_GET['cp'])) {
     return;
   }
   $collection_pid = $_GET['cp'];

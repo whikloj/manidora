@@ -1,16 +1,21 @@
 <?php
+
 /**
- * Get pids of all sub-collections of supplied collection pid
- * @param string $collection_pid
- *  pid of ancestor collection
+ * @file
+ * Miscellaneous helper functions.
+ */
+
+/**
+ * Get pids of all sub-collections of supplied collection pid.
  *
+ * @param string $collection_pid
+ *   pid of ancestor collection
  */
 function manidora_get_descendant_collections($collection_pid) {
   $fedora_object = islandora_object_load('islandora:root');
 
   $dirs_to_process = array($collection_pid);
   $dirs_to_search = array($collection_pid);
-
 
   while (count($dirs_to_process) > 0) {
     $where = manidora_build_query($dirs_to_process);
@@ -20,7 +25,7 @@ function manidora_get_descendant_collections($collection_pid) {
     and  \$pid <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
     and (\$pid <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:collectionCModel>
          or \$pid <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:newspaperCModel>)";
-    $objects = $fedora_object->repository->ri->itqlQuery($ri_query, 'unlimited'); // for itql
+    $objects = $fedora_object->repository->ri->itqlQuery($ri_query, 'unlimited');
     foreach ($objects as $object) {
       $dirs_to_search[] = $object['pid']['value'];
       $dirs_to_process[] = $object['pid']['value'];
@@ -30,9 +35,13 @@ function manidora_get_descendant_collections($collection_pid) {
 }
 
 /**
- * Builds itql string from collection pids
+ * Builds itql string from collection pids.
+ *
  * @param array $collection_pids
+ *   Collection PID.
+ *
  * @return string
+ *   Query string.
  */
 function manidora_build_query($collection_pids) {
   $first_pid = array_shift($collection_pids);
