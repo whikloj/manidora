@@ -941,3 +941,26 @@ function manidora_islandora_solr_query($islandora_solr_query) {
   $islandora_solr_query->solrParams['fq'][] = $hidden_filter;
 
 }
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function manidora_preprocess_page(&$variables) {
+  $arg1 = arg(1);
+  $arg2 = arg(2);
+  if ($arg1 == 'object' && islandora_is_valid_pid($arg2)) {
+    
+    // get compound children
+    $children = islandora_compound_object_get_parts($arg2);
+    $pid = (!empty($children)) ? $children[0] : $arg2;
+
+    if ($object = islandora_object_load($pid)) {
+      $rels_predicate = variable_get('islandora_compound_object_relationship', 'isPartOf');
+      $part_of = $object->relationships->get('info:fedora/fedora-system:def/relations-external#', $rels_predicate);
+      // This object is part of a compound object
+      if (!empty($part_of)) {
+        $variables['title'] = '';
+      }
+    }
+  }
+}
