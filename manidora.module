@@ -386,7 +386,11 @@ function manidora_mods_transform($object) {
       $did_load = $input->loadXML($mods_text);
 
       if ($did_load) {
+        global $base_url;
         $xslt_processor->importStylesheet($xsl);
+        $xslt_processor->setParameter('', array(
+          'islandoraUrl' => $base_url,
+        ));
         $mods_transformed = $xslt_processor->transformToXml($input);
         return $mods_transformed;
       }

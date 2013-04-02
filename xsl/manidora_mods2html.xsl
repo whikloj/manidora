@@ -1,31 +1,17 @@
-
+<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-  <xsl:variable name="islandoraUrl" select="&apos;http://digitalcollections.lib.umanitoba.ca&apos;"></xsl:variable>
-  <xsl:variable name="smallcase" select="&apos;abcdefghijklmnopqrstuvwxyz&apos;"></xsl:variable>
-  <xsl:variable name="uppercase" select="&apos;ABCDEFGHIJKLMNOPQRSTUVWXYZ&apos;"></xsl:variable>
+  <xsl:param name="islandoraUrl"/>
+  <xsl:variable name="smallcase">abcdefghijklmnopqrstuvwxyz</xsl:variable>
+  <xsl:variable name="uppercase">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
+
   <xsl:template match="/">
     <div>
       <ul class="manidora-metadata">
-      <li>
-        <strong>Title: </strong>
-        <xsl:value-of select="/mods:mods/mods:titleInfo/mods:title"></xsl:value-of>
-      </li>
-        <xsl:apply-templates select="/mods:mods/mods:identifier"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:relatedItem"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:abstract"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:name"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:typeOfResource"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:subject/mods:temporal"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:subject"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:subject/mods:hierarchicalGeographic"></xsl:apply-templates>
-        <xsl:apply-templates mode="subject" select="/mods:mods/mods:subject/mods:name[@type=&apos;personal&apos;]"></xsl:apply-templates>
-        <xsl:apply-templates mode="subjectTitle" select="/mods:mods/mods:subject/mods:titleInfo"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:language"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:location/mods:physicalLocation"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:location/mods:shelfLocator"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:physicalDescription/mods:internetMediaType"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:accessCondition"></xsl:apply-templates>
-        <xsl:apply-templates select="/mods:mods/mods:note"></xsl:apply-templates>
+        <li>
+          <strong>Title: </strong>
+          <xsl:value-of select="/mods:mods/mods:titleInfo/mods:title"></xsl:value-of>
+        </li>
+        <xsl:apply-templates/>
       </ul>
     </div>
   </xsl:template>
@@ -95,7 +81,7 @@
         <strong>Collection: </strong>
         <xsl:element name="a">
           <xsl:attribute name="href">
-            <xsl:value-of select="concat($islandoraUrl,&apos;/fedora/repository/&apos;,normalize-space(mods:identifier))"></xsl:value-of>
+            <xsl:value-of select="concat($islandoraUrl,&apos;/islandora/objects/&apos;,normalize-space(mods:identifier))"></xsl:value-of>
           </xsl:attribute>
           <xsl:attribute name="target">_parent</xsl:attribute>
           <xsl:value-of select="mods:titleInfo/mods:title"></xsl:value-of>
@@ -139,6 +125,8 @@
       </xsl:for-each>
       </li>
     </xsl:if>
+    <xsl:apply-templates mode="subject" select="mods:name[@type=&apos;personal&apos;]"/>
+    <xsl:apply-templates mode="subjectTitle" select="mods:titleInfo"/>
   </xsl:template>
   <xsl:template match="mods:titleInfo" mode="subjectTitle">
     <li>
@@ -478,4 +466,9 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+
+  <!-- Delete text which is not explicitly output. -->
+  <xsl:template match="text()"/>
+  <xsl:template match="text()" mode="subject"/>
+  <xsl:template match="text()" mode="subjectTitle"/>
 </xsl:stylesheet>
