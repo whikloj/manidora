@@ -7,7 +7,7 @@
 a:link,
 a:visited { /* underline all links */
   text-decoration: underline !important;
-f}
+}
 
 #site-name a:link,
 #site-name a:visited { /* Don't underline header */
