@@ -799,7 +799,7 @@ function manidora_process_islandora_object_print(array &$variables) {
     $variables['content']['buttons']['download_pdf'] = array(
       '#prefix' => '<strong>',
       '#markup' => l(t('Download PDF'), "islandora/object/{$object->id}/manidora_download_clip_pdf", array(
-                   'query' => array('clip' => $clip))),
+        'query' => array('clip' => $clip))),
       '#suffix' => '</strong>',
       '#weight' => -5,
     );
@@ -921,7 +921,7 @@ function manidora_preprocess_page(&$variables) {
   $arg1 = arg(1);
   $arg2 = arg(2);
   if ($arg1 == 'object' && islandora_is_valid_pid($arg2)) {
-    
+
     // get compound children
     $children = islandora_compound_object_get_parts($arg2);
     $pid = (!empty($children)) ? $children[0] : $arg2;
