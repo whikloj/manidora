@@ -4,14 +4,27 @@
   <xsl:variable name="smallcase">abcdefghijklmnopqrstuvwxyz</xsl:variable>
   <xsl:variable name="uppercase">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
 
-  <xsl:template match="/">
+  <xsl:template match="mods:mods">
     <div>
       <ul class="manidora-metadata">
         <li>
           <strong>Title: </strong>
-          <xsl:value-of select="/mods:mods/mods:titleInfo/mods:title"></xsl:value-of>
+          <xsl:value-of select="mods:titleInfo/mods:title"></xsl:value-of>
         </li>
-        <xsl:apply-templates/>
+        <xsl:apply-templates select="mods:identifier"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:abstract"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:name"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:typeOfResource"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:subject/mods:temporal"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:subject"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:language"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:location/mods:physicalLocation"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:location/mods:shelfLocator"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:accessCondition"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:note"></xsl:apply-templates>
       </ul>
     </div>
   </xsl:template>
@@ -45,7 +58,7 @@
       </xsl:element>
     </li>
   </xsl:template>
-  <xsl:template match="/mods:mods/mods:name">
+  <xsl:template match="mods:name">
     <xsl:choose>
       <xsl:when test="@type = &apos;organization&apos;">
         <li>
@@ -374,7 +387,7 @@
       <xsl:when test="normalize-space(text()) = &apos;lyr&apos;">Lyricist</xsl:when>
       <xsl:when test="normalize-space(text()) = &apos;mfr&apos;">Manufacturer</xsl:when>
       <xsl:when test="normalize-space(text()) = &apos;mrb&apos;">Marbler</xsl:when>
-   <xsl:when test="normalize-space(text()) = &apos;mrk&apos;">Markup editor</xsl:when>
+      <xsl:when test="normalize-space(text()) = &apos;mrk&apos;">Markup editor</xsl:when>
       <xsl:when test="normalize-space(text()) = &apos;mdc&apos;">Metadata contact</xsl:when>
       <xsl:when test="normalize-space(text()) = &apos;mte&apos;">Metal-engraver</xsl:when>
       <xsl:when test="normalize-space(text()) = &apos;mod&apos;">Moderator</xsl:when>
