@@ -4,6 +4,16 @@
   <xsl:variable name="smallcase">abcdefghijklmnopqrstuvwxyz</xsl:variable>
   <xsl:variable name="uppercase">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
 
+  <xsl:param name="searchUrl">/islandora/search/</xsl:param>
+
+  <!-- XXX: Should probably be tied to some config in the front-end. -->
+  <xsl:param name="type_of_resource_field">type_of_resource_mt</xsl:param>
+  <xsl:param name="subject_name_field">subject_name_mt</xsl:param>
+  <xsl:param name="subject_topic_field">subject_topic_mt</xsl:param>
+  <xsl:param name="subject_title_field">subject_title_mt</xsl:param>
+  <xsl:param name="language_field">language_mt</xsl:param>
+  <xsl:param name="member_field">RELS_EXT_isMemberOfCollection_uri_ms</xsl:param>
+
   <xsl:template match="mods:mods">
     <div>
       <ul class="manidora-metadata">
@@ -34,14 +44,29 @@
       <xsl:value-of select="text()"></xsl:value-of>
     </li>
   </xsl:template>
+
+  <xsl:template mode="search_link" match="text()">
+    <xsl:param name="field"/>
+    <xsl:variable name="textValue" select="normalize-space(.)"/>
+
+    <xsl:attribute name="href">
+      <xsl:value-of select="$islandoraUrl"/>
+      <xsl:value-of select="$searchUrl"/>
+      <xsl:value-of select="$field"/>
+      <xsl:text>%3A%22</xsl:text>
+      <xsl:value-of select="$textValue"/>
+      <xsl:text>%22</xsl:text>
+    </xsl:attribute>
+  </xsl:template>
+
   <xsl:template match="mods:typeOfResource">
     <li>
       <strong>Format: </strong>
       <xsl:element name="a">
         <xsl:attribute name="target">_parent</xsl:attribute>
-        <xsl:attribute name="href">
-          <xsl:value-of select="concat($islandoraUrl,&apos;/islandora/search/type_of_resource_t:%22&apos;,normalize-space(text()),&apos;%22&apos;)"></xsl:value-of>
-        </xsl:attribute>
+        <xsl:apply-templates mode="search_link" select="text()">
+          <xsl:with-param name="field" select="$type_of_resource_field"/>
+        </xsl:apply-templates>
         <xsl:value-of select="text()"></xsl:value-of>
       </xsl:element>
     </li>
@@ -51,9 +76,9 @@
       <strong>Subject - Personal: </strong>
       <xsl:element name="a">
         <xsl:attribute name="target">_parent</xsl:attribute>
-        <xsl:attribute name="href">
-          <xsl:value-of select="concat($islandoraUrl,&apos;/islandora/search/subject_name_t%3A%22&apos;,normalize-space(mods:namePart),&apos;%22&apos;)"></xsl:value-of>
-        </xsl:attribute>
+        <xsl:apply-templates mode="search_link" select="mods:namePart/text()">
+          <xsl:with-param name="field" select="$subject_name_field"/>
+        </xsl:apply-templates>
         <xsl:value-of select="mods:namePart"></xsl:value-of>
       </xsl:element>
     </li>
@@ -94,7 +119,7 @@
         <strong>Collection: </strong>
         <xsl:element name="a">
           <xsl:attribute name="href">
-            <xsl:value-of select="concat($islandoraUrl,&apos;/islandora/objects/&apos;,normalize-space(mods:identifier))"></xsl:value-of>
+            <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $member_field, &apos;%3A%22&apos;,normalize-space(mods:identifier), &apos;%22&apos;)"></xsl:value-of>
           </xsl:attribute>
           <xsl:attribute name="target">_parent</xsl:attribute>
           <xsl:value-of select="mods:titleInfo/mods:title"></xsl:value-of>
@@ -130,9 +155,9 @@
         <xsl:for-each select="mods:topic">
           <xsl:element name="a">
             <xsl:attribute name="target">_parent</xsl:attribute>
-            <xsl:attribute name="href">
-              <xsl:value-of select="concat($islandoraUrl,&apos;/islandora/search/subject_topic_t:%22&apos;,normalize-space(text()),&apos;%22&apos;)"></xsl:value-of>
-            </xsl:attribute>
+            <xsl:apply-templates mode="search_link" select="text()">
+              <xsl:with-param name="field" select="$subject_topic_field"/>
+            </xsl:apply-templates>
             <xsl:value-of select="text()"></xsl:value-of>
           </xsl:element> 
       </xsl:for-each>
@@ -146,9 +171,9 @@
       <strong>Subject - Title: </strong>
       <xsl:element name="a">
         <xsl:attribute name="target">_parent</xsl:attribute>
-        <xsl:attribute name="href">
-          <xsl:value-of select="concat($islandoraUrl,&apos;/islandora/search/subject_title_t:%22&apos;,normalize-space(mods:title),&apos;%22&apos;)"></xsl:value-of>
-        </xsl:attribute>
+        <xsl:apply-templates mode="search_link" select="mods:title/text()">
+          <xsl:with-param name="field" select="$subject_title_field"/>
+        </xsl:apply-templates>
         <xsl:value-of select="mods:title"></xsl:value-of>
       </xsl:element>
     </li>
@@ -181,9 +206,9 @@
       <xsl:for-each select="mods:languageTerm">
         <xsl:element name="a">
           <xsl:attribute name="target">_parent</xsl:attribute>
-          <xsl:attribute name="href">
-            <xsl:value-of select="concat($islandoraUrl,&apos;/islandora/search/language_t:%22&apos;,normalize-space(text()),&apos;%22&apos;)"></xsl:value-of>
-          </xsl:attribute>
+          <xsl:apply-templates mode="search_link" select="text()">
+            <xsl:with-param name="field" select="$language_field"/>
+          </xsl:apply-templates>
           <xsl:value-of select="text()"></xsl:value-of>
         </xsl:element> 
 	</xsl:for-each>
