@@ -588,8 +588,13 @@ function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(
   // module https://jira.duraspace.org/browse/ISLANDORA-840
   // UofM's collection field has been hacked to not be a URI.
   $search_results['object_url'] = 'islandora/search/';
-  $search_results['object_url_params']['f[0]'] = variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms')
-      . ':"' . $search_results['solr_doc']['PID'] . '" OR RELS_EXT_isMemberOf_uri_ms:"info:fedora/' . $search_results['solr_doc']['PID'] . '"';
+  $search_results['object_url_params']['f'] = array(
+    format_string('!field_one:"!pid" OR !field_two:"info:fedora/!pid"', array(
+      '!pid' => $search_results['solr_doc']['PID'],
+      '!field_one' => variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
+      '!field_two' => variable_get('manidora_secondary_collection_solr_field', 'RELS_EXT_isMemberOf_uri_ms'),
+    )),
+  );
 }
 
 /**
@@ -603,6 +608,13 @@ function manidora_admin($form, &$form_state) {
     '#title' => t('Collection Solr Field'),
     '#description' => t("Holds the collection Solr field."),
     '#default_value' => variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
+    '#size' => 30,
+  );
+  $form['manidora_secondary_collection_solr_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Secondary Membership Solr Field'),
+    '#description' => t('A Solr field; assumed to be "@pid_structure".', array('@pid_structure' => 'info:fedora/<pid>')),
+    '#default_value' => variable_get('manidora_secondary_collection_solr_field', 'RELS_EXT_isMemberOf_uri_ms'),
     '#size' => 30,
   );
 
