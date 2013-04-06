@@ -578,26 +578,6 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
 }
 
 /**
- * Implements hook_CMODEL_PID_islandora_solr_object_result_alter().
- *
- * Links all collection results to solr results rather than directly to the
- * objects.
- */
-function manidora_islandora_collectionCModel_islandora_solr_object_result_alter(&$search_results, $query_processor) {
-  // We are using this strange hackish URL to get around a bug in the solr
-  // module https://jira.duraspace.org/browse/ISLANDORA-840
-  // UofM's collection field has been hacked to not be a URI.
-  $search_results['object_url'] = 'islandora/search/';
-  $search_results['object_url_params']['f'] = array(
-    format_string('!field_one:"!pid" OR !field_two:"info:fedora/!pid"', array(
-      '!pid' => $search_results['solr_doc']['PID'],
-      '!field_one' => variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
-      '!field_two' => variable_get('manidora_secondary_collection_solr_field', 'RELS_EXT_isMemberOf_uri_ms'),
-    )),
-  );
-}
-
-/**
  * Admin form definition.
  */
 function manidora_admin($form, &$form_state) {
@@ -967,7 +947,6 @@ function manidora_preprocess_page(&$variables) {
   $arg1 = arg(1);
   $arg2 = arg(2);
   if ($arg1 == 'object' && islandora_is_valid_pid($arg2)) {
-    
     // get compound children
     $children = islandora_compound_object_get_parts($arg2);
     $pid = (!empty($children)) ? $children[0] : $arg2;
@@ -982,3 +961,41 @@ function manidora_preprocess_page(&$variables) {
     }
   }
 }
+
+/**
+ * Implements hook_CMODEL_PID_islandora_view_object_alter().
+ *
+ * Get rid of the default collection view--we render our desired view with Solr
+ * in manidora_islandora_collectioncmodel_islandora_view_object().
+ */
+function manidora_islandora_collectioncmodel_islandora_view_object_alter(FedoraObject &$object, &$views) {
+  unset($views['Collection View']);
+}
+
+/**
+ * Implements hook_CMODEL_PID_islandora_view_object().
+ *
+ * Render Solr results for a collection, to be used instead of the default
+ * collection display.
+ */
+function manidora_islandora_collectioncmodel_islandora_view_object(FedoraObject $object) {
+  // XXX: Seems counter-intuitive to set into the $_GET parameters, but that's
+  // how Solr takes 'em.
+  $_GET['f'] = array(
+    format_string('!field_one:"!pid" OR !field_two:"info:fedora/!pid"', array(
+      '!pid' => $object->id,
+      '!field_one' => variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
+      '!field_two' => variable_get('manidora_secondary_collection_solr_field', 'RELS_EXT_isMemberOf_uri_ms'),
+    )),
+  );
+
+  // XXX: Maintain breadcrumbs. The Solr display tries to set 'em.
+  $bc = drupal_set_breadcrumb();
+  $output = array(
+    'manidora_collection' => islandora_solr('*:*'),
+  );
+  drupal_set_breadcrumb($bc);
+
+  return $output;
+}
+
