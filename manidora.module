@@ -175,6 +175,8 @@ function manidora_block_view_alter(&$data, $block) {
  */
 function manidora_retrieve_metadata_form($object) {
   drupal_set_title(t("@label Metadata", array('@label' => $object->label)));
+  module_load_include('inc', 'islandora', 'includes/breadcrumb');
+  drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
   $output = manidora_mods_transform($object);
 
   if ($output) {
@@ -419,6 +421,9 @@ function manidora_mods_transform($object) {
 function manidora_download_table($islandora_object) {
   module_load_include('inc', 'islandora', 'includes/datastream');
   module_load_include('inc', 'islandora', 'includes/utilities');
+
+  module_load_include('inc', 'islandora', 'includes/breadcrumb');
+  drupal_set_breadcrumb(islandora_get_breadcrumbs($islandora_object));
 
   drupal_set_title(t("@label Downloads", array('@label' => $islandora_object->label)));
 
@@ -900,10 +905,15 @@ function manidora_islandora_solr_query($islandora_solr_query) {
       $pid_string2 .= ' OR "info:fedora/' . $collection_pid . '"';
     }
   }
-  $hidden_filter = "RELS_EXT_isMemberOfCollection_uri_ms:($pid_string)";
-  $hidden_filter .= " OR RELS_EXT_isMemberOf_uri_ms:($pid_string2)";
-  $islandora_solr_query->solrParams['fq'][] = $hidden_filter;
 
+  $hidden_filter = format_string('!field_one:(!pid_string_one) OR !field_two:(!pid_string_two)', array(
+    '!field_one' => variable_get('manidora_collection_solr_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
+    '!pid_string_one' => $pid_string,
+    '!field_two' => variable_get('manidora_secondary_collection_solr_field', 'RELS_EXT_isMemberOf_uri_ms'),
+    '!pid_string_two' => $pid_string2,
+  ));
+
+  $islandora_solr_query->solrParams['fq'][] = $hidden_filter;
 }
 
 /**
@@ -912,6 +922,7 @@ function manidora_islandora_solr_query($islandora_solr_query) {
 function manidora_preprocess_page(&$variables) {
   $arg1 = arg(1);
   $arg2 = arg(2);
+
   if ($arg1 == 'object' && islandora_is_valid_pid($arg2)) {
 
     // Get compound children.
