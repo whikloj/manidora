@@ -181,6 +181,7 @@ function manidora_retrieve_metadata_form($object) {
     $form = array(
       '#type' => 'item',
       '#markup' => $output,
+      '#weight' => 10,
     );
   }
   else {
@@ -367,13 +368,13 @@ function manidora_mods_transform($object) {
       // Table markup.
       $headers = array('Field' => t('Field'), 'Value' => t('Value'));
       $markup = theme_table(array(
-                  'header' => $headers,
-                  'rows' => $rows,
-                  'attributes' => array(),
-                  'caption' => '',
-                  'colgroups' => array(),
-                  'sticky' => TRUE,
-                  'empty' => t('No MODS present!')));
+        'header' => $headers,
+        'rows' => $rows,
+        'attributes' => array(),
+        'caption' => '',
+        'colgroups' => array(),
+        'sticky' => TRUE,
+        'empty' => t('No MODS present!')));
       return $markup;
     }
     else {
@@ -651,9 +652,7 @@ function manidora_printable_pdf($pid, $url = NULL) {
         $this->Cell(0, 15, $string, 0, FALSE, 'C', 0, '', 0, FALSE, 'M', 'M');
       }
     }
-
   }
-
   // Create new PDF document.
   $pdf = new MYPDF($pid, PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, TRUE, 'UTF-8', FALSE);
 
@@ -788,60 +787,27 @@ function manidora_islandora_view_object_alter(FedoraObject $object) {
  * Implements hook_process_theme().
  */
 function manidora_process_islandora_object_print(array &$variables) {
-  drupal_add_css(drupal_get_path('module', 'manidora') . '/css/manidora.print.css');
   $object = $variables['object'];
-  manidora_set_title($object);
-  $clip = isset($variables['clip']) ? $variables['clip'] : NULL;
-  $variables['content']['buttons'] = array(
-    '#access' => isset($clip),
-    '#prefix' => '<div>',
-    '#suffix' => '</div></br>',
-    'print' => array(
-      '#prefix' => '<strong>',
-      '#markup' => l(t('Print'), 'javascript:window.print();', array('external' => TRUE)),
-      '#suffix' => '</strong>',
-    ),
-    '0' => array(
+  if (in_array('islandora:newspaperPageCModel', $object->models)) {
+    drupal_add_css(drupal_get_path('module', 'manidora') . '/css/manidora.print.css');
+    manidora_set_title($object);
+    $clip = isset($variables['clip']) ? $variables['clip'] : NULL;
+    $variables['content']['buttons']['1'] = array(
       '#markup' => ' | ',
-    ),
-    'download_clip' => array(
-      '#prefix' => '<strong>',
-      '#markup' => l(t('Download Image'), "islandora/object/{$object->id}/manidora_download_clip", array(
-        'query' => array('clip' => $clip))),
-      '#suffix' => '</strong>',
-    ),
-    '1' => array(
-      '#markup' => ' | ',
-    ),
-    'download_pdf' => array(
+      '#weight' => -5,
+    );
+    $variables['content']['buttons']['download_pdf'] = array(
       '#prefix' => '<strong>',
       '#markup' => l(t('Download PDF'), "islandora/object/{$object->id}/manidora_download_clip_pdf", array(
         'query' => array('clip' => $clip))),
       '#suffix' => '</strong>',
-    ),
-  );
-}
-
-/**
- * Menu callback downloads the given clip.
- */
-function manidora_download_clip(FedoraObject $object) {
-  if (isset($_GET['clip'])) {
-    $is_https = isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on';
-    $http_protocol = $is_https ? 'https' : 'http';
-    $url = $http_protocol . '://' . $_SERVER['HTTP_HOST'] . $_GET['clip'];
-    $filename = manidora_get_title($object);
-    header("Content-Disposition: attachment; filename=\"{$filename}.jpg\"");
-    header("Content-type: image/jpeg");
-    header("Content-Transfer-Encoding: binary");
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_URL, $url);
-    $response = curl_exec($ch);
-    curl_close($ch);
+      '#weight' => -5,
+    );
   }
-  exit();
+  elseif (in_array('islandora:sp_large_image_cmodel', $object->models)) {
+    drupal_add_css(drupal_get_path('module', 'manidora') . '/css/manidora.print.css');
+    $variables['content']['metadata'] = manidora_retrieve_metadata_form($object);
+  }
 }
 
 /**
@@ -955,18 +921,27 @@ function manidora_preprocess_page(&$variables) {
   $arg1 = arg(1);
   $arg2 = arg(2);
   if ($arg1 == 'object' && islandora_is_valid_pid($arg2)) {
-    
-    // get compound children
+
+    // Get compound children.
     $children = islandora_compound_object_get_parts($arg2);
     $pid = (!empty($children)) ? $children[0] : $arg2;
 
     if ($object = islandora_object_load($pid)) {
       $rels_predicate = variable_get('islandora_compound_object_relationship', 'isPartOf');
       $part_of = $object->relationships->get('info:fedora/fedora-system:def/relations-external#', $rels_predicate);
-      // This object is part of a compound object
+      // This object is part of a compound object.
       if (!empty($part_of)) {
         $variables['title'] = '';
       }
     }
   }
+}
+
+/**
+ * Implements hook_process_theme().
+ */
+function manidora_process_islandora_large_image(&$variables) {
+  // Override the default text for UofM.
+  $islandora_object = $variables['islandora_object'];
+  $variables['image_clip'] = l(t('Printer Friendly Version'), "islandora/object/{$islandora_object->id}/print", array('attributes' => array('title' => 'Printer Friendly Version', 'id' => 'clip')));
 }
