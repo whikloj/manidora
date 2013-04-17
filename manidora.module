@@ -686,10 +686,22 @@ function manidora_printable_pdf($pid, $url = NULL) {
   // Set font.
   $pdf->SetFont('times', 'BI', 12);
 
+  // If no url was provided (e.g. we're not coming from the clipper),
+  // check to see if there's a high quality jpeg derivative.  If it does not
+  // exist, default to the standard JPG datastream.
+  if (!isset($url)) {
+    $obj = islandora_object_load($pid);
+    $dsid = isset($obj['HQ_JPG']) ? 'HQ_JPG' : 'JPG';
+    $url = variable_get('islandora_base_url', 'http://localhost:8080/fedora') . '/objects/' . $pid . '/datastreams/' . $dsid . '/content';
+  }
+
   // Add a page.
   $pdf->AddPage();
-  $url = isset($url) ? $url : variable_get('islandora_base_url', 'http://localhost:8080/fedora') . '/objects/' . $pid . '/datastreams/JPG/content';
-  $pdf->Image($url, '0', '15', '', '', '', '', '', 2);
+  // Add the image.
+  // Gotta specify almost ALL the parameters to get to the 'fitonpage'
+  // parameter.  This should fix weird clipping issues between the actual image
+  // source and what gets embedded into the PDF.
+  $pdf->Image($url, '0', '15', 0, 0, '', '', '', 2, 300, '', FALSE, FALSE, 0, FALSE, FALSE, TRUE);
 
   // Close and output PDF document.
   $pdf->Output($header_text . '.pdf', 'D');
@@ -853,6 +865,27 @@ function manidora_ocr_flag_submit($form, &$form_state) {
     $object = reset($form_state['islandora']['objects']);
     $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1);
   }
+}
+
+/**
+ * Implements hook_CMODEL_PID_islandora_object_ingested().
+ *
+ * Generates a high-quality jpeg derivative datastream (HQ_JPG) for embedding
+ * into PDF's.
+ */
+function manidora_islandora_newspaperPageCModel_islandora_object_ingested($object) {
+  module_load_include('inc', 'islandora_large_image', 'includes/derivatives');
+  $base_name = str_replace(':', '-', $object->id);
+  $uploaded_file = islandora_large_image_get_uploaded_file($object, $base_name);
+  $args = array();
+  $args[] = '-quality ' . escapeshellarg('25%');
+  $derivative_file = islandora_large_image_imagemagick_convert($uploaded_file, "temporary://{$base_name}_HQ_JPG.jpg", $args);
+  if ($derivative_file === FALSE) {
+    drupal_set_message(t('Failed to create HQ_JPG derivative'), 'error');
+    return FALSE;
+  }
+  islandora_large_image_add_datastream($object, 'HQ_JPG', $derivative_file, 'image/jpeg', t('High quality JPEG'));
+  return file_unmanaged_delete($derivative_file);
 }
 
 /**

@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Book batch ingest script for University of Manitoba.
+ */
+
+/**
  * Implements hook_drush_command().
  */
 function manidora_drush_command() {
@@ -9,8 +14,7 @@ function manidora_drush_command() {
   $items['manidora-book-batch'] = array(
     'options' => array(
       'timeout' => array(
-        'description' => 'The duration to run for (in seconds), before ' .
-          'stopping. Default is to run until completion.',
+        'description' => 'The duration to run for (in seconds), before stopping. Default is to run until completion.',
         'value' => 'optional',
       ),
       'target' => array(
@@ -72,4 +76,3 @@ function drush_manidora_book_batch() {
 
   timer_stop($t);
 }
-
