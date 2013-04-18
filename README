@@ -12,5 +12,5 @@ INSTALLATION
 ------------
 
 Name: TCPDF
-Version: 5.9.205
-http://sourceforge.net/donate/index.php?group_id=128076
+http://sourceforge.net/projects/tcpdf/files/
+Download the TCPDF library from the above link and extract its contents to sites/all/libraries/tcpdf .
