@@ -8,5 +8,4 @@ dependencies[] = islandora
 dependencies[] = islandora_solr
 dependencies[] = print
 dependencies[] = print_pdf
-dependencies[] = colorbox
 dependencies[] = islandora_compound_object
