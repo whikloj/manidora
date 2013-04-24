@@ -567,8 +567,13 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     $query_string .= ')';
   }
   $query_string = str_replace('/', '~slsh~', $query_string);
-  $query = array('type' => 'edismax');
-  drupal_goto('islandora/search/' . $query_string, array('query' => $query));
+  $query = array(
+    'type' => 'edismax',
+    'hidden_filter' => array('+RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:newspaperCModel" "info:fedora/islandora:newspaperIssueCModel")'),
+  );
+  drupal_goto('islandora/search/' . $query_string, array(
+    'query' => $query,
+  ));
 }
 
 /**
@@ -870,10 +875,14 @@ function manidora_islandora_newspaperPageCModel_islandora_object_ingested($objec
   $derivative_file = islandora_large_image_imagemagick_convert($uploaded_file, "temporary://{$base_name}_HQ_JPG.jpg", $args);
   if ($derivative_file === FALSE) {
     drupal_set_message(t('Failed to create HQ_JPG derivative'), 'error');
+    file_unmanaged_delete($uploaded_file);
     return FALSE;
   }
   islandora_large_image_add_datastream($object, 'HQ_JPG', $derivative_file, 'image/jpeg', t('High quality JPEG'));
-  return file_unmanaged_delete($derivative_file);
+  file_unmanaged_delete($derivative_file);
+  file_unmanaged_delete($uploaded_file);
+
+  return TRUE;
 }
 
 /**
@@ -998,7 +1007,7 @@ function manidora_islandora_collectioncmodel_islandora_view_object(FedoraObject 
   return $output;
 }
 
-/*
+/**
  * Implements hook_process_theme().
  */
 function manidora_process_islandora_large_image(&$variables) {
