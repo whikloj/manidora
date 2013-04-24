@@ -567,10 +567,12 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     $query_string .= ')';
   }
   $query_string = str_replace('/', '~slsh~', $query_string);
-  $query = array('type' => 'edismax');
+  $query = array(
+    'type' => 'edismax',
+    'hidden_filter' => array('+RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:newspaperCModel" "info:fedora/islandora:newspaperIssueCModel")'),
+  );
   drupal_goto('islandora/search/' . $query_string, array(
     'query' => $query,
-    'hidden_filter' => array('+RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:newspaperCModel" "info:fedora/islandora:newspaperIssueCModel")'),
   ));
 }
 
