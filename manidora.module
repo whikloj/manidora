@@ -870,10 +870,14 @@ function manidora_islandora_newspaperPageCModel_islandora_object_ingested($objec
   $derivative_file = islandora_large_image_imagemagick_convert($uploaded_file, "temporary://{$base_name}_HQ_JPG.jpg", $args);
   if ($derivative_file === FALSE) {
     drupal_set_message(t('Failed to create HQ_JPG derivative'), 'error');
+    file_unmanaged_delete($uploaded_file);
     return FALSE;
   }
   islandora_large_image_add_datastream($object, 'HQ_JPG', $derivative_file, 'image/jpeg', t('High quality JPEG'));
-  return file_unmanaged_delete($derivative_file);
+  file_unmanaged_delete($derivative_file);
+  file_unmanaged_delete($uploaded_file);
+
+  return TRUE;
 }
 
 /**
