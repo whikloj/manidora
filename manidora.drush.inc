@@ -28,6 +28,14 @@ function manidora_drush_command() {
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
   );
+  $items['manidora_generate_hq_jpegs'] = array(
+      'callback' => 'manidora_derive_hq_jpeg_datastreams',
+      'description' => 'Derives the HQ_JPG datastream for downloading pdfs of newspaper pages for those pages who missed having these derivatives created upon ingest.',
+      'examples' => array(
+        'drush -u 1 -l http://mysite manidora_derive_hq_jpegs'
+      ),
+      'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
+    );
 
   return $items;
 }
@@ -75,4 +83,25 @@ function drush_manidora_book_batch() {
   }
 
   timer_stop($t);
+}
+
+function manidora_derive_hq_jpeg_datastreams() {
+  $obj = '<info:fedora/*/OBJ>';
+  $q = <<<EOQ
+SELECT ?obj
+FROM <#ri>
+WHERE {
+  ?obj <fedora-model:hasModel> <info:fedora/islandora:newspaperPageCModel> ;
+  <fedora-view:disseminates> [<fedora-view:disseminationType> $obj]
+}
+EOQ;
+
+  $tuque = islandora_get_tuque_connection();
+  foreach($tuque->repository->ri->sparqlQuery($q) as $result) {
+    $pid = $result['obj']['value'];
+    $object = islandora_object_load($pid);
+    if (!isset($object['HQ_JPG'])) {
+      manidora_islandora_newspaperPageCModel_islandora_object_ingested($object);
+    }
+  }
 }
