@@ -719,7 +719,15 @@ function manidora_retrieve_header_text($pid) {
     $date = '';
     $page = '';
 
-    if (isset($xml->titleInfo)) {
+    if (in_array('islandora:newspaperPageCModel', $object->models) && isset($xml->relatedItem)) {
+      if (isset($xml->relatedItem->titleInfo)) {
+        if (isset($xml->relatedItem->titleInfo->title)) {
+          $title = (string) $xml->relatedItem->titleInfo->title;
+        }
+      }
+    }
+
+    if (empty($title) && isset($xml->titleInfo)) {
       if (isset($xml->titleInfo->title)) {
         $title = (string) $xml->titleInfo->title;
         $title = preg_replace('/:(.*)/', '', $title);
