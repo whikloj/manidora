@@ -125,14 +125,14 @@
         <strong>Collection: </strong>
         <xsl:element name="a">
           <xsl:attribute name="href">
-             <xsl:choose>
-               <xsl:when test="mods:identifier">
-                 <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $member_field, &apos;%3A%22&apos;,normalize-space(mods:identifier), &apos;%22&apos;)"></xsl:value-of>
-               </xsl:when>
-               <xsl:otherwise>
-                 <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $related_field, &apos;%3A%22&apos;,normalize-space(mods:titleInfo/mods:title), &apos;%22&apos;)"></xsl:value-of>
-               </xsl:otherwise>
-             </xsl:choose>
+            <xsl:choose>
+              <xsl:when test="mods:identifier">
+                <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $member_field, &apos;%3A%22&apos;,normalize-space(mods:identifier), &apos;%22&apos;)"></xsl:value-of>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $related_field, &apos;%3A%22&apos;,normalize-space(mods:titleInfo/mods:title), &apos;%22&apos;)"></xsl:value-of>
+              </xsl:otherwise>
+            </xsl:choose>
           </xsl:attribute>
           <xsl:attribute name="target">_parent</xsl:attribute>
           <xsl:value-of select="mods:titleInfo/mods:title"></xsl:value-of>
