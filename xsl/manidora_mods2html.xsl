@@ -13,7 +13,7 @@
   <xsl:param name="subject_title_field">subject_title_mt</xsl:param>
   <xsl:param name="language_field">language_mt</xsl:param>
   <xsl:param name="member_field">RELS_EXT_isMemberOfCollection_uri_ms</xsl:param>
-    <xsl:param name="related_field">related_item_title_mt</xsl:param>
+  <xsl:param name="related_field">related_item_title_mt</xsl:param>
   
   <xsl:template match="mods:mods">
     <div>
@@ -37,7 +37,7 @@
         <xsl:apply-templates select="mods:accessCondition"></xsl:apply-templates>
         <xsl:apply-templates select="mods:note"></xsl:apply-templates>
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start"></xsl:apply-templates>
         <xsl:apply-templates select="mods:originInfo/mods:issuance"></xsl:apply-templates>
         <xsl:apply-templates select="mods:originInfo/mods:frequency"></xsl:apply-templates>
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date"></xsl:apply-templates>
@@ -141,45 +141,45 @@
     </xsl:if>
   </xsl:template>
   <xsl:template match="mods:relatedItem/mods:part/mods:detail">
-      <xsl:choose>
-        <xsl:when test="@type = &apos;volume&apos;">
-          <li>
-              <strong>Volume: </strong>
-              <xsl:value-of select="mods:number"></xsl:value-of>
-          </li>
-       </xsl:when>
-          <xsl:when test="@type = &apos;issue&apos;">
-              <li>
-                  <strong>Issue: </strong>
-                  <xsl:value-of select="mods:number"></xsl:value-of>
-              </li>
-          </xsl:when>
-      </xsl:choose>
+    <xsl:choose>
+      <xsl:when test="@type = &apos;volume&apos;">
+         <li>
+           <strong>Volume: </strong>
+           <xsl:value-of select="mods:number"></xsl:value-of>
+         </li>
+      </xsl:when>
+      <xsl:when test="@type = &apos;issue&apos;">
+        <li>
+          <strong>Issue: </strong>
+            <xsl:value-of select="mods:number"></xsl:value-of>
+        </li>
+      </xsl:when>
+    </xsl:choose>
   </xsl:template>
-     <xsl:template match="mods:relatedItem/mods:part/mods:extent/mods:start">
-            <li>
-                <strong>Page Start: </strong>
-                <xsl:value-of select="text()"></xsl:value-of>
-            </li>
-    </xsl:template>
-    <xsl:template match="mods:relatedItem/mods:part/mods:date">
-        <li>
-            <strong>Date: </strong>
-            <xsl:value-of select="text()"></xsl:value-of>
-        </li>
-    </xsl:template>
-    <xsl:template match="mods:originInfo/mods:issuance">
-       <li>
-         <strong>Issuance: </strong>
-         <xsl:value-of select="text()"></xsl:value-of>
-       </li>
-    </xsl:template>
-    <xsl:template match="mods:originInfo/mods:frequency">
-        <li>
-            <strong>Frequency: </strong>
-            <xsl:value-of select="text()"></xsl:value-of>
-        </li>
-    </xsl:template>
+  <xsl:template match="mods:relatedItem/mods:part/mods:extent/mods:start">
+    <li>
+      <strong>Page Start: </strong>
+      <xsl:value-of select="text()"></xsl:value-of>
+    </li>
+  </xsl:template>
+  <xsl:template match="mods:relatedItem/mods:part/mods:date">
+    <li>
+      <strong>Date: </strong>
+       <xsl:value-of select="text()"></xsl:value-of>
+    </li>
+  </xsl:template>
+  <xsl:template match="mods:originInfo/mods:issuance">
+    <li>
+      <strong>Issuance: </strong>
+      <xsl:value-of select="text()"></xsl:value-of>
+    </li>
+  </xsl:template>
+  <xsl:template match="mods:originInfo/mods:frequency">
+    <li>
+      <strong>Frequency: </strong>
+      <xsl:value-of select="text()"></xsl:value-of>
+    </li>
+  </xsl:template>
   <xsl:template match="mods:identifier">
     <xsl:choose>
       <xsl:when test="@type = &apos;local&apos;">
