@@ -13,7 +13,8 @@
   <xsl:param name="subject_title_field">subject_title_mt</xsl:param>
   <xsl:param name="language_field">language_mt</xsl:param>
   <xsl:param name="member_field">RELS_EXT_isMemberOfCollection_uri_ms</xsl:param>
-
+  <xsl:param name="related_field">related_item_title_mt</xsl:param>
+  
   <xsl:template match="mods:mods">
     <div>
       <ul class="manidora-metadata">
@@ -35,7 +36,12 @@
         <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType"></xsl:apply-templates>
         <xsl:apply-templates select="mods:accessCondition"></xsl:apply-templates>
         <xsl:apply-templates select="mods:note"></xsl:apply-templates>
-      </ul>
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:originInfo/mods:issuance"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:originInfo/mods:frequency"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date"></xsl:apply-templates>
+       </ul>
     </div>
   </xsl:template>
   <xsl:template match="mods:abstract">
@@ -119,13 +125,60 @@
         <strong>Collection: </strong>
         <xsl:element name="a">
           <xsl:attribute name="href">
-            <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $member_field, &apos;%3A%22&apos;,normalize-space(mods:identifier), &apos;%22&apos;)"></xsl:value-of>
+            <xsl:choose>
+              <xsl:when test="mods:identifier">
+                <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $member_field, &apos;%3A%22&apos;,normalize-space(mods:identifier), &apos;%22&apos;)"></xsl:value-of>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $related_field, &apos;%3A%22&apos;,normalize-space(mods:titleInfo/mods:title), &apos;%22&apos;)"></xsl:value-of>
+              </xsl:otherwise>
+            </xsl:choose>
           </xsl:attribute>
           <xsl:attribute name="target">_parent</xsl:attribute>
           <xsl:value-of select="mods:titleInfo/mods:title"></xsl:value-of>
         </xsl:element>
       </li>
     </xsl:if>
+  </xsl:template>
+  <xsl:template match="mods:relatedItem/mods:part/mods:detail">
+    <xsl:choose>
+      <xsl:when test="@type = &apos;volume&apos;">
+         <li>
+           <strong>Volume: </strong>
+           <xsl:value-of select="mods:number"></xsl:value-of>
+         </li>
+      </xsl:when>
+      <xsl:when test="@type = &apos;issue&apos;">
+        <li>
+          <strong>Issue: </strong>
+            <xsl:value-of select="mods:number"></xsl:value-of>
+        </li>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+  <xsl:template match="mods:relatedItem/mods:part/mods:extent/mods:start">
+    <li>
+      <strong>Page Start: </strong>
+      <xsl:value-of select="text()"></xsl:value-of>
+    </li>
+  </xsl:template>
+  <xsl:template match="mods:relatedItem/mods:part/mods:date">
+    <li>
+      <strong>Date: </strong>
+       <xsl:value-of select="text()"></xsl:value-of>
+    </li>
+  </xsl:template>
+  <xsl:template match="mods:originInfo/mods:issuance">
+    <li>
+      <strong>Issuance: </strong>
+      <xsl:value-of select="text()"></xsl:value-of>
+    </li>
+  </xsl:template>
+  <xsl:template match="mods:originInfo/mods:frequency">
+    <li>
+      <strong>Frequency: </strong>
+      <xsl:value-of select="text()"></xsl:value-of>
+    </li>
   </xsl:template>
   <xsl:template match="mods:identifier">
     <xsl:choose>
@@ -159,7 +212,7 @@
               <xsl:with-param name="field" select="$subject_topic_field"/>
             </xsl:apply-templates>
             <xsl:value-of select="text()"></xsl:value-of>
-          </xsl:element> 
+          </xsl:element> 
       </xsl:for-each>
       </li>
     </xsl:if>
@@ -210,7 +263,7 @@
             <xsl:with-param name="field" select="$language_field"/>
           </xsl:apply-templates>
           <xsl:value-of select="text()"></xsl:value-of>
-        </xsl:element> 
+        </xsl:element> 
 	</xsl:for-each>
     </li>
   </xsl:template>
@@ -510,3 +563,4 @@
   <xsl:template match="text()" mode="subject"/>
   <xsl:template match="text()" mode="subjectTitle"/>
 </xsl:stylesheet>
+
