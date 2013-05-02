@@ -152,7 +152,6 @@ WHERE {
 ORDER BY ?datastream_date
 LIMIT 50
 EOQ;
-  dlm($query);
 
   $connection = islandora_get_tuque_connection();
 
