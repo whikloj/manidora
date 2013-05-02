@@ -36,6 +36,20 @@ function manidora_drush_command() {
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
   );
+  $items['manidora-wipe-hocr-doctypes'] = array(
+    'options' => array(
+      'before' => array(
+        'description' => 'HOCR datastreams from before the given date with be transformed. If not provided, all HOCR streams will be processed.',
+        'value' => 'optional',
+      ),
+    ),
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
+    'drupal dependencies' => array(
+      'islandora_ocr',
+      'islandora',
+      'manidora',
+    ),
+  );
 
   return $items;
 }
@@ -106,7 +120,81 @@ EOQ;
     $pid = $result['obj']['value'];
     $object = islandora_object_load($pid);
     if (!isset($object['HQ_JPG'])) {
-      manidora_islandora_newspaperPageCModel_islandora_object_ingested($object);
+      manidora_islandora_newspaperpagecmodel_islandora_object_ingested($object);
     }
   }
+}
+
+/**
+ * Batch operation.
+ */
+function manidora_batch_wipe_hocr_doctypes($before_date, &$context) {
+  if ($before_date) {
+    $before_date_filter = "FILTER(?datastream_date < '$before_date'^^<http://www.w3.org/2001/XMLSchema#dateTime>)";
+  }
+  elseif (isset($context['results']['first_altered_date'])) {
+    $before_date_filter = "FILTER(?datastream_date < '{$context['results']['first_altered_date']}'^^<http://www.w3.org/2001/XMLSchema#dateTime>)";
+  }
+  else {
+    $before_date_filter = '';
+  }
+
+  $query = <<<EOQ
+SELECT ?object ?datastream_date
+WHERE {
+  ?object <fedora-view:disseminates> ?datastream ;
+          <fedora-model:state> <fedora-model:Active> .
+  ?datastream <fedora-model:state> <fedora-model:Active> ;
+              <fedora-view:disseminationType> <info:fedora/*/HOCR> ;
+              <fedora-view:lastModifiedDate> ?datastream_date .
+  $before_date_filter
+}
+ORDER BY ?datastream_date
+LIMIT 50
+EOQ;
+
+  $connection = islandora_get_tuque_connection();
+
+  $results = $connection->repository->ri->sparqlQuery($query);
+
+  // If there were no results, we're finished.
+  $context['finished'] = empty($results);
+
+  $temp_file = drupal_tempnam('temporary://', 'hocr-dtd');
+  foreach ($results as $result) {
+    $object = islandora_object_load($result['object']['value']);
+    $datastream = $object['HOCR'];
+    $datastream->getContent($temp_file);
+    HOCR::stripDoctypeFromFile($temp_file);
+    $datastream->setContentFromFile($temp_file);
+    if (!$before_date && !isset($context['results']['first_altered_date'])) {
+      // The resource index calls it "lastModifiedDate"...  Looks like objects
+      // call it "createdDate"...  Hurray inconsistencies!
+      $context['results']['first_altered_date'] = $datastream->createdDate;
+    }
+    $context['message'] = dt('Wiped DOCTYPE from HOCR in @pid. New lastModified/created date "@date".', array(
+      '@pid' => $object->id,
+      '@date' => $datastream->createdDate,
+    ));
+  }
+  file_unmanaged_delete($temp_file);
+}
+
+/**
+ * Drush callback.
+ */
+function drush_manidora_wipe_hocr_doctypes() {
+  $batch = array(
+    'operations' => array(
+      array(
+        'manidora_batch_wipe_hocr_doctypes', array(
+          drush_get_option('before', FALSE),
+        ),
+      ),
+    ),
+    'title' => dt('Wiping HOCR DOCTYPE declarations...'),
+  );
+
+  batch_set($batch);
+  drush_backend_batch_process();
 }
