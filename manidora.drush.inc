@@ -170,11 +170,11 @@ EOQ;
     if (!$before_date && !isset($context['results']['first_altered_date'])) {
       // The resource index calls it "lastModifiedDate"...  Looks like objects
       // call it "createdDate"...  Hurray inconsistencies!
-      $context['results']['first_altered_date'] = $datastream->createdDate;
+      $context['results']['first_altered_date'] = (string) $datastream->createdDate;
     }
     $context['message'] = dt('Wiped DOCTYPE from HOCR in @pid. New lastModified/created date "@date".', array(
       '@pid' => $object->id,
-      '@date' => $datastream->createdDate,
+      '@date' => (string) $datastream->createdDate,
     ));
   }
   file_unmanaged_delete($temp_file);
