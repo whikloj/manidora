@@ -770,10 +770,10 @@ function manidora_retrieve_header_text($pid) {
  *
  * Newspapers have specialized titles.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The object from which to derive the title.
  */
-function manidora_get_title(FedoraObject $object) {
+function manidora_get_title(AbstractObject $object) {
   $models = $object->models;
   $retrieve_title = in_array('islandora:newspaperPageCModel', $models);
   return $retrieve_title ? manidora_retrieve_header_text($object->id) : $object->label;
@@ -782,14 +782,14 @@ function manidora_get_title(FedoraObject $object) {
 /**
  * Gets the title to display for the given newspaper page or newspaper.
  */
-function manidora_set_title(FedoraObject $object) {
+function manidora_set_title(AbstractObject $object) {
   drupal_set_title(manidora_get_title($object));
 }
 
 /**
  * Implements hook_islandora_view_object().
  */
-function manidora_islandora_view_object_alter(FedoraObject $object) {
+function manidora_islandora_view_object_alter(AbstractObject $object) {
   manidora_set_title($object);
 }
 
@@ -823,7 +823,7 @@ function manidora_process_islandora_object_print(array &$variables) {
 /**
  * Menu callback downloads the given clip.
  */
-function manidora_download_clip_pdf(FedoraObject $object) {
+function manidora_download_clip_pdf(AbstractObject $object) {
   if (isset($_GET['clip'])) {
     $is_https = isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on';
     $http_protocol = $is_https ? 'https' : 'http';
@@ -984,7 +984,7 @@ function manidora_preprocess_page(&$variables) {
  * Get rid of the default collection view--we render our desired view with Solr
  * in manidora_islandora_collectioncmodel_islandora_view_object().
  */
-function manidora_islandora_collectioncmodel_islandora_view_object_alter(FedoraObject &$object, &$views) {
+function manidora_islandora_collectioncmodel_islandora_view_object_alter(AbstractObject &$object, &$views) {
   unset($views['Collection View']);
 }
 
@@ -994,7 +994,7 @@ function manidora_islandora_collectioncmodel_islandora_view_object_alter(FedoraO
  * Render Solr results for a collection, to be used instead of the default
  * collection display.
  */
-function manidora_islandora_collectioncmodel_islandora_view_object(FedoraObject $object) {
+function manidora_islandora_collectioncmodel_islandora_view_object(AbstractObject $object) {
   // XXX: Seems counter-intuitive to set into the $_GET parameters, but that's
   // how Solr takes 'em.
   $_GET['f'] = array(
