@@ -46,10 +46,10 @@ function manidora_get_descendant_collections($collection_pid) {
 function manidora_build_query($collection_pids) {
   $first_pid = array_shift($collection_pids);
   $string = "\$pid  <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> <info:fedora/$first_pid>";
-  while (count($collection_pids) > 0) {
-    $next_pid = array_shift($collection_pids);
-    $string .= " or \$pid  <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> <info:fedora/$first_pid>";
+  foreach ($collections_pids as $collection_pid) {
+    $string .= " or \$pid  <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> <info:fedora/$collection_pid>";
   }
   $where_string = "where($string)";
+  dsm($where_string);
   return $where_string;
 }

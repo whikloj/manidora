@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains funtions for blocks
+ * Contains functions for blocks.
  */
 
 /**
