@@ -219,11 +219,11 @@ function __manidora_homepage_tabs_content(){
     ),
   );
   $departments = array(
-    "Libraries: Archives & Special Collections" => "uofm:archives",
     "Faculty of Architecture" => "",
     "Faculty of Dentistry" => "uofm:dentalDAMS",
     "Faculty of Medicine Archives" => "uofm:medArchives",
-  //  "Libraries: Newspapers" => "uofm:libraries",
+    "Libraries: Archives & Special Collections" => "uofm:archives",
+    "Libraries: Newspapers" => "uofm:libraries",
   );
   
 
