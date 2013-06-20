@@ -183,7 +183,9 @@ function manidora_menu_alter(&$items) {
  *   The object you wish to retrive formatted metadata from
  */
 function manidora_retrieve_metadata_form($object) {
-  drupal_set_title(t("@label Metadata", array('@label' => $object->label)));
+//  drupal_set_title(t("@label Metadata", array('@label' => htmlspecialchars_decode($object->label,ENT_NOQUOTES))));
+// The above is causing the double encoding of quotes and double quotes. drupal_set_title does it's own xss checking
+  drupal_set_title($object->label . " Metadata");
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
   $output = manidora_mods_transform($object);
@@ -251,7 +253,17 @@ function manidora_download_access($object) {
  *   The IslandoraObject whose MODS metadata you wish to transform.
  */
 function manidora_mods_transform($object) {
+  module_load_include('inc', 'islandora', 'includes/utilities'); // To get the islandora functions
+  
   $mods_text = $object->repository->api->a->getDatastreamDissemination($object->id, 'MODS');
+  $parent_collections = islandora_get_parents_from_rels_ext($object);
+
+  if ($parent_collections){
+    $collections = "";
+    foreach ($parent_collections as $c){
+      $collections .= l($c->label,'islandora/objects/'.$c->id) . "<br />";
+    }
+  }
 
   if ($mods_text) {
     if (in_array('islandora:bookCModel', $object->models)) {
@@ -266,6 +278,29 @@ function manidora_mods_transform($object) {
 
       if (!empty($title)) {
         $rows[] = array('Field' => t('Title'), 'Value' => $title);
+      }
+      
+      if (!empty($collections)){
+        $rows[] = array(t('Collections'),$collections);
+      }
+      
+      $description_results = $mods_xml->xpath('/mods:mods/mods:abstract');
+      $description = (string) reset($description_results);
+      
+      if (!empty($description)){
+        $rows[] = array(t('Description'),$description);
+      }
+      
+      $format_res = $mods_xml->xpath('/mods:mods/mods:typeOfResource');
+      $format = (string) reset($format_res);
+      if (!empty($format)){
+        $rows[] = array(t('Format'),$format);
+      }
+
+      $date_res = $mods_xml->xpath('/mods:mods/mods:subject/mods:temporal');
+      $date = (string) reset($date_res);
+      if (!empty($date)){
+        $rows[] = array(t('Date'),$date);
       }
 
       $subtitle_results = $mods_xml->xpath('/mods:mods/mods:titleInfo/mods:subTitle');
@@ -403,8 +438,16 @@ function manidora_mods_transform($object) {
         $xslt_processor->setParameter('', array(
           'islandoraUrl' => $base_url,
         ));
-        $mods_transformed = $xslt_processor->transformToXml($input);
-        return $mods_transformed;
+        //$mods_transformed = $xslt_processor->transformToXml($input);
+        $mods_transformed_tmp = $xslt_processor->transformToXml($input);
+        if (!empty($collections)){
+          $replace = '<li><strong>Collections:</strong> '.$collections.'</li>';
+        } else {
+          $replace = '';
+        }
+        $mods_transformed = preg_replace('/REPLACE_COLLECTIONS/',$replace,$mods_transformed_tmp);
+        
+        return manidora_print_insert_link('print/islandora/object/'.$object->id."/manitoba_metadata") .$mods_transformed;
       }
       else {
         return FALSE;
@@ -434,7 +477,7 @@ function manidora_download_table($islandora_object) {
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($islandora_object));
 
-  drupal_set_title(t("@label Downloads", array('@label' => $islandora_object->label)));
+  drupal_set_title($islandora_object->label ." Downloads");
 
   $headers = array(
     'ID' => t('ID'),
@@ -455,7 +498,19 @@ function manidora_download_table($islandora_object) {
       );
     }
   }
-
+  // We want TIFFS, JPEG and PDFs at the top of the Downloads list.
+  $topA = array();
+  $bottomA = array();
+  foreach ($rows as $row){
+    if (preg_match('/>(JPG|PDF|TIFF)</',$row['ID'])){
+      array_push($topA,array('data'=>$row, 'class'=>array('important-download')));
+    } else {
+      array_push($bottomA,array('data'=>$row));
+    }
+  }
+  sort($topA);
+  sort($bottomA);
+  $rows = array_merge($topA,$bottomA);
   $table = array(
     '#theme' => 'table',
     '#header' => $headers,
@@ -496,6 +551,12 @@ function manidora_newspaper_search_form($form, &$form_state) {
       '#type' => 'textfield',
       '#title' => t('With all of the words'),
     ),
+ /*   'newspaper_only' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Search newspapers only'),
+      '#default_value' => 0,
+      '#return_value' => 1,
+    ),*/
     'submit' => array(
       '#type' => 'submit',
       '#value' => t('Search'),
@@ -588,10 +649,14 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     $query_string .= ')';
   }
   $query_string = str_replace('/', '~slsh~', $query_string);
-  $query = array(
-    'type' => 'edismax',
-    'hidden_filter' => array('+RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:newspaperCModel" "info:fedora/islandora:newspaperIssueCModel")'),
-  );
+//  if ($form_state['values']['newspaper_only'] == 1){
+    $query = array(
+      'type' => 'edismax',
+      'hidden_filter' => array('+RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:newspaperCModel" "info:fedora/islandora:newspaperIssueCModel")'),
+    );
+/*  } else {
+    $query = array('type' => 'edismax');
+  }*/
   drupal_goto('islandora/search/' . $query_string, array(
     'query' => $query,
   ));
@@ -1044,7 +1109,7 @@ function manidora_islandora_collectioncmodel_islandora_view_object(AbstractObjec
 function manidora_process_islandora_large_image(&$variables) {
   // Override the default text for UofM.
   $islandora_object = $variables['islandora_object'];
-  $variables['image_clip'] = l(t('Printer Friendly Version'), "islandora/object/{$islandora_object->id}/print", array('attributes' => array('title' => 'Printer Friendly Version', 'id' => 'clip')));
+  $variables['image_clip'] = ""; //l(t('Printer Friendly Version'), "islandora/object/{$islandora_object->id}/print", array('attributes' => array('title' => 'Printer Friendly Version', 'id' => 'clip')));
 }
 
 /**

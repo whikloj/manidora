@@ -4,6 +4,9 @@
     Author     : dgi
     Description:
         Purpose of the stylesheet follows.
+    
+    2013-06-14 (whikloj) : 
+        XSL was changed from list to table
 */
 
 .manidora-metadata {
@@ -15,8 +18,18 @@
   margin-bottom: 0.25em;
 }
 
-.manidora-metadata li:nth-child(odd) {
+.manidora-metadata li:nth-child(even), .manidora-metadata tr:nth-child(even) {
   background-color: #EAEAE9;
+}
+
+.manidora-metadata .label {
+    font-weight: bold;
+    text-align: right;
+    border-right: 2px solid #fff;
+}
+
+.manidora-metadata td {
+    vertical-align: top;
 }
 
 .manidora-commons-license {

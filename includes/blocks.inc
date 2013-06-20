@@ -18,6 +18,9 @@ function manidora_block_info() {
   $blocks['manidora_homepage_thumbnails'] = array(
     'info' => t('Manidora homepage thumbnails'),
   );
+  $blocks['manidora_newspaper_search'] = array(
+    'info' => t('Manidora newspaper search'),
+  );
   return $blocks;
 }
 
@@ -39,6 +42,9 @@ function manidora_block_view($delta = '') {
       $block['subject'] = 'Homepage Thumbnails';
       $block['content'] = __manidora_homepage_thumbnail_content();
       break;
+    case 'manidora_newspaper_search':
+      $block['subject'] = 'Newspaper Search';
+      $block['content'] = drupal_get_form('manidora_newspaper_search_form');
   }
   return $block;
 }
@@ -166,30 +172,57 @@ function __manidora_homepage_tabs_content(){
    );
    $formats = array(
      "Images" => array(
-       "glass lantern slide",
-      "photograph",
-      "slide",
-      "stereo photograph",
-      "still image",
-    ),
+       "solr_field" => "type_of_resource_mt",
+       "data" => array(
+         "glass lantern slide",
+         "photograph",
+         "slide",
+         "stereo photograph",
+         "still image",
+        ),
+      ),
     "Text" => array(
-      "text",
-      "textual record",
+      "solr_field" => "type_of_resource_mt",
+      "data" => array(
+        "text",
+        "textual record",
+      ),
     ),
-    "Newspapers" => array("newspaper"),
-    "Books" => array(),
-    "Moving images" => array("moving image"),
+    "Newspapers" => array(
+      "solr_field" => "type_of_resource_mt",
+      "data" => array(
+        "newspaper",
+      ),
+    ),
+    "Books" => array(
+      "solr_field" => "",
+      "data" => array(),
+    ),
+    "Moving images" => array(
+      "solr_field" => "type_of_resource_mt",
+      "data" => array(
+        "moving image",
+      ),
+    ),
     "Sound recordings" => array(
-      "sound recording",
-      "sound recording - nonmusical"
+      "solr_field" => "type_of_resource_mt",
+      "data" => array(
+        "sound recording",
+        "sound recording - nonmusical",
+      ),
     ),
-    "Mixed material" => array("mixed material"),
+    "Mixed material" => array(
+      "solr_field" => "type_of_resource_mt",
+      "data" => array(
+        "mixed material",
+      ),
+    ),
   );
   $departments = array(
-    "Archives & Special Collections" => "uofm:archives",
+    "Libraries: Archives & Special Collections" => "uofm:archives",
     "Faculty of Architecture" => "",
+    "Faculty of Dentistry" => "uofm:dentalDAMS",
     "Faculty of Medicine Archives" => "uofm:medArchives",
-    "Restorative Dentistry Collection" => "uofm:dentalDAMS",
   //  "Libraries: Newspapers" => "uofm:libraries",
   );
   
@@ -213,33 +246,53 @@ EOF;
         $output .= "</div><!-- /.column_50 -->\n";
         $output .= "<div class=\"column_50 last\">\n";
       }
-      $output .= "$sub<br />\n";
+      $output .= l($sub,'islandora/search/subject_topic_facet_ms:"'.$sub.'"')."<br />\n";
       $count += 1;
     } 
     $output .=<<<EOF
       </div><!-- /#.column_50 -->
     </div><!-- /#home-panel-subjects -->
     <div class="home-panel" id="home-panel-collections">
-      <div class="column_50 first">
+      
 EOF;
-    $ri_query = "select \$pid \$title from <#ri> where \$pid <dc:title> \$title and  \$pid <fedora-model:state> <info:fedora/fedora-system:def/model#Active> and (\$pid <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:collectionCModel> or \$pid <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:newspaperCModel>) order by \$title";
-    /**
-     * @todo When they load actual objects to Fedora (or when we do), try to restrict collections to uofm ones
-     */
-    // and \$pid <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> <info:fedora/uofm:top>
+    $sparql_query = "select ?title ?y where { ?y <dc:title> ?title . ?y <info:fedora/fedora-system:def/model#state> <info:fedora/fedora-system:def/model#Active> . {?y <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:collectionCModel> } UNION {?y <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:newspaperCModel> } . ?y <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> ?coll . FILTER(REGEX(str(?coll), 'uofm', 'i'))} ORDER BY ASC(?title)";
       try{
-        $objects = $fedora_object->repository->ri->itqlQuery($ri_query, 20);
+        $objects = $fedora_object->repository->ri->sparqlQuery($sparql_query);
+        $odd = array();
+        $even = array();
+        $both = array(&$even, &$odd);
+        // Split items to even and odd array : http://stackoverflow.com/a/12405336
+        array_walk($objects, function($v, $k) use ($both) { $both[$k % 2][] = $v; });
+        $letters = array();
+        $cl = "";
+        $both = array_merge($even,$odd);
         $count = 0;
-        foreach ($objects as $obj){
-          if ($count == 11){
-            $output .= "</div><!-- /.column_50 -->\n";
-            $output .= "<div class=\"column_50 last\">\n";
+        $tmp = "<div class=\"column_50 first\">";
+        foreach ($both as $obj){
+          if ($count >= count($even)){
+            $tmp .= "</div><!-- /.column_50 -->\n";
+            $tmp .= "<div class=\"column_50 last\">\n";
           }
-          $output .= $obj['title']['value'] . "<br />\n";
+          if (strtolower(substr($obj['title']['value'],0,1)) != $cl){
+            $cl = strtolower(substr($obj['title']['value'],0,1));
+            $tmp .= '<a class="collection_spacer" name="coll_' . $cl . '"></a>';
+            $letters[] = $cl;
+          }
+          $tmp .= l($obj['title']['value'],'islandora/object/'.$obj['y']['value']) . "<br />\n";
           $count += 1;
         }
+        $output .= "<span class=\"coll_alpha_list\">";
+        for ($x=97; $x<122; $x+=1){
+          if (in_array(chr($x),$letters)){
+            $output .= '<a href="#' . chr($x) .'">' . chr($x) .'</a> | ';
+          } else {
+            $output .= chr($x)." | ";
+          }
+        }
+        $output = substr($output,0,-3) . "</span>";
+        $output .= $tmp;
       } catch (Exception $e){
-        error_log("Error in RI query " . $e->getMessage(),0);
+        watchdog('Manidora','Homepage blocks error, sparqlQuery threw (%e)',array('%e'=> $e->getMessage()));
         $output .= "Unable to retrieve collections";
       }
       
@@ -249,16 +302,15 @@ EOF;
     <div class="home-panel" id="home-panel-formats">
       <div class="column_50 first">
 EOF;
-    foreach ($formats as $key => $arr){
+    foreach ($formats as $key => $format){
       $uri = "";
-      if (is_array($arr) && count($arr)>0){
-        foreach ($arr as $arr_ele){
-          $uri .= (!empty($uri)? "%20OR%20":"") . "type_of_resource_mt%3a(".urlencode($arr_ele).")";
+      if (is_array($format['data']) && count($format['data'])>0){
+        foreach ($format['data'] as $ele){
+          $uri .= (!empty($uri)? " OR ":"") . $format['solr_field'].":(".$ele.")";
         }
-  //      $uri = "f[0]=" . $uri;
       }
       if (!empty($uri)){
-        $output .= "<a href=\"".url("islandora/search/")."$uri"."\">$key</a><br />\n";
+        $output .= l($key,"islandora/search/$uri") . "<br />\n";
       } else {
         $output .= "$key<br />\n";
       }
@@ -271,8 +323,7 @@ EOF;
 EOF;
     foreach ($departments as $dept => $uri){
       if (!empty($uri)){
-        $theURL = url("islandora/object/$uri");
-        $output .= "<a href=\"$theURL\">$dept</a><br />\n";
+        $output .= l($dept,"islandora/object/$uri") . "<br />\n";
       } else {
         $output .= "$dept<br />\n";
       }
