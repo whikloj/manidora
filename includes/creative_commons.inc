@@ -6,6 +6,8 @@
  */
 
 function manidora_creative_commons_form(&$form, &$form_state) {
+  form_load_include($form_state, 'inc', 'manidora', 'includes/creative_commons');
+
   // Form options.
   $modification_options = array(
     0 => t('Yes'),
@@ -89,7 +91,7 @@ function manidora_creative_commons_form(&$form, &$form_state) {
   );
 
   $form['license_fieldset']['allow_modifications'] = array(
-    '#type' => 'radios',
+    '#type' => 'select',
     '#title' => t('Allow modifications of your work?'),
     '#options' => $modification_options,
     '#default_value' => 0,
@@ -100,7 +102,7 @@ function manidora_creative_commons_form(&$form, &$form_state) {
   );
 
   $form['license_fieldset']['allow_commercial'] = array(
-    '#type' => 'radios',
+    '#type' => 'select',
     '#title' => t('Allow commercial uses of your work?'),
     '#options' => $commercial_options,
     '#default_value' => 0,
@@ -120,7 +122,7 @@ function manidora_creative_commons_form(&$form, &$form_state) {
     ),
   );
 
-  if (isset($form_state['triggering_element'])) {
+  if (isset($form_state['values']['license_fieldset'])) {
     $derivatives = '';
 
     if ($form_state['values']['license_fieldset']['allow_modifications'] == 0) {
@@ -165,9 +167,10 @@ function manidora_creative_commons_form(&$form, &$form_state) {
     '#suffix' => '</div>',
   );
 
-  $form['next']['#submit'][] = array('manidora_creative_commons_form_submit');
+  $form['next']['#submit'][] = 'manidora_creative_commons_form_submit';
   $form['next']['#weight'] = 100;
 }
+
 
 function manidora_on_form_input_change($form, &$form_state) {
   return $form['license_fieldset']['license_output'];
