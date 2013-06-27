@@ -2,17 +2,20 @@
 
 /**
  * @file
- * A module for testing out drupal stuffs.
+ * This file contains all the functions to manitobas creative commons chooser.
  */
 
+/**
+ * Draws the creative commons form. Altered in form builder forms.
+ */
 function manidora_creative_commons_form(&$form, &$form_state) {
   form_load_include($form_state, 'inc', 'manidora', 'includes/creative_commons');
 
   // Form options.
   $modification_options = array(
-    0 => t('Yes'),
-    1 => t('No'),
-    2 => t('Yes, as long as others share alike'),
+    'y' => t('Yes'),
+    'n' => t('No'),
+    'sa' => t('Yes, as long as others share alike'),
   );
 
   $countries = array(
@@ -78,9 +81,58 @@ function manidora_creative_commons_form(&$form, &$form_state) {
   );
 
   $commercial_options = array(
-    0 => t('Yes'),
-    1 => t('No'),
+    'y' => t('Yes'),
+    'n' => t('No'),
   );
+
+  // Setup defaults:
+  $derivatives_default = 'y';
+  $commercial_default = 'y';
+  $jurisdiction_default = 'ca';
+
+  if ($form['form_id']['#id'] == 'edit-xml-form-builder-edit-datastream-form') {
+    // Edit form.
+    $item = manidora_creative_commons_find_creative_commons_mods_element($form_state['storage']['objective_form_storage']['document']->document);
+
+    if ($item !== FALSE) {
+      $item = explode('/', $item->nodeValue);
+
+      $properties = explode('-', $item[0]);
+
+      $commercial_default = 'y';
+      $derivatives_default = 'y';
+
+      foreach ($properties as $property) {
+        switch ($property) {
+          case 'by':
+            break;
+          case 'nc':
+            $commercial_default = 'n';
+            break;
+          case 'nd':
+            $derivatives_default = 'n';
+            break;
+          case 'sa':
+            $derivatives_default = 'sa';
+            break;
+        }
+      }
+
+      $jurisdiction_default = empty($item[2]) ? 'international' : $item[2];
+    }
+    $form['update']['#weight'] = 100;
+    array_unshift($form['update']['#submit'], 'manidora_creative_commons_form_edit_submit');
+  }
+  else {
+    // Ingest steps.
+    $form['next']['#weight'] = 100;
+    $form['prev']['#weight'] = 99;
+    $form['next']['#submit'][] = 'manidora_creative_commons_form_submit';
+  }
+
+  $derivatives = isset($form_state['values']['license_fieldset']['allow_modifications']) ? $form_state['values']['license_fieldset']['allow_modifications'] : $derivatives_default;
+  $commercial = isset($form_state['values']['license_fieldset']['allow_commercial']) ? $form_state['values']['license_fieldset']['allow_commercial'] : $commercial_default;
+  $jurisdiction = isset($form_state['values']['license_fieldset']['license_jurisdiction']) ? $form_state['values']['license_fieldset']['license_jurisdiction'] : $jurisdiction_default;
 
   // Form elements.
   $form['license_fieldset'] = array(
@@ -94,7 +146,7 @@ function manidora_creative_commons_form(&$form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Allow modifications of your work?'),
     '#options' => $modification_options,
-    '#default_value' => 0,
+    '#default_value' => $derivatives,
     '#ajax' => array(
       'wrapper' => 'license-output',
       'callback' => 'manidora_on_form_input_change',
@@ -105,7 +157,7 @@ function manidora_creative_commons_form(&$form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Allow commercial uses of your work?'),
     '#options' => $commercial_options,
-    '#default_value' => 0,
+    '#default_value' => $commercial,
     '#ajax' => array(
       'wrapper' => 'license-output',
       'callback' => 'manidora_on_form_input_change',
@@ -116,66 +168,94 @@ function manidora_creative_commons_form(&$form, &$form_state) {
     '#type' => 'select',
     '#title' => t('License Jurisdiction'),
     '#options' => $countries,
+    '#default_value' => $jurisdiction,
     '#ajax' => array(
       'wrapper' => 'license-output',
       'callback' => 'manidora_on_form_input_change',
     ),
   );
 
-  if (isset($form_state['values']['license_fieldset'])) {
-    $derivatives = '';
+  $license_url = 'http://api.creativecommons.org/rest/1.5/license/standard/get?commercial=' . $commercial . '&derivatives=' . $derivatives . '&jurisdiction=' . $jurisdiction;
+  $response = simplexml_load_file($license_url);
 
-    if ($form_state['values']['license_fieldset']['allow_modifications'] == 0) {
-      $derivatives = 'y';
-    }
-    elseif ($form_state['values']['license_fieldset']['allow_modifications'] == 1) {
-      $derivatives = 'n';
-    }
-    elseif ($form_state['values']['license_fieldset']['allow_modifications'] == 2) {
-      $derivatives = 'sa';
-    }
-
-    $commercial = '';
-
-    if ($form_state['values']['license_fieldset']['allow_commercial'] == 0) {
-      $commercial = 'y';
-    }
-    elseif ($form_state['values']['license_fieldset']['allow_commercial'] == 1) {
-      $commercial = 'n';
-    }
-
-    $jurisdiction = $form_state['values']['license_fieldset']['license_jurisdiction'];
-    $data = '&derivatives=' . $derivatives . 'commercial=' . $commercial . '&jurisdiction=' . $jurisdiction;
-    $response = simplexml_load_file('http://api.creativecommons.org/rest/1.5/license/standard/get?commercial=' . $commercial . '&derivatives=' . $derivatives . '&jurisdiction=' . $jurisdiction);
-
-    $license = '';
-    $count = 1;
-    foreach ($response->html->a as $a) {
-      if ($count == 2) {
-        $license = $a;
-      }
-
-      $count++;
-    }
-
-    $license_markup = '<strong>' . t('Selected license:') . '</strong> ' . $license;
-  }
+  $form_state['manitoba'] = array();
+  $form_state['manitoba']['cc_license_uri'] = (string)$response->{'license-uri'};
 
   $form['license_fieldset']['license_output'] = array(
     '#prefix' => '<div id="license-output">',
-    '#markup' => isset($license_markup) ? $license_markup : '<strong>' . t('Selected license:') . '</strong> Attribution 3.0 Unported',
+    '#markup' => '<strong>' . t('Selected license:') . '</strong><br>' . $response->html->asXml(),
     '#suffix' => '</div>',
   );
-
-  $form['next']['#submit'][] = 'manidora_creative_commons_form_submit';
-  $form['next']['#weight'] = 100;
 }
 
-
+/**
+ * Ajax callback to render the CC license.
+ */
 function manidora_on_form_input_change($form, &$form_state) {
   return $form['license_fieldset']['license_output'];
 }
 
+/**
+ * Submit function called when using ingest steps.
+ */
 function manidora_creative_commons_form_submit($form, &$form_state) {
-  dsm($form_state);
+  if (isset($form_state['islandora']['objects'][0]['MODS'])) {
+    // We are inside of ingest steps.
+    $document = new DOMDocument();
+    $document->loadXML($form_state['islandora']['objects'][0]['MODS']->content);
+    manidora_creative_commons_create_new_element($document, $form_state['manitoba']['cc_license_uri']);
+    $document->formatOutput = TRUE;
+    $form_state['islandora']['objects'][0]['MODS']->content = $document->saveXML();
+  }
+}
+
+/**
+ * Submit function called when using the edit form.
+ */
+function manidora_creative_commons_form_edit_submit($form, &$form_state) {
+  $item = manidora_creative_commons_find_creative_commons_mods_element($form_state['storage']['objective_form_storage']['document']->document);
+  if ($item) {
+    $item->nodeValue = manidora_creative_commons_hack_up_url($form_state['manitoba']['cc_license_uri']);
+  }
+  else {
+    manidora_creative_commons_create_new_element($form_state['storage']['objective_form_storage']['document']->document, $form_state['manitoba']['cc_license_uri']);
+  }
+}
+
+/**
+ * Given a DomDocument, returns the accessCondition element.
+ *
+ * @param DomDocument $document
+ *   The document to search.
+ *
+ * @return mixed
+ *   The DomElement if its found FALSE otherwise.
+ */
+function manidora_creative_commons_find_creative_commons_mods_element($document) {
+  $xpath = new DOMXPath($document);
+  $xpath->registerNamespace('mods', 'http://www.loc.gov/mods/v3');
+  $result = $xpath->query("/mods:mods/mods:accessCondition[@type='Creative Commons License']");
+  if ($result->length > 0) {
+    return $result->item(0);
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Hacks up the URL to fit with existing manitoba URLs.
+ */
+function manidora_creative_commons_hack_up_url($url) {
+  return str_replace('http://creativecommons.org/licenses/', '', $url);
+}
+
+/**
+ * Creates a new element for accessCondition, inserts the CC URL and appends.
+ */
+function manidora_creative_commons_create_new_element($document, $url) {
+    // Substring here to cut of the CC URL for UofM.
+    $access_condition = $document->createElementNS('http://www.loc.gov/mods/v3', 'accessCondition', manidora_creative_commons_hack_up_url($url));
+    $access_condition->setAttribute('type', 'Creative Commons License');
+    $document->documentElement->appendChild($access_condition);
 }

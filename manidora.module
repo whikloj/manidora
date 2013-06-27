@@ -865,7 +865,7 @@ function manidora_form_alter(&$form, &$form_state, $form_id) {
 
     array_unshift($form['next']['#submit'], 'manidora_ocr_flag_submit');
   }
-  elseif ($form_id == 'xml_form_builder_ingest_form') {
+  elseif ($form_id == 'xml_form_builder_ingest_form' || $form_id == 'xml_form_builder_edit_datastream_form') {
     module_load_include('inc', 'manidora', 'includes/creative_commons');
     manidora_creative_commons_form($form, $form_state);
   }
@@ -997,9 +997,12 @@ function manidora_preprocess_page(&$variables) {
  * Get rid of the default collection view--we render our desired view with Solr
  * in manidora_islandora_collectioncmodel_islandora_view_object().
  */
+/*
 function manidora_islandora_collectioncmodel_islandora_view_object_alter(AbstractObject &$object, &$views) {
   unset($views['Collection View']);
 }
+ *
+ */
 
 /**
  * Implements hook_CMODEL_PID_islandora_view_object().
@@ -1007,6 +1010,7 @@ function manidora_islandora_collectioncmodel_islandora_view_object_alter(Abstrac
  * Render Solr results for a collection, to be used instead of the default
  * collection display.
  */
+/*
 function manidora_islandora_collectioncmodel_islandora_view_object(AbstractObject $object) {
   // XXX: Seems counter-intuitive to set into the $_GET parameters, but that's
   // how Solr takes 'em.
@@ -1027,6 +1031,9 @@ function manidora_islandora_collectioncmodel_islandora_view_object(AbstractObjec
 
   return $output;
 }
+ *
+ */
+
 
 /**
  * Implements hook_process_theme().
