@@ -90,7 +90,7 @@ function manidora_creative_commons_form(&$form, &$form_state) {
   $commercial_default = 'y';
   $jurisdiction_default = 'ca';
 
-  if ($form['form_id']['#id'] == 'edit-xml-form-builder-edit-datastream-form') {
+  if (isset($form['form_id']['#id']) && $form['form_id']['#id'] == 'edit-xml-form-builder-edit-datastream-form') {
     // Edit form.
     $item = manidora_creative_commons_find_creative_commons_mods_element($form_state['storage']['objective_form_storage']['document']->document);
 
