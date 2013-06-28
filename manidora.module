@@ -856,6 +856,10 @@ function manidora_form_alter(&$form, &$form_state, $form_id) {
 
     array_unshift($form['next']['#submit'], 'manidora_ocr_flag_submit');
   }
+  elseif ($form_id == 'xml_form_builder_ingest_form' || $form_id == 'xml_form_builder_edit_datastream_form') {
+    module_load_include('inc', 'manidora', 'includes/creative_commons');
+    manidora_creative_commons_form($form, $form_state);
+  } 
 }
 
 /**
