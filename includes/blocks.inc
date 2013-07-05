@@ -75,8 +75,8 @@ function manidora_simple_search_form($form, &$form_state) {
     }
   }
   $options = array(
-    0 => t('All collections'),
-    1 => t('This collection'),
+    0 => t('Search All Collections:'),
+    1 => t('Search This Collection:'),
   );
   $form['simple'] = array(
     '#type' => 'container',
@@ -146,7 +146,8 @@ function __manidora_homepage_tabs_content(){
    * @todo Ideally the content for the Fedora derived tabs (departments, subjects, format) should be stored in a tab and administered through Drupal.
    *   Unfortunately, due to time-constraints we are hard-coding
    */
-   $fedora_object = islandora_object_load('islandora:root');
+   //$fedora_object = islandora_object_load('islandora:root');
+   $solr_client = new IslandoraSolrQueryProcessor;
    
    
    $subjects = array(
@@ -255,9 +256,31 @@ EOF;
     <div class="home-panel" id="home-panel-collections">
       
 EOF;
-    $sparql_query = "select ?title ?y where { ?y <dc:title> ?title . ?y <info:fedora/fedora-system:def/model#state> <info:fedora/fedora-system:def/model#Active> . {?y <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:collectionCModel> } UNION {?y <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:newspaperCModel> } . ?y <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> ?coll . FILTER(REGEX(str(?coll), 'uofm', 'i'))} ORDER BY ASC(?title)";
+
+    $solr_query = "(RELS_EXT_isMemberOfCollection_uri_mt:%22uofm:*%22+AND+RELS_EXT_hasModel_uri_mt:%22info:fedora/islandora:collectionCModel%22)";
+    $solr_params = array("fl"=>"PID+dc.title");
+   // $sparql_query = "select ?title ?y where { ?y <dc:title> ?title . ?y <info:fedora/fedora-system:def/model#state> <info:fedora/fedora-system:def/model#Active> . {?y <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:collectionCModel> } UNION {?y <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:newspaperCModel> } . ?y <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> ?coll . FILTER(REGEX(str(?coll), 'uofm', 'i'))} ORDER BY ASC(?title)";
       try{
-        $objects = $fedora_object->repository->ri->sparqlQuery($sparql_query);
+        //$objects = $fedora_object->repository->ri->sparqlQuery($sparql_query);
+        $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
+        //$solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
+        $solr = new Apache_Solr_Service("http://digitalcollections.lib.umanitoba.ca", 8080, "/solr" . '/');
+        
+        $solr->setCreateDocuments(0);
+        $results = $solr->search($solr_query,0,0,$solr_params);
+        ob_start();
+        print_r($results);
+        $v = ob_get_clean();
+        watchdog("Manidora","solr result is <pre>%v</pre>",array('%v'=>$v));
+        
+        $objects = array();
+        if ($results){
+          /*foreach ($results->response->docs as $doc){
+            $objects[] = array("PID"=>$doc->PID, "title"=>$doc->dc.title->[0]);
+            }
+          }*/
+        }
+        
         $odd = array();
         $even = array();
         $both = array(&$even, &$odd);
