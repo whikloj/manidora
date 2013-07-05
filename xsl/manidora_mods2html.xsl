@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" version="1.0">
   <xsl:param name="islandoraUrl"/>
+  <xsl:param name="collections"/>
   <xsl:variable name="smallcase">abcdefghijklmnopqrstuvwxyz</xsl:variable>
   <xsl:variable name="uppercase">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
 
@@ -14,6 +15,7 @@
   <xsl:param name="language_field">language_mt</xsl:param>
   <xsl:param name="member_field">RELS_EXT_isMemberOfCollection_uri_ms</xsl:param>
   <xsl:param name="related_field">related_item_title_mt</xsl:param>
+
   
   <xsl:template match="mods:mods">
     <table class="manidora-metadata">
@@ -21,7 +23,12 @@
             <td class="label">Title</td>
             <td><xsl:value-of select="mods:titleInfo/mods:title"/></td>
         </tr>
-        REPLACE_COLLECTIONS
+        <xsl:if test="string-length($collections) &gt; 0">
+          <tr>
+            <td class="label">Collections</td>
+            <td><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></td>
+          </tr>
+        </xsl:if>
         <!--<xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>-->
         <xsl:apply-templates select="mods:abstract"></xsl:apply-templates>
         <!--<xsl:apply-templates select="mods:name"></xsl:apply-templates>-->

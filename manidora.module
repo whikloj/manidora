@@ -434,19 +434,13 @@ function manidora_mods_transform($object) {
 
       if ($did_load) {
         global $base_url;
+        $xslt_processor->registerPHPFunctions(); // Using PHP functions to inject the collections HTML into the XSL
         $xslt_processor->importStylesheet($xsl);
         $xslt_processor->setParameter('', array(
           'islandoraUrl' => $base_url,
+          'collections' => '<span>'.$collections.'</span>', // 
         ));
-        //$mods_transformed = $xslt_processor->transformToXml($input);
-        $mods_transformed_tmp = $xslt_processor->transformToXml($input);
-        if (!empty($collections)){
-          $replace = '<li><strong>Collections:</strong> '.$collections.'</li>';
-        } else {
-          $replace = '';
-        }
-        $mods_transformed = preg_replace('/REPLACE_COLLECTIONS/',$replace,$mods_transformed_tmp);
-        
+        $mods_transformed = $xslt_processor->transformToXml($input);
         return manidora_print_insert_link('print/islandora/object/'.$object->id."/manitoba_metadata") .$mods_transformed;
       }
       else {
@@ -457,6 +451,16 @@ function manidora_mods_transform($object) {
   else {
     return FALSE;
   }
+}
+
+/** 
+ * Used to insert the Collections into the mods2html.xsl stylesheet
+ * This is called from the mods2html.xsl XSLT and passed a string of HTML.
+ */ 
+function manidora_return_collection_nodeset($i){
+  $doc = new DOMDocument;
+  $doc->loadXml($i);
+  return $doc;
 }
 
 /**
@@ -1134,19 +1138,10 @@ function manidora_homepage_thumbnail_admin($form, &$form_state){
       '#length' => 30,
       '#maxlength' => 255,
       '#default_value' => '',
-  //    '#ajax' => array(
-  //      'callback' => 'manidora_add_homepage_pid',
-  //      'keypress' => TRUE,
-  //      'wrapper' => 'manidora_homepage_thumbnails',
-  //    ),
     );
     $form['manidora_homepage_thumbnails_add_btn'] = array(
       '#type' => 'submit',
       '#value' => 'Add',
-  //    '#ajax' => array(
-  //      'callback' => 'manidora_add_homepage_pid',
-  //      'wrapper' => 'manidora_homepage_thumbnails',
-  //    ),
     );
   
   
