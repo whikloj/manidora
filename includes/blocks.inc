@@ -146,9 +146,7 @@ function __manidora_homepage_tabs_content(){
    * @todo Ideally the content for the Fedora derived tabs (departments, subjects, format) should be stored in a tab and administered through Drupal.
    *   Unfortunately, due to time-constraints we are hard-coding
    */
-   //$fedora_object = islandora_object_load('islandora:root');
-   $solr_client = new IslandoraSolrQueryProcessor;
-   
+   module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
    
    $subjects = array(
      "Aboriginal Peoples",
@@ -254,73 +252,70 @@ EOF;
       </div><!-- /#.column_50 -->
     </div><!-- /#home-panel-subjects -->
     <div class="home-panel" id="home-panel-collections">
-      
 EOF;
 
-    $solr_query = "(RELS_EXT_isMemberOfCollection_uri_mt:%22uofm:*%22+AND+RELS_EXT_hasModel_uri_mt:%22info:fedora/islandora:collectionCModel%22)";
-    $solr_params = array("fl"=>"PID+dc.title");
-   // $sparql_query = "select ?title ?y where { ?y <dc:title> ?title . ?y <info:fedora/fedora-system:def/model#state> <info:fedora/fedora-system:def/model#Active> . {?y <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:collectionCModel> } UNION {?y <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:newspaperCModel> } . ?y <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> ?coll . FILTER(REGEX(str(?coll), 'uofm', 'i'))} ORDER BY ASC(?title)";
-      try{
-        //$objects = $fedora_object->repository->ri->sparqlQuery($sparql_query);
-        $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
-        //$solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
-        $solr = new Apache_Solr_Service("http://digitalcollections.lib.umanitoba.ca", 8080, "/solr" . '/');
+    $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:"uofm:*" AND RELS_EXT_hasModel_uri_mt:"info:fedora/islandora:collectionCModel")';
+    $solr_params = array("fl"=>"PID,dc.title");
+    try{
+      //$path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+      $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr'); // DEV running from PROD
+      $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
         
-        $solr->setCreateDocuments(0);
-        $results = $solr->search($solr_query,0,0,$solr_params);
-        ob_start();
-        print_r($results);
-        $v = ob_get_clean();
-        watchdog("Manidora","solr result is <pre>%v</pre>",array('%v'=>$v));
-        
+      $solr->setCreateDocuments(0);
+      $results = $solr->search($solr_query,0,100,$solr_params);
+                
+      $tmpobjects = array();
+      if ($results){
+        $solr_results = json_decode($results->getRawResponse(), TRUE);
+        foreach ($solr_results["response"]["docs"] as $key => $doc){
+          $tmpobjects[] = array("PID"=>$doc['PID'], "title"=>$doc['dc.title'][0]);
+        }
+        // Solr can't sort by multivalued elements, so sort by title
+        usort($tmpobjects,create_function('$a,$b','return strcasecmp($a["title"],$b["title"]);'));
         $objects = array();
-        if ($results){
-          /*foreach ($results->response->docs as $doc){
-            $objects[] = array("PID"=>$doc->PID, "title"=>$doc->dc.title->[0]);
+        $cl = "";
+        // Move the items so each letter that exists is an array of those collections 
+        array_walk($tmpobjects, function($v,$k) use (&$objects,&$cl) { if (strtolower(substr($v['title'],0,1)) != $cl){ $cl = strtolower(substr($v['title'],0,1));} if (array_key_exists($cl,$objects) && !is_array($objects[$cl])){ $objects[$cl] = array(); } $objects[$cl][] = $v; });      
+        $tmp = "";
+        foreach ($objects as $letter => $collections){
+          $odd = array();
+          $even = array();
+          $both = array(&$even, &$odd);
+          // Split items to even and odd array : http://stackoverflow.com/a/12405336
+          array_walk($collections, function($v, $k) use ($both) { $both[$k % 2][] = $v; });  
+          $both = array_merge($even,$odd);
+          $tmp .= "<div class=\"coll_letter_box\"><a name=\"coll_$letter\" class=\"collection_spacer\"></a>";
+          $tmp .= "<div class=\"column_50 first collections\">";
+          $count = 0;
+          foreach ($both as $c){
+            if ($count == count($even)){
+              $tmp .= "</div><!-- /.column_50 -->\n";
+              $tmp .= "<div class=\"column_50 last\">\n";
             }
-          }*/
+            $tmp .= l($c['title'],'islandora/object/' . $c['PID']) . "<br />\n";
+            $count += 1;
+          }
+          $tmp .= "</div> <!-- /.column_50 -->\n";
+          $tmp .= "</div> <!-- /.coll_letter_box -->\n";
         }
         
-        $odd = array();
-        $even = array();
-        $both = array(&$even, &$odd);
-        // Split items to even and odd array : http://stackoverflow.com/a/12405336
-        array_walk($objects, function($v, $k) use ($both) { $both[$k % 2][] = $v; });
-        $letters = array();
-        $cl = "";
-        $both = array_merge($even,$odd);
-        $count = 0;
-        $tmp = "<div class=\"column_50 first\">";
-        foreach ($both as $obj){
-          if ($count >= count($even)){
-            $tmp .= "</div><!-- /.column_50 -->\n";
-            $tmp .= "<div class=\"column_50 last\">\n";
-          }
-          if (strtolower(substr($obj['title']['value'],0,1)) != $cl){
-            $cl = strtolower(substr($obj['title']['value'],0,1));
-            $tmp .= '<a class="collection_spacer" name="coll_' . $cl . '"></a>';
-            $letters[] = $cl;
-          }
-          $tmp .= l($obj['title']['value'],'islandora/object/'.$obj['y']['value']) . "<br />\n";
-          $count += 1;
-        }
         $output .= "<span class=\"coll_alpha_list\">";
         for ($x=97; $x<122; $x+=1){
-          if (in_array(chr($x),$letters)){
-            $output .= '<a href="#' . chr($x) .'">' . chr($x) .'</a> | ';
+          if (array_key_exists(chr($x),$objects)){
+            $output .= '<a href="#coll_' . chr($x) .'"> ' . chr($x) .' </a>|';
           } else {
-            $output .= chr($x)." | ";
+            $output .= ' '.chr($x)." |";
           }
         }
         $output = substr($output,0,-3) . "</span>";
         $output .= $tmp;
-      } catch (Exception $e){
-        watchdog('Manidora','Homepage blocks error, sparqlQuery threw (%e)',array('%e'=> $e->getMessage()));
-        $output .= "Unable to retrieve collections";
       }
+    } catch (Exception $e){
+      watchdog('Manidora','Homepage blocks error, Solr query threw (%e)',array('%e'=> $e->getMessage()));
+      $output .= "Unable to retrieve collections";
+    }
       
     $output .=<<<EOF
-      </div><!-- /.column_50 -->
     </div><!-- /#home-panel-collections -->
     <div class="home-panel" id="home-panel-formats">
       <div class="column_50 first">
