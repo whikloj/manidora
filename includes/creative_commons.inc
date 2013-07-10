@@ -232,6 +232,10 @@ function manidora_creative_commons_form_edit_submit($form, &$form_state) {
  *   The DomElement if its found FALSE otherwise.
  */
 function manidora_creative_commons_find_creative_commons_mods_element($document) {
+  // Exit early if null is passed in.
+  if (empty($document)) {
+    return FALSE;
+  }
   $xpath = new DOMXPath($document);
   $xpath->registerNamespace('mods', 'http://www.loc.gov/mods/v3');
   $result = $xpath->query("/mods:mods/mods:accessCondition[@type='Creative Commons License']");
