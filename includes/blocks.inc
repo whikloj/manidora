@@ -9,9 +9,6 @@
  * Implements hook_block_info().
  */
 function manidora_block_info() {
-  $blocks['manidora_simple_search'] = array(
-    'info' => t('Manidora simple search'),
-  );
   $blocks['manidora_homepage_tabs'] = array(
     'info' => t('Manidora homepage tabs'),
   );
@@ -30,10 +27,6 @@ function manidora_block_info() {
 function manidora_block_view($delta = '') {
   $block = array();
   switch ($delta) {
-    case 'manidora_simple_search':
-      $block['subject'] = t('Manidora simple search');
-      $block['content'] = drupal_get_form('manidora_simple_search_form');
-      break;
     case 'manidora_homepage_tabs':
       $block['subject'] = 'Homepage Tabs';
       $block['content'] = __manidora_homepage_tabs_content();
@@ -50,95 +43,6 @@ function manidora_block_view($delta = '') {
 }
 
 /**
- * Manidora simple search form.
- *
- * Based on the Islandora Solr simple search block, this search box adds a
- * feature to search within the current collection or newspaper.
- */
-function manidora_simple_search_form($form, &$form_state) {
-  $params = $_GET;
-  $hidden_filter = NULL;
-  $rels_ext = array(
-    'RELS_EXT_isMemberOfCollection_uri_ms',
-    'RELS_EXT_isMemberOf_uri_ms',
-  );
-  // Find rels ext in parameters.
-  if (isset($params['f'])) {
-    foreach ($params['f'] as $filter) {
-      $filter_arr = explode(':', $filter);
-      foreach ($rels_ext as $rels) {
-        if (strpos($filter_arr[0], $rels) === 0) {
-          $hidden_filter = $filter;
-          break;
-        }
-      }
-    }
-  }
-  $options = array(
-    0 => t('Search All Collections:'),
-    1 => t('Search This Collection:'),
-  );
-  $form['simple'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array(
-        'container-inline',
-      ),
-    ),
-  );
-  $form['simple']['hidden_filter'] = array(
-    '#type' => 'hidden',
-    '#value' => $hidden_filter,
-  );
-  if (!empty($hidden_filter)) {
-    $form['simple']['collection_select'] = array(
-      '#type' => 'select',
-      '#options' => $options,
-      '#default_value' => (!empty($hidden_filter)) ? 1 : 0,
-    );
-  } else {
-    $form['simple']['collection_all'] = array(
-      '#markup' => '<h2 class="block-title">Search All Collections:</h2>',
-    );
-  }
-  $form['simple']["islandora_simple_search_query"] = array(
-    '#size' => '15',
-    '#type' => 'textfield',
-    '#title' => '',
-    // @TODO: should this be the searched value?
-    '#default_value' => '',
-  );
-  $form['simple']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('search'),
-  );
-  return $form;
-}
-
-/**
- * Islandora Solr simple search form submit.
- */
-function manidora_simple_search_form_submit($form, &$form_state) {
-  $form_state['rebuild'] = TRUE;
-  $search_string = $form_state['values']['islandora_simple_search_query'];
-  // Replace the slash so url doesn't break.
-  $search_string = str_replace('/', '~slsh~', $search_string);
-  preg_match('/:"(.*?)"/', $form_state['values']['hidden_filter'], $hidden_match);
-  $hidden_filter = $hidden_match[1];
-  $collection_pid = $hidden_filter;
-  if (isset($form_state['values']['collection_select'])) {
-    $collection_select = $form_state['values']['collection_select'];
-  }
-
-  // Using edismax by default for manidora.
-  //$query = array('type' => 'edismax');
-  if (!empty($hidden_filter) && isset($collection_select) && $collection_select == 1) {
-    $query = array('cp' => $collection_pid);
-  }
-  drupal_goto('islandora/search/' . $search_string, array('query' => $query));
-}
-
-/**
  * Collect collections under Root Collection PID to display
  */
 function __manidora_homepage_tabs_content(){
@@ -147,7 +51,7 @@ function __manidora_homepage_tabs_content(){
    *   Unfortunately, due to time-constraints we are hard-coding
    */
    module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
-   
+
    $subjects = array(
      "Aboriginal Peoples",
      "Arts, Music, and Architecture",
@@ -160,7 +64,7 @@ function __manidora_homepage_tabs_content(){
      "Immigration",
      "Media and Communications",
      "Northern Studies",
-     "Prairie History",  
+     "Prairie History",
      "Religion, Philosophy, and Spiritualism",
      "Science and Technology",
      "Sports and Recreation",
@@ -224,10 +128,10 @@ function __manidora_homepage_tabs_content(){
     "Libraries: Archives & Special Collections" => "uofm:archives",
     "Libraries: Newspapers" => "uofm:libraries",
   );
-  
 
-   
-  
+
+
+
   $output = <<<EOF
     <ul class="home-tabs-container">
     <li class="home-tab active"><a id="home-tabs-subjects" class="home-tab-link" href="javascript:void(0)">Subjects</a></li>
@@ -247,7 +151,7 @@ EOF;
       }
       $output .= l($sub,'islandora/search/subject_topic_facet_ms:"'.$sub.'"')."<br />\n";
       $count += 1;
-    } 
+    }
     $output .=<<<EOF
       </div><!-- /#.column_50 -->
     </div><!-- /#home-panel-subjects -->
@@ -257,12 +161,12 @@ EOF;
     $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:"uofm:*" AND RELS_EXT_hasModel_uri_mt:"info:fedora/islandora:collectionCModel")';
     $solr_params = array("fl"=>"PID,dc.title");
     try{
-      $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+      $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
       $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
-        
+
       $solr->setCreateDocuments(0);
       $results = $solr->search($solr_query,0,100,$solr_params);
-                
+
       $tmpobjects = array();
       if ($results){
         $solr_results = json_decode($results->getRawResponse(), TRUE);
@@ -273,15 +177,15 @@ EOF;
         usort($tmpobjects,create_function('$a,$b','return strcasecmp($a["title"],$b["title"]);'));
         $objects = array();
         $cl = "";
-        // Move the items so each letter that exists is an array of those collections 
-        array_walk($tmpobjects, function($v,$k) use (&$objects,&$cl) { if (strtolower(substr($v['title'],0,1)) != $cl){ $cl = strtolower(substr($v['title'],0,1));} if (array_key_exists($cl,$objects) && !is_array($objects[$cl])){ $objects[$cl] = array(); } $objects[$cl][] = $v; });      
+        // Move the items so each letter that exists is an array of those collections
+        array_walk($tmpobjects, function($v,$k) use (&$objects,&$cl) { if (strtolower(substr($v['title'],0,1)) != $cl){ $cl = strtolower(substr($v['title'],0,1));} if (array_key_exists($cl,$objects) && !is_array($objects[$cl])){ $objects[$cl] = array(); } $objects[$cl][] = $v; });
         $tmp = "";
         foreach ($objects as $letter => $collections){
           $odd = array();
           $even = array();
           $both = array(&$even, &$odd);
           // Split items to even and odd array : http://stackoverflow.com/a/12405336
-          array_walk($collections, function($v, $k) use ($both) { $both[$k % 2][] = $v; });  
+          array_walk($collections, function($v, $k) use ($both) { $both[$k % 2][] = $v; });
           $both = array_merge($even,$odd);
           $tmp .= "<div class=\"coll_letter_box\"><a name=\"coll_$letter\" class=\"collection_spacer\"></a>";
           $tmp .= "<div class=\"column_50 first collections\">";
@@ -297,7 +201,7 @@ EOF;
           $tmp .= "</div> <!-- /.column_50 -->\n";
           $tmp .= "</div> <!-- /.coll_letter_box -->\n";
         }
-        
+
         $output .= "<span class=\"coll_alpha_list\">";
         for ($x=97; $x<122; $x+=1){
           if (array_key_exists(chr($x),$objects)){
@@ -313,7 +217,7 @@ EOF;
       watchdog('Manidora','Homepage blocks error, Solr query threw (%e)',array('%e'=> $e->getMessage()));
       $output .= "Unable to retrieve collections";
     }
-      
+
     $output .=<<<EOF
     </div><!-- /#home-panel-collections -->
     <div class="home-panel" id="home-panel-formats">
@@ -362,7 +266,7 @@ EOF;
 EOF;
 
   return $output;
-  
+
 }
 
 /**
@@ -375,7 +279,7 @@ function __manidora_homepage_thumbnail_content(){
   $output = "";
   if (!is_null($thumbs)){ // If its null we display nothing.
     $t_array = explode('~',urldecode($thumbs));
-    /** 
+    /**
      * This is temporary for debugging, we extend the array by duplicating it to see the full selection.
      */
     if (count($t_array)<$num_pics){
@@ -386,7 +290,7 @@ function __manidora_homepage_thumbnail_content(){
       }
       $t_array = $new_arr;
     }
-    /** 
+    /**
      * End temporary extension
      */
     if (count($t_array)>=$num_pics){
