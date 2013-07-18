@@ -5,6 +5,9 @@
  * Custom University of Manitoba hacks for Islandora.
  */
 
+// Includes functions for blocks.
+require_once dirname(__FILE__) . '/includes/blocks.inc'; 
+
 /**
  * API call to insert a link to a printer friendly version of something.
  *
