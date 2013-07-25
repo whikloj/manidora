@@ -13,6 +13,9 @@
    $blocks['manidora_homepage_tabs'] = array(
      'info' => t('Manidora homepage tabs'),
    );
+   $blocks['manidora_homepage_thumbnails'] = array(
+     'info' => t('Manidora homepage thumbnails'),
+   );
   }
   
   /**
@@ -24,6 +27,10 @@
       case 'manidora_homepage_tabs':
         $block['subject'] = 'Homepage Tabs';
         $block['content'] = __manidora_homepage_tabs_content();
+        break;
+      case 'manidora_homepage_thumbnails':
+        $block['subject'] = 'Homepage Thumbnails';
+        $block['content'] = __manidora_homepage_thumbnail_content();
         break;
     }
   }
@@ -251,3 +258,43 @@ EOF;
     return $output;
 
   }
+
+/**
+ * Display 16 thumbnails on the homepage from those selected
+ */
+function __manidora_homepage_thumbnail_content(){
+  $num_pics = 16; // How many thumbnails are we displaying
+  $num_rows = 2; // Figure out when to break
+  $thumbs = variable_get('manidora_thumbnail_pids'); // Get the pids from the variable
+  $output = "";
+  if (!is_null($thumbs)){ // If its null we display nothing.
+    $t_array = explode('~',urldecode($thumbs));
+    /** 
+     * This is temporary for debugging, we extend the array by duplicating it to see the full selection.
+     */
+    if (count($t_array)<$num_pics){
+      $dup = intval($num_pics / count($t_array)) + 1;
+      $new_arr = array();
+      for ($foo = 0; $foo < $dup; $foo += 1){
+        $new_arr = array_merge($new_arr,$t_array);
+      }
+      $t_array = $new_arr;
+    }
+    /** 
+     * End temporary extension
+     */
+    if (count($t_array)>=$num_pics){
+      $picked = array_rand($t_array,$num_pics);
+      $output = '<div id="manidora-homepage-thumbs">';
+      $count = 0;
+      foreach ($picked as $pid){
+        $output .= '<a href="' . url("islandora/object/" . urlencode($t_array[$pid])) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . urlencode($t_array[$pid]) . "/datastream/TN/view") . '" alt="Object '. $t_array[$pid] .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
+        $count += 1;
+      }
+      $output .= "</div> <!-- /#manidora-homepage-thumbs -->\n";
+    }
+  }
+  return $output;
+}
+    
+  

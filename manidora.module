@@ -106,6 +106,12 @@ function manidora_menu() {
     'access arguments' => array(FEDORA_VIEW_OBJECTS),
   );
   $items['admin/islandora/manidora'] = array(
+    'title' => t('Manidora'),
+    'description' => t('Configure the UofM customization module!'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/islandora/manidora/settings'] = array(
     'title' => 'Manidora',
     'description' => 'Configure the UofM customization module.',
     'page callback' => 'drupal_get_form',
@@ -135,7 +141,22 @@ function manidora_menu() {
     'access arguments' => array(FEDORA_VIEW_OBJECTS, 2),
     'load arguments' => array(2),
   );
-
+  $items['admin/islandora/manidora/homepage'] = array(
+    'title' => t('Manidora Homepage images'),
+    'description' => t('Configure the selected homepage thumbnails.'),
+    'page callback' => 'drupal_get_form',
+    'access arguments' => array('administer site configuration'),
+    'page arguments' => array('manidora_homepage_thumbnail_admin'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/islandora/manidora/homepage/%/remove'] = array(
+    'title' => t('Manidora Homepage images - removal PID path'),
+    'page callback' => 'manidora_homepage_thumbnail_remove',
+    'page arguments' => array(4),
+    'type'=> MENU_CALLBACK,
+    'access arguments' => array('administer site configuration'),
+  );
+  
   return $items;
 }
 
@@ -1045,4 +1066,124 @@ function manidora_process_islandora_large_image(&$variables) {
   // Override the default text for UofM.
   $islandora_object = $variables['islandora_object'];
   $variables['image_clip'] = "";
+}
+
+/**
+ * Admin form for homepage thumbnails
+ */
+function manidora_homepage_thumbnail_admin($form, &$form_state){
+  $form = array();
+  $thumbnails = variable_get('manidora_thumbnail_pids',NULL);
+  $headers = array('pid' => 'PID', 'image' => 'Preview','opers' => 'Operations');
+  $options = array();
+  if (!is_null($thumbnails) && strlen(trim($thumbnails))>0){
+    $thumb_array = explode('~',$thumbnails);
+    foreach($thumb_array as $uupid){
+      $pid = urldecode($uupid);
+      $options[] = array('pid' => $pid, 'image' => '<img style="width:63px;height:63px;" src="' . url('islandora/object/' . $pid . '/datastream/TN/view') . '" alt="thumbnail for ' . $pid . '"/>', 'opers' => l('Remove','admin/islandora/manidora/homepage/' . $pid . '/remove'));
+    }
+  }
+    $form['manidora_homepage_thumbnails_add'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Enter the new pid here'),
+      '#description' => t('To add a new image to the homepage, add the pid here'),
+      '#length' => 30,
+      '#maxlength' => 255,
+      '#default_value' => '',
+    );
+    $form['manidora_homepage_thumbnails_add_btn'] = array(
+      '#type' => 'submit',
+      '#value' => 'Add',
+    );
+  
+  
+  $form['manidora_homepage_title'] = array(
+    '#markup' => '<p><b>'.t('Homepage images') .'</b></p>',
+  );
+  if (count($options)>0){
+    $form['manidora_homepage_thumbnails'] = array(
+      '#type' => 'tableselect',
+      '#title' => t('Homepage images'),
+      '#description' => t('Holds the pids to rotate on the homepage'),
+      '#multiple' => TRUE,
+      '#options' => $options,
+      '#empty' => t('There are no PIDs currently displayed on the homepage.'),
+      '#header' => $headers,
+    );
+  } else {
+    $form['manidora_homepage_thumbnails'] = array(
+      '#title' => t('Homepage images'),
+      '#description' => t('Holds the pids to rotate on the homepage'),
+      '#markup' => '<p>' . t('There are no images currently displayed on the homepage, add one below') . '</p>',
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Validate the PID entered to be added to the homepage
+ */
+function manidora_homepage_thumbnail_admin_validate($form, &$form_state){
+  $thumbnails = variable_get('manidora_thumbnail_pids');
+  $pids = array();
+  if (!is_null($thumbnails)){
+    $pids = explode('~',$thumbnails);
+  }
+  $newpid = $form_state['values']['manidora_homepage_thumbnails_add'];
+  if (strlen(trim($newpid)) > 0 && preg_match('/^\w+:\w+$/',$newpid)){
+    if (in_array(urlencode($newpid),$pids)){
+      form_error($form,t('This image is already included on the homepage'));
+    }
+    try {
+      $fedora_object = islandora_object_load($newpid);
+      if (!is_a($fedora_object,'IslandoraFedoraObject')){
+        form_error($form,t('Cannot load this PID, please ensure it is in the Fedora Repository.'));
+      } else {
+        $tn = $fedora_object->getDatastream('TN');
+        ob_start();
+        print_r($tn);
+        $v = ob_get_clean();
+        watchdog('Manidora','datastream <pre>%V</pre>',array('%V'=>$v));
+        if (!$tn){
+          form_error($form,t('PID (' . $newpid . ') does not have a TN datastream.'));
+        }
+      }
+    } catch (Exception $e){
+      watchdog('Manidora','Homepage Thumbnail PID error (%e)',array('%e'=>$e->getMessage));
+      form_error($form,t('This PID seems invalid (' . $e->getMessage() . ')'));
+    }
+    
+  } else {
+    form_error($form,t('The PID must be of the correct format'));
+  }
+}
+/**
+ * Submit the Homepage Image addition
+ */
+function manidora_homepage_thumbnail_admin_submit($form, &$form_state){
+  $thumbnails = variable_get('manidora_thumbnail_pids',"");
+  if (strlen($thumbnails)>0){
+    $thumbnails .= '~';
+  }
+  $thumbnails .= urlencode($form_state['values']['manidora_homepage_thumbnails_add']);
+  variable_set('manidora_thumbnail_pids',$thumbnails);
+  drupal_set_message(t('PID added successfully'),'status',FALSE);
+}
+
+/**
+ * Remove PID from homepage collage
+ */
+function manidora_homepage_thumbnail_remove($pid = ""){
+  if (strlen($pid)>0){
+    $thumbnails = variable_get('manidora_thumbnail_pids',"");
+     if (strlen($thumbnails)>0){
+       $thumbs = explode('~',$thumbnails);
+       $newThumbs = array_filter($thumbs,create_function('$v','$pid = "' . $pid . '"; return ($v != urlencode($pid));'));
+       $thumbnails = implode('~',$newThumbs);
+     }
+     variable_set('manidora_thumbnail_pids',$thumbnails);
+     drupal_set_message(t('Image ' . $pid . ' removed'),'status',FALSE);
+  }
+  drupal_goto('admin/islandora/manidora/homepage');
 }
