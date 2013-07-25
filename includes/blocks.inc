@@ -16,6 +16,7 @@
    $blocks['manidora_homepage_thumbnails'] = array(
      'info' => t('Manidora homepage thumbnails'),
    );
+   return $blocks;
   }
   
   /**
@@ -33,6 +34,7 @@
         $block['content'] = __manidora_homepage_thumbnail_content();
         break;
     }
+    return $block;
   }
   
   function __manidora_homepage_tabs_content(){
