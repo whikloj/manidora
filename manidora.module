@@ -81,7 +81,7 @@ function manidora_preprocess_print(&$variables) {
 function manidora_menu() {
   $items = array();
   $items['islandora/object/%islandora_object/manitoba_metadata'] = array(
-    'title' => 'Metadata',
+    'title' => 'Details',
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'manidora_retrieve_metadata_form',
     'page arguments' => array(2),
