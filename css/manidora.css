@@ -24,3 +24,11 @@
   font-size: 90%;
   margin-bottom: 1em;
 }
+
+#home-panel-collections .collection_spacer {
+    display:block;
+}
+
+.coll_letter_box {
+    clear:left;
+}
