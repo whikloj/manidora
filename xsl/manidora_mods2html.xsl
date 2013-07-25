@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" version="1.0">
   <xsl:param name="islandoraUrl"/>
+  <xsl:param name="collections"/>
   <xsl:variable name="smallcase">abcdefghijklmnopqrstuvwxyz</xsl:variable>
   <xsl:variable name="uppercase">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
 
@@ -14,42 +15,55 @@
   <xsl:param name="language_field">language_mt</xsl:param>
   <xsl:param name="member_field">RELS_EXT_isMemberOfCollection_uri_ms</xsl:param>
   <xsl:param name="related_field">related_item_title_mt</xsl:param>
+
   
   <xsl:template match="mods:mods">
-    <div>
-      <ul class="manidora-metadata">
-        <li>
-          <strong>Title: </strong>
-          <xsl:value-of select="mods:titleInfo/mods:title"></xsl:value-of>
-        </li>
-        <xsl:apply-templates select="mods:identifier"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>
+    <table class="manidora-metadata">
+        <tr>
+            <td class="label">Title</td>
+            <td><xsl:value-of select="mods:titleInfo/mods:title"/></td>
+        </tr>
+        <xsl:if test="string-length($collections) &gt; 0">
+          <tr>
+            <td class="label">Collections</td>
+            <td><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></td>
+          </tr>
+        </xsl:if>
+        <!--<xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>-->
         <xsl:apply-templates select="mods:abstract"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:name"></xsl:apply-templates>
+        <!--<xsl:apply-templates select="mods:name"></xsl:apply-templates>-->
         <xsl:apply-templates select="mods:typeOfResource"></xsl:apply-templates>
         <xsl:apply-templates select="mods:subject/mods:temporal"></xsl:apply-templates>
         <xsl:apply-templates select="mods:subject"></xsl:apply-templates>
         <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic"></xsl:apply-templates>
         <xsl:apply-templates select="mods:language"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:note[@type!=&quot;cid&quot; and @type != &quot;objectID&quot; and @type != &quot;imageID&quot;]"></xsl:apply-templates>
         <xsl:apply-templates select="mods:location/mods:physicalLocation"></xsl:apply-templates>
         <xsl:apply-templates select="mods:location/mods:shelfLocator"></xsl:apply-templates>
         <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:identifier[@type=&quot;local&quot;]"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:identifier[@type=&quot;hdl&quot;]"></xsl:apply-templates>        
         <xsl:apply-templates select="mods:accessCondition"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:note"></xsl:apply-templates>
+
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail"></xsl:apply-templates>
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start"></xsl:apply-templates>
         <xsl:apply-templates select="mods:originInfo/mods:issuance"></xsl:apply-templates>
         <xsl:apply-templates select="mods:originInfo/mods:frequency"></xsl:apply-templates>
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date"></xsl:apply-templates>
-       </ul>
-    </div>
+    </table>
   </xsl:template>
-  <xsl:template match="mods:abstract">
-    <li>
-      <strong>Description: </strong>
-      <xsl:value-of select="text()"></xsl:value-of>
-    </li>
+  
+  <!-- BASIC OUTPUT TEMPLATE -->
+  <xsl:template name="basic_output">
+      <xsl:param name="label"/>
+      <xsl:param name="content" />
+      <tr>
+          <td class="label"><xsl:value-of select="$label"/>:</td>
+          <td><xsl:copy-of select="$content"/></td>
+      </tr>
   </xsl:template>
+  <!-- BASIC OUTPUT TEMPLATE -->
+ 
 
   <xsl:template mode="search_link" match="text()">
     <xsl:param name="field"/>
@@ -64,31 +78,34 @@
       <xsl:text>%22</xsl:text>
     </xsl:attribute>
   </xsl:template>
+  
+  <xsl:template mode="search_link2" match="text()">
+    <xsl:param name="field"/>
+    <xsl:variable name="textValue" select="normalize-space(.)"/>
+    
+    <a>
+        <xsl:attribute name="target">_parent</xsl:attribute>
+        <xsl:attribute name="href">
+            <xsl:value-of select="$islandoraUrl"/>
+          <xsl:value-of select="$searchUrl"/>
+          <xsl:value-of select="$field"/>
+          <xsl:text>%3A%22</xsl:text>
+          <xsl:value-of select="$textValue"/>
+          <xsl:text>%22</xsl:text>
+        </xsl:attribute>
+        <xsl:value-of select="."/>
+    </a>
+  </xsl:template>
 
   <xsl:template match="mods:typeOfResource">
-    <li>
-      <strong>Format: </strong>
-      <xsl:element name="a">
-        <xsl:attribute name="target">_parent</xsl:attribute>
-        <xsl:apply-templates mode="search_link" select="text()">
-          <xsl:with-param name="field" select="$type_of_resource_field"/>
-        </xsl:apply-templates>
-        <xsl:value-of select="text()"></xsl:value-of>
-      </xsl:element>
-    </li>
+      <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Format</xsl:with-param>
+          <xsl:with-param name="content"><xsl:apply-templates mode="search_link2" match="text()">
+              <xsl:with-param name="field" select="$type_of_resource_field"/>
+          </xsl:apply-templates></xsl:with-param>
+      </xsl:call-template>
   </xsl:template>
-  <xsl:template match="mods:name[@type = &apos;personal&apos;]" mode="subject">
-    <li>
-      <strong>Subject - Personal: </strong>
-      <xsl:element name="a">
-        <xsl:attribute name="target">_parent</xsl:attribute>
-        <xsl:apply-templates mode="search_link" select="mods:namePart/text()">
-          <xsl:with-param name="field" select="$subject_name_field"/>
-        </xsl:apply-templates>
-        <xsl:value-of select="mods:namePart"></xsl:value-of>
-      </xsl:element>
-    </li>
-  </xsl:template>
+
   <xsl:template match="mods:name">
     <xsl:choose>
       <xsl:when test="@type = &apos;organization&apos;">
@@ -119,107 +136,124 @@
       </xsl:when>
     </xsl:choose>
   </xsl:template>
-  <xsl:template match="mods:relatedItem">
-    <xsl:if test="@type = &apos;host&apos; and mods:titleInfo/mods:title">
-      <li>
-        <strong>Collection: </strong>
-        <xsl:element name="a">
-          <xsl:attribute name="href">
-            <xsl:choose>
-              <xsl:when test="mods:identifier">
-                <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $member_field, &apos;%3A%22&apos;,normalize-space(mods:identifier), &apos;%22&apos;)"></xsl:value-of>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $related_field, &apos;%3A%22&apos;,normalize-space(mods:titleInfo/mods:title), &apos;%22&apos;)"></xsl:value-of>
-              </xsl:otherwise>
-            </xsl:choose>
-          </xsl:attribute>
-          <xsl:attribute name="target">_parent</xsl:attribute>
-          <xsl:value-of select="mods:titleInfo/mods:title"></xsl:value-of>
-        </xsl:element>
-      </li>
-    </xsl:if>
+  
+  <xsl:template match="mods:relatedItem[@type = &apos;host&apos; and mods:titleInfo/mods:title]">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Collection</xsl:with-param>
+        <xsl:with-param name="content"><a>
+              <xsl:attribute name="href">
+                  <xsl:choose>
+                      <xsl:when test="mods:identifier">
+                          <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $member_field, &apos;%3A%22&apos;,normalize-space(mods:identifier), &apos;%22&apos;)"></xsl:value-of>
+                      </xsl:when>
+                      <xsl:otherwise>
+                          <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $related_field, &apos;%3A%22&apos;,normalize-space(mods:titleInfo/mods:title), &apos;%22&apos;)"></xsl:value-of>
+                      </xsl:otherwise>
+                  </xsl:choose>
+              </xsl:attribute>
+              <xsl:attribute name="target">_parent</xsl:attribute>
+              <xsl:value-of select="mods:titleInfo/mods:title"/></a>
+         </xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
-  <xsl:template match="mods:relatedItem/mods:part/mods:detail">
-    <xsl:choose>
-      <xsl:when test="@type = &apos;volume&apos;">
-         <li>
-           <strong>Volume: </strong>
-           <xsl:value-of select="mods:number"></xsl:value-of>
-         </li>
-      </xsl:when>
-      <xsl:when test="@type = &apos;issue&apos;">
-        <li>
-          <strong>Issue: </strong>
-            <xsl:value-of select="mods:number"></xsl:value-of>
-        </li>
-      </xsl:when>
-    </xsl:choose>
+  
+  <!-- BASIC template output -->
+  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type=&quot;volume&quot;]">
+      <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Volume</xsl:with-param>
+          <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
+      </xsl:call-template>
   </xsl:template>
+  
+  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type=&quot;issue&quot;]">
+    <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Issue</xsl:with-param>
+        <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+      
+  <xsl:template match="mods:abstract">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Description</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+  
   <xsl:template match="mods:relatedItem/mods:part/mods:extent/mods:start">
-    <li>
-      <strong>Page Start: </strong>
-      <xsl:value-of select="text()"></xsl:value-of>
-    </li>
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Page Start</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
+  
   <xsl:template match="mods:relatedItem/mods:part/mods:date">
-    <li>
-      <strong>Date: </strong>
-       <xsl:value-of select="text()"></xsl:value-of>
-    </li>
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Date</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
+  
   <xsl:template match="mods:originInfo/mods:issuance">
-    <li>
-      <strong>Issuance: </strong>
-      <xsl:value-of select="text()"></xsl:value-of>
-    </li>
-  </xsl:template>
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Issuance</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>  </xsl:template>
+  
   <xsl:template match="mods:originInfo/mods:frequency">
-    <li>
-      <strong>Frequency: </strong>
-      <xsl:value-of select="text()"></xsl:value-of>
-    </li>
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Frequency</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
-  <xsl:template match="mods:identifier">
-    <xsl:choose>
-      <xsl:when test="@type = &apos;local&apos;">
-        <li>
-          <strong>Local Identifier: </strong>
-          <xsl:value-of select="text()"></xsl:value-of>
-        </li>
-      </xsl:when>
-      <xsl:when test="@type = &apos;hdl&apos;">
-        <li>
-          <strong>Handle: </strong>
-          <xsl:element name="a">
-            <xsl:attribute name="target">_parent</xsl:attribute>
-            <xsl:attribute name="href">http://hdl.handle.net/<xsl:value-of select="normalize-space(text())"></xsl:value-of>
-            </xsl:attribute>
-	  http://hdl.handle.net/<xsl:value-of select="normalize-space(text())"></xsl:value-of>
-          </xsl:element>
-        </li>
-      </xsl:when>
-    </xsl:choose>
+
+  <xsl:template match="mods:identifier[@type=&quot;local&quot;]">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Local Identifier</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
+
+  <xsl:template match="mods:identifier[@type=&quot;hdl&quot;]">
+      <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Handle</xsl:with-param>
+          <xsl:with-param name="content"><a>
+              <xsl:attribute name="target">_parent</xsl:attribute>
+              <xsl:attribute name="href">http://hdl.handle.net/<xsl:value-of select="normalize-space(text())"/></xsl:attribute>
+	          http://hdl.handle.net/<xsl:value-of select="normalize-space(text())"/></a></xsl:with-param>
+	</xsl:call-template>
+  </xsl:template>
+  
   <xsl:template match="mods:subject">
-    <xsl:if test="mods:topic">
-      <li>
-        <strong>Subject - Topics: </strong>
-        <xsl:for-each select="mods:topic">
-          <xsl:element name="a">
-            <xsl:attribute name="target">_parent</xsl:attribute>
-            <xsl:apply-templates mode="search_link" select="text()">
-              <xsl:with-param name="field" select="$subject_topic_field"/>
-            </xsl:apply-templates>
-            <xsl:value-of select="text()"></xsl:value-of>
-          </xsl:element> 
-      </xsl:for-each>
-      </li>
+    <xsl:if test="mods:topic or mods:name[@type=&quot;personal&quot;] or mods:titleInfo">
+      <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Subjects</xsl:with-param>
+          <xsl:with-param name="content">
+            <xsl:for-each select="mods:topic">
+              <xsl:apply-templates mode="search_link2" select="text()">
+                <xsl:with-param name="field" select="$subject_topic_field"/>
+              </xsl:apply-templates>
+              <xsl:if test="position() &lt; last() or mods:name[@type=&quot;personal&quot;] or mods:titleInfo"><xsl:text>, </xsl:text></xsl:if>
+            </xsl:for-each>
+            <xsl:for-each select="mods:name[@type=&quot;personal&quot;]">
+              <xsl:apply-templates mode="search_link2" select="mods:namePart/text()">
+                <xsl:with-param name="field" select="$subject_name_field"/>
+              </xsl:apply-templates>
+              <xsl:if test="position() &lt; last() or mods:titleInfo"><xsl:text>, </xsl:text></xsl:if>
+            </xsl:for-each>
+            <xsl:for-each select="mods:titleInfo">
+              <xsl:apply-templates mode="search_link2" select="mods:title/text()">
+                <xsl:with-param name="field" select="$subject_title_field"/>
+              </xsl:apply-templates>
+              <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
+            </xsl:for-each>
+          </xsl:with-param>
+        </xsl:call-template>
     </xsl:if>
-    <xsl:apply-templates mode="subject" select="mods:name[@type=&apos;personal&apos;]"/>
-    <xsl:apply-templates mode="subjectTitle" select="mods:titleInfo"/>
+<!--    <xsl:apply-templates mode="subject" select="mods:name[@type=&apos;personal&apos;]"/>
+    <xsl:apply-templates mode="subjectTitle" select="mods:titleInfo"/>-->
   </xsl:template>
-  <xsl:template match="mods:titleInfo" mode="subjectTitle">
+  <!-- Moved into above template -->
+<!--  <xsl:template match="mods:titleInfo" mode="subjectTitle">
     <li>
       <strong>Subject - Title: </strong>
       <xsl:element name="a">
@@ -231,105 +265,116 @@
       </xsl:element>
     </li>
   </xsl:template>
+  <xsl:template match="mods:name[@type = &apos;personal&apos;]" mode="subject">
+    <li>
+      <strong>Subject - Personal: </strong>
+      <xsl:element name="a">
+        <xsl:attribute name="target">_parent</xsl:attribute>
+        <xsl:apply-templates mode="search_link" select="mods:namePart/text()">
+          <xsl:with-param name="field" select="$subject_name_field"/>
+        </xsl:apply-templates>
+        <xsl:value-of select="mods:namePart"></xsl:value-of>
+      </xsl:element>
+    </li>
+  </xsl:template>-->
+  
   <xsl:template match="mods:hierarchicalGeographic">
     <xsl:if test="mods:country or mods:province or mods:city">
-      <li>
-        <strong>Subject - Geographic: </strong>
-        <xsl:if test="mods:country">
-          <xsl:value-of select="normalize-space(mods:country)"></xsl:value-of>
-          <xsl:if test="mods:province or mods:city">, </xsl:if>
-        </xsl:if>
-        <xsl:if test="mods:province">
-          <xsl:value-of select="normalize-space(mods:province)"></xsl:value-of>
-          <xsl:if test="mods:city">, </xsl:if>
-        </xsl:if>
-        <xsl:value-of select="normalize-space(mods:city)"></xsl:value-of>
-      </li>
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Place</xsl:with-param>
+        <xsl:with-param name="content">
+          <xsl:if test="mods:country">
+            <xsl:value-of select="normalize-space(mods:country)"/>
+            <xsl:if test="mods:province or mods:city">, </xsl:if>
+          </xsl:if>
+          <xsl:if test="mods:province">
+            <xsl:value-of select="normalize-space(mods:province)"/>
+            <xsl:if test="mods:city">, </xsl:if>
+          </xsl:if>
+          <xsl:value-of select="normalize-space(mods:city)"></xsl:value-of>
+        </xsl:with-param>
+      </xsl:call-template>
     </xsl:if>
   </xsl:template>
+
   <xsl:template match="mods:temporal">
-    <li>
-      <strong>Subject - Temporal: </strong>
-      <xsl:value-of select="text()"></xsl:value-of>
-    </li>
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Date</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
+
   <xsl:template match="mods:language">
-    <li>
-      <strong>Languages: </strong>
-      <xsl:for-each select="mods:languageTerm">
-        <xsl:element name="a">
-          <xsl:attribute name="target">_parent</xsl:attribute>
-          <xsl:apply-templates mode="search_link" select="text()">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Languages</xsl:with-param>
+      <xsl:with-param name="content">
+        <xsl:for-each select="mods:languageTerm">
+          <xsl:apply-templates mode="search_link2" select="text()">
             <xsl:with-param name="field" select="$language_field"/>
           </xsl:apply-templates>
-          <xsl:value-of select="text()"></xsl:value-of>
-        </xsl:element> 
-	</xsl:for-each>
-    </li>
+          <xsl:if test="position() &gt; last()">, </xsl:if>
+        </xsl:for-each>
+      </xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
-  <xsl:template match="mods:physicalLocation">
-    <li>
-      <strong>Physical Location: </strong>
-      <xsl:value-of select="text()"></xsl:value-of>
-    </li>
-  </xsl:template>
-  <xsl:template match="mods:shelfLocator">
-    <li>
-      <strong>Shelf Locator: </strong>
-      <xsl:value-of select="text()"></xsl:value-of>
-    </li>
-  </xsl:template>
-  <xsl:template match="mods:internetMediaType">
-    <li>
-      <strong>Original File MIME Type: </strong>
-      <xsl:value-of select="text()"></xsl:value-of>
-    </li>
-  </xsl:template>
-  <xsl:template match="mods:accessCondition">
-    <li>
-      <xsl:choose>
-        <xsl:when test="normalize-space(@type) = &apos;Creative Commons License&apos;">
-        <div class="manidora-commons-license">
-      <xsl:element name="a">
-            <xsl:attribute name="rel">license</xsl:attribute>
-            <xsl:attribute name="target">_new</xsl:attribute>
-            <xsl:attribute name="href">
-              <xsl:value-of select="concat(&apos;http://creativecommons.org/licenses/&apos;,normalize-space(text()))"></xsl:value-of>
-            </xsl:attribute>
-            <xsl:element name="img">
-              <xsl:attribute name="alt">Creative Commons License</xsl:attribute>
-              <xsl:attribute name="style">border-width:0</xsl:attribute>
-              <xsl:attribute name="src">
-                <xsl:value-of select="concat(&apos;http://i.creativecommons.org/l/&apos;,normalize-space(text()),&apos;88x31.png&apos;)"></xsl:value-of>
-              </xsl:attribute>
-            </xsl:element>
-          </xsl:element>
-              This work is licensed under a
 
-                <xsl:element name="a">
-            <xsl:attribute name="rel">license</xsl:attribute>
-            <xsl:attribute name="target">_new</xsl:attribute>
-            <xsl:attribute name="href">
-              <xsl:value-of select="concat(&apos;http://creativecommons.org/licenses/&apos;,normalize-space(text()))"></xsl:value-of>
-            </xsl:attribute>
-		  Creative Commons License
-		</xsl:element>
-        </div>
-        </xsl:when>
-        <xsl:otherwise>
-          <strong>
-            <xsl:value-of select="concat(translate(substring(normalize-space(@type),1,1), $smallcase, $uppercase),substring(normalize-space(@type),2))"></xsl:value-of>: </strong>
-          <xsl:value-of select="text()"></xsl:value-of>
-        </xsl:otherwise>
-      </xsl:choose>
-    </li>
+  <xsl:template match="mods:physicalLocation">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Physical Location</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
+
+  <xsl:template match="mods:shelfLocator">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Shelf Location</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="mods:internetMediaType">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Original File MIME Type</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="mods:accessCondition">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Copyright</xsl:with-param>
+      <xsl:with-param name="content">
+        <xsl:choose>
+          <xsl:when test="normalize-space(@type) = &apos;Creative Commons License&apos;">
+            <div class="manidora-commons-license">
+              <a rel="license" target="_new">
+                <xsl:attribute name="href"><xsl:value-of select="concat(&apos;http://creativecommons.org/licenses/&apos;,normalize-space(text()))"/></xsl:attribute>
+                <img alt="Creative Commons License" style="border-width:0;">
+                  <xsl:attribute name="src"><xsl:value-of select="concat(&apos;http://i.creativecommons.org/l/&apos;,normalize-space(text()),&apos;88x31.png&apos;)"/></xsl:attribute>
+                </img>
+              </a>
+              This work is licensed under a <a rel="license" target="_new">
+                <xsl:attribute name="href"><xsl:value-of select="concat(&apos;http://creativecommons.org/licenses/&apos;,normalize-space(text()))"/></xsl:attribute>
+                Creative Commons License</a>
+            </div>
+          </xsl:when>
+          <xsl:otherwise>
+            <strong>
+              <xsl:value-of select="concat(translate(substring(normalize-space(@type),1,1), $smallcase, $uppercase),substring(normalize-space(@type),2))"/>: </strong>
+              <xsl:value-of select="text()"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <!--<xsl:template match="mods:note[@type != &quot;cid&quot; or @type != &quot;objectID&quot; or @type != &quot;imageID&quot;]">-->
   <xsl:template match="mods:note">
-    <li>
-      <strong>Note: </strong>
-      <xsl:value-of select="text()"></xsl:value-of>
-    </li>
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Note</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
+
   <xsl:template match="mods:role/mods:roleTerm">
     <xsl:choose>
       <xsl:when test="normalize-space(text()) = &apos;act&apos;">Actor</xsl:when>
