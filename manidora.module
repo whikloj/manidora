@@ -183,7 +183,7 @@ function manidora_menu_alter(&$items) {
  *   The object you wish to retrive formatted metadata from
  */
 function manidora_retrieve_metadata_form($object) {
-  drupal_set_title(t("@label Metadata", array('@label' => $object->label)));
+  drupal_set_title($object->label . " Metadata");
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
   $output = manidora_mods_transform($object);
@@ -469,7 +469,7 @@ function manidora_download_table($islandora_object) {
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($islandora_object));
 
-  drupal_set_title(t("@label Downloads", array('@label' => $islandora_object->label)));
+  drupal_set_title($islandora_object->label ." Downloads");
 
   $headers = array(
     'ID' => t('ID'),
