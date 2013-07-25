@@ -469,7 +469,21 @@ function manidora_download_table($islandora_object) {
       );
     }
   }
-
+  
+  // We want TIFFS, JPEG and PDFs at the top of the Downloads list.
+  $topA = array();
+  $bottomA = array();
+  foreach ($rows as $row){
+    if (preg_match('/>(JPG|PDF|TIFF|OBJ)</',$row['ID'])){
+      array_push($topA,array('data'=>$row, 'class'=>array('important-download')));
+    } else {
+      array_push($bottomA,array('data'=>$row));
+    }
+  }
+  sort($topA);
+  sort($bottomA);
+  $rows = array_merge($topA,$bottomA);
+  
   $table = array(
     '#theme' => 'table',
     '#header' => $headers,
