@@ -1044,5 +1044,5 @@ function manidora_islandora_collectioncmodel_islandora_view_object(AbstractObjec
 function manidora_process_islandora_large_image(&$variables) {
   // Override the default text for UofM.
   $islandora_object = $variables['islandora_object'];
-  $variables['image_clip'] = l(t('Printer Friendly Version'), "islandora/object/{$islandora_object->id}/print", array('attributes' => array('title' => 'Printer Friendly Version', 'id' => 'clip')));
+  $variables['image_clip'] = "";
 }
