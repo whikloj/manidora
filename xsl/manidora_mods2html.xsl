@@ -42,8 +42,10 @@
         <xsl:apply-templates select="mods:location/mods:shelfLocator"></xsl:apply-templates>
         <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType"></xsl:apply-templates>
         <xsl:apply-templates select="mods:identifier[@type=&quot;local&quot;]"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
         <xsl:apply-templates select="mods:identifier[@type=&quot;hdl&quot;]"></xsl:apply-templates>        
-        <xsl:apply-templates select="mods:accessCondition"></xsl:apply-templates>
+        
+        <xsl:apply-templates select="mods:accessCondition"></xsl:apply-templates><!-- Copyright -->
 
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail"></xsl:apply-templates>
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start"></xsl:apply-templates>
@@ -185,6 +187,13 @@
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
+
+  <xsl:template match="mods:relatedItem/mods:location/mods:url">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Source</xsl:with-param>
+      <xsl:with-param name="content"><a><xsl:attribute name="href"><xsl:value-of select="text()"/></xsl:attribute><xsl:value-of select="text()"/></a></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
   
   <xsl:template match="mods:relatedItem/mods:part/mods:date">
     <xsl:call-template name="basic_output">
@@ -215,7 +224,7 @@
 
   <xsl:template match="mods:identifier[@type=&quot;hdl&quot;]">
       <xsl:call-template name="basic_output">
-          <xsl:with-param name="label">Handle</xsl:with-param>
+          <xsl:with-param name="label">Permalink</xsl:with-param>
           <xsl:with-param name="content"><a>
               <xsl:attribute name="target">_parent</xsl:attribute>
               <xsl:attribute name="href">http://hdl.handle.net/<xsl:value-of select="normalize-space(text())"/></xsl:attribute>
