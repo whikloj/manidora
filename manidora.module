@@ -179,16 +179,24 @@ function manidora_menu_alter(&$items) {
 /**
  * Fetches MODS metadata as form encoded markup.
  *
- * @param IslandoraObject $object
+ * @param AbstractObject $object
  *   The object you wish to retrive formatted metadata from
  */
-function manidora_retrieve_metadata_form($object) {
+function manidora_retrieve_metadata_form(AbstractObject $object) {
   drupal_set_title($object->label . " Metadata");
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
-  $output = manidora_mods_transform($object);
-
-  if ($output) {
+  $output = '';
+  $form = array();
+  // Video and audio objects get PBCORE.
+  if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models)) {
+    $output = manidora_pbcore_metadata($object);
+  }
+  // Grab MODS otherwise.
+  else {
+    $output = manidora_mods_transform($object);
+  }
+  if (!empty($output)) {
     $form = array(
       '#type' => 'item',
       '#markup' => $output,
@@ -198,15 +206,24 @@ function manidora_retrieve_metadata_form($object) {
   else {
     drupal_set_message(t('A transformation error has occured!'), 'error');
   }
-  return $form;
+  return $form;  
 }
 
 /**
  * Implements hook_access().
  */
-function manidora_metadata_access($object) {
-  if (!in_array('islandora:collectionCModel', $object->models) && $object['MODS']) {
-    return TRUE;
+function manidora_metadata_access(AbstractObject $object) {
+  if (!in_array('islandora:collectionCModel', $object->models)) {
+    if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models)) {
+      if (isset($object['PBCORE'])) {
+        return TRUE;
+      }
+    }
+    else {
+      if (isset($object['MODS'])) {
+        return TRUE;
+      }
+    }
   }
   return FALSE;
 }
@@ -1187,3 +1204,30 @@ function manidora_homepage_thumbnail_remove($pid = ""){
   }
   drupal_goto('admin/islandora/manidora/homepage');
 }
+
+/**
+ * Retrieves and renders PBCORE metadata.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing a Fedora object.
+ *
+ * @return string
+ *   The PBCORE metadata markup to be displayed.
+ */
+function manidora_pbcore_metadata($object) {
+  $pbcore_metadata = drupal_get_form('PBCORE Display', $object['PBCORE']->content);
+  return drupal_render($pbcore_metadata);
+}
+
+/**
+ * Implements hook_islandora_xml_form_builder_forms().
+ */
+function manidora_islandora_xml_form_builder_forms() {
+  $module_path = drupal_get_path('module', 'manidora');
+  return array(
+    'PBCORE Display' => array(
+      'form_file' => "$module_path/xml/forms/pbcore_display.xml",
+    ),
+  );
+}
+
