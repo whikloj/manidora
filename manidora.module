@@ -545,6 +545,25 @@ function manidora_download_table($islandora_object) {
  *   The constructed form
  */
 function manidora_newspaper_search_form($form, &$form_state) {
+  module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
+  $solr_params = array('fl'=>'PID,dc.title');
+  $solr_query = '+RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperCModel"';
+  
+  $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
+  #$path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+  $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
+
+  $solr->setCreateDocuments(0);
+  $results = $solr->search($solr_query,0,100,$solr_params);
+  
+  $tmpobjects = array();
+  if ($results){
+    $solr_results = json_decode($results->getRawResponse(), TRUE);
+    foreach ($solr_results["response"]["docs"] as $key => $doc){
+      $tmpobjects[] = array("PID"=>$doc['PID'], "title"=>$doc['dc.title'][0]);
+    }
+  }
+  
   $form = array(
     'exact_phrase' => array(
       '#type' => 'textfield',
@@ -554,18 +573,24 @@ function manidora_newspaper_search_form($form, &$form_state) {
       '#type' => 'textfield',
       '#title' => t('With at least one of the words'),
     ),
-    'without_words' => array(
-      '#type' => 'textfield',
-      '#title' => t('Without all the words'),
-    ),
     'all_words' => array(
       '#type' => 'textfield',
       '#title' => t('With all of the words'),
+    ),
+    'without_words' => array(
+      '#type' => 'textfield',
+      '#title' => t('Without all the words'),
     ),
     'submit' => array(
       '#type' => 'submit',
       '#value' => t('Search'),
       '#submit' => array('manidora_newspaper_search_form_submit'),
+    ),
+    'titles' => array(
+      '#type' => 'checkboxes',
+      '#title' => t('Search these titles'),
+      '#options' => $tmpobjects,
+      '#default_value' => array_keys($tmpobjects),
     ),
   );
   return $form;
