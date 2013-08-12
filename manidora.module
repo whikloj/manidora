@@ -546,7 +546,7 @@ function manidora_download_table($islandora_object) {
  */
 function manidora_newspaper_search_form($form, &$form_state) {
   module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
-  $solr_params = array('fl'=>'PID,dc.title');
+  $solr_params = array('fl'=>'PID,title_sort_ms');
   $solr_query = '+RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperCModel"';
   
   $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
@@ -560,39 +560,56 @@ function manidora_newspaper_search_form($form, &$form_state) {
   if ($results){
     $solr_results = json_decode($results->getRawResponse(), TRUE);
     foreach ($solr_results["response"]["docs"] as $key => $doc){
-      $tmpobjects[] = array("PID"=>$doc['PID'], "title"=>$doc['dc.title'][0]);
+      if (strlen($doc['title_sort_ms'][0]) > 0){
+        $tmpobjects[$doc['PID']] = $doc['title_sort_ms'][0];
+      }
     }
   }
   
   $form = array(
-    'exact_phrase' => array(
-      '#type' => 'textfield',
-      '#title' => t('With the exact phrase'),
+    'left_column' => array(
+      '#type' => 'container',
+      '#attributes' => array('class'=> array('column-split')),
     ),
-    'least_one' => array(
-      '#type' => 'textfield',
-      '#title' => t('With at least one of the words'),
-    ),
-    'all_words' => array(
-      '#type' => 'textfield',
-      '#title' => t('With all of the words'),
-    ),
-    'without_words' => array(
-      '#type' => 'textfield',
-      '#title' => t('Without all the words'),
-    ),
-    'submit' => array(
-      '#type' => 'submit',
-      '#value' => t('Search'),
-      '#submit' => array('manidora_newspaper_search_form_submit'),
-    ),
-    'titles' => array(
-      '#type' => 'checkboxes',
-      '#title' => t('Search these titles'),
-      '#options' => $tmpobjects,
-      '#default_value' => array_keys($tmpobjects),
+    'right_column' => array(
+      '#type' => 'container',
+      '#attributes' => array('class'=> array('column-split')),
     ),
   );
+  
+  $form['left_column']['exact_phrase'] = array(
+    '#type' => 'textfield',
+    '#title' => t('With the exact phrase'),
+  );
+  $form['left_column']['least_one'] = array(
+    '#type' => 'textfield',
+    '#title' => t('With at least one of the words'),
+  );
+  $form['left_column']['all_words'] = array(
+    '#type' => 'textfield',
+    '#title' => t('With all of the words'),
+  );
+  $form['left_column']['without_words'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Without all the words'),
+  );
+  $form['left_column']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Search'),
+    '#submit' => array('manidora_newspaper_search_form_submit'),
+  );
+
+  $form['right_column']['titles'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Search these titles'),
+    '#options' => $tmpobjects,
+    '#default_value' => array_keys($tmpobjects),
+  );
+  $form['right_column']['select_all'] = array(
+    '#type' => 'markup',
+    '#markup' => l(t("Select all"),'islandora/manitoba/newspaper_search',array('attributes'=>array('id'=>'manidora-select-newspapers'))),
+  );
+
   return $form;
 }
 

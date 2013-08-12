@@ -219,8 +219,9 @@ EOF;
         $uri = "";
         if (is_array($format['data']) && count($format['data'])>0){
           foreach ($format['data'] as $ele){
-            $uri .= (!empty($uri)? " OR ":"") . $format['solr_field'].":(".$ele.")";
+            $uri .= (!empty($uri)? " OR ":"") . '"'.$ele.'"';
           }
+          $uri = $format['solr_field'].':('.$uri.')';
         }
         if (!empty($uri)){
           $output .= l($key,"islandora/search/$uri") . "<br />\n";

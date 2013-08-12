@@ -42,3 +42,9 @@
 .coll_letter_box {
     clear:left;
 }
+
+#manidora-newspaper-search-form .column-split {
+    float:left;
+    width:48%;
+    overflow:hidden;
+}
