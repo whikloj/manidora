@@ -607,7 +607,11 @@ function manidora_newspaper_search_form($form, &$form_state) {
   );
   $form['right_column']['select_all'] = array(
     '#type' => 'markup',
-    '#markup' => l(t("Select all"),'islandora/manitoba/newspaper_search',array('attributes'=>array('id'=>'manidora-select-newspapers'))),
+    '#markup' => '<a href="javascript://" id="manidora-select-newspapers" onclick="jQuery(\'#edit-titles input:checkbox\').attr(\'checked\',\'checked\');">'.t('Select all titles').'</a>',
+  );
+  $form['right_column']['browse'] = array(
+    '#type' => 'markup',
+    '#markup' => '<p>'.l(t('Browse all newspapers'),'islandora/object/uofm:libraries').'</p>',
   );
 
   return $form;
