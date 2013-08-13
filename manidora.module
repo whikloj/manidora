@@ -549,8 +549,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
   $solr_params = array('fl'=>'PID,title_sort_ms');
   $solr_query = '+RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperCModel"';
   
-  $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
-  #$path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+  $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
   $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
 
   $solr->setCreateDocuments(0);
@@ -607,7 +606,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
   );
   $form['right_column']['select_all'] = array(
     '#type' => 'markup',
-    '#markup' => '<a href="javascript://" id="manidora-select-newspapers" onclick="jQuery(\'#edit-titles input:checkbox\').attr(\'checked\',\'checked\');">'.t('Select all titles').'</a>',
+    '#markup' => '<span id="manidora-newspaper-search-select-all"><a href="javascript://" onclick="jQuery(\'#edit-titles input:checkbox\').attr(\'checked\',\'checked\');">'.t('Select').'</a>/<a href="javascript://" onclick="jQuery(\'#edit-titles input:checkbox\').removeAttr(\'checked\');">'.t('Deselect').'</a> all titles</span>',
   );
   $form['right_column']['browse'] = array(
     '#type' => 'markup',
@@ -699,11 +698,24 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     }
     $query_string .= ')';
   }
+
+  // Did we select at least 1, but not all newspapers
+  $selected_papers = array();
+  foreach ($form_state['values']['titles'] as $key => $val){
+    if ($key === $val){
+      $selected_papers[] = $key;
+    }
+  }
+  $hidden_filter = array('+RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:newspaperCModel" "info:fedora/islandora:newspaperIssueCModel")');
+  if (count($selected_papers) > 0 && count($selected_papers) < count($form_state['values']['titles'])){
+    $hidden_filter = array('+ancestors_ms:("'.implode('" "',$selected_papers).'")');
+  }
   $query_string = str_replace('/', '~slsh~', $query_string);
   $query = array(
     'type' => 'edismax',
-    'hidden_filter' => array('+RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:newspaperCModel" "info:fedora/islandora:newspaperIssueCModel")'),
+    'hidden_filter' => $hidden_filter,
   );
+
   drupal_goto('islandora/search/' . $query_string, array(
     'query' => $query,
   ));
