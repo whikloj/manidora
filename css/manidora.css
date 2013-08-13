@@ -45,3 +45,18 @@
 .coll_letter_box {
     clear:left;
 }
+
+#manidora-newspaper-search-form .column-split {
+    float:left;
+    width:48%;
+    overflow:hidden;
+}
+
+
+#manidora-newspaper-search-form .form-item-titles {
+  margin-bottom: 5px;
+}
+#edit-titles {
+  border: 1px solid black;
+  background-color: #fff;
+}
