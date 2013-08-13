@@ -6,7 +6,7 @@
  */
 
 // Includes functions for blocks.
-require_once dirname(__FILE__) . '/includes/blocks.inc'; 
+require_once dirname(__FILE__) . '/includes/blocks.inc';
 
 /**
  * API call to insert a link to a printer friendly version of something.
@@ -156,7 +156,7 @@ function manidora_menu() {
     'type'=> MENU_CALLBACK,
     'access arguments' => array('administer site configuration'),
   );
-
+  
   return $items;
 }
 
@@ -179,18 +179,24 @@ function manidora_menu_alter(&$items) {
 /**
  * Fetches MODS metadata as form encoded markup.
  *
- * @param IslandoraObject $object
+ * @param AbstractObject $object
  *   The object you wish to retrive formatted metadata from
  */
-function manidora_retrieve_metadata_form($object) {
-//  drupal_set_title(t("@label Metadata", array('@label' => htmlspecialchars_decode($object->label,ENT_NOQUOTES))));
-// The above is causing the double encoding of quotes and double quotes. drupal_set_title does it's own xss checking
+function manidora_retrieve_metadata_form(AbstractObject $object) {
   drupal_set_title($object->label . " Metadata");
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
-  $output = manidora_mods_transform($object);
-
-  if ($output) {
+  $output = '';
+  $form = array();
+  // Video and audio objects get PBCORE.
+  if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models)) {
+    $output = manidora_pbcore_metadata($object);
+  }
+  // Grab MODS otherwise.
+  else {
+    $output = manidora_mods_transform($object);
+  }
+  if (!empty($output)) {
     $form = array(
       '#type' => 'item',
       '#markup' => $output,
@@ -200,15 +206,24 @@ function manidora_retrieve_metadata_form($object) {
   else {
     drupal_set_message(t('A transformation error has occured!'), 'error');
   }
-  return $form;
+  return $form;  
 }
 
 /**
  * Implements hook_access().
  */
-function manidora_metadata_access($object) {
-  if (!in_array('islandora:collectionCModel', $object->models) && $object['MODS']) {
-    return TRUE;
+function manidora_metadata_access(AbstractObject $object) {
+  if (!in_array('islandora:collectionCModel', $object->models)) {
+    if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models)) {
+      if (isset($object['PBCORE'])) {
+        return TRUE;
+      }
+    }
+    else {
+      if (isset($object['MODS'])) {
+        return TRUE;
+      }
+    }
   }
   return FALSE;
 }
@@ -252,206 +267,206 @@ function manidora_download_access($object) {
  * @param IslandoraObject $object
  *   The IslandoraObject whose MODS metadata you wish to transform.
  */
-function manidora_mods_transform($object) {
-  module_load_include('inc', 'islandora', 'includes/utilities'); // To get the islandora functions
-  
-  $mods_text = $object->repository->api->a->getDatastreamDissemination($object->id, 'MODS');
-  $parent_collections = islandora_get_parents_from_rels_ext($object);
+ function manidora_mods_transform($object) {
+   module_load_include('inc', 'islandora', 'includes/utilities'); // To get the islandora functions
 
-  if ($parent_collections){
-    $collections = "";
-    foreach ($parent_collections as $c){
-      $collections .= l($c->label,'islandora/objects/'.$c->id) . "<br />";
-    }
-  }
+   $mods_text = $object->repository->api->a->getDatastreamDissemination($object->id, 'MODS');
+   $parent_collections = islandora_get_parents_from_rels_ext($object);
 
-  if ($mods_text) {
-    if (in_array('islandora:bookCModel', $object->models)) {
-      $rows = array();
-      $mods_xml = new SimpleXMLElement($mods_text);
+   if ($parent_collections){
+     $collections = "";
+     foreach ($parent_collections as $c){
+       $collections .= l($c->label,'islandora/objects/'.$c->id) . "<br />";
+     }
+   }
 
-      $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
+   if ($mods_text) {
+     if (in_array('islandora:bookCModel', $object->models)) {
+       $rows = array();
+       $mods_xml = new SimpleXMLElement($mods_text);
 
-      // Title info.
-      $title_results = $mods_xml->xpath('/mods:mods/mods:titleInfo/mods:title');
-      $title = (string) reset($title_results);
+       $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
 
-      if (!empty($title)) {
-        $rows[] = array('Field' => t('Title'), 'Value' => $title);
-      }
-      
-      if (!empty($collections)){
-        $rows[] = array(t('Collections'),$collections);
-      }
-      
-      $description_results = $mods_xml->xpath('/mods:mods/mods:abstract');
-      $description = (string) reset($description_results);
-      
-      if (!empty($description)){
-        $rows[] = array(t('Description'),$description);
-      }
-      
-      $format_res = $mods_xml->xpath('/mods:mods/mods:typeOfResource');
-      $format = (string) reset($format_res);
-      if (!empty($format)){
-        $rows[] = array(t('Format'),$format);
-      }
+       // Title info.
+       $title_results = $mods_xml->xpath('/mods:mods/mods:titleInfo/mods:title');
+       $title = (string) reset($title_results);
 
-      $date_res = $mods_xml->xpath('/mods:mods/mods:subject/mods:temporal');
-      $date = (string) reset($date_res);
-      if (!empty($date)){
-        $rows[] = array(t('Date'),$date);
-      }
+       if (!empty($title)) {
+         $rows[] = array('Field' => t('Title'), 'Value' => $title);
+       }
 
-      $subtitle_results = $mods_xml->xpath('/mods:mods/mods:titleInfo/mods:subTitle');
-      $subtitle = (string) reset($subtitle_results);
+       if (!empty($collections)){
+         $rows[] = array(t('Collections'),$collections);
+       }
 
-      if (!empty($subtitle)) {
-        $rows[] = array(t('Subtitle'), $subtitle);
-      }
+       $description_results = $mods_xml->xpath('/mods:mods/mods:abstract');
+       $description = (string) reset($description_results);
 
-      $authors = array();
+       if (!empty($description)){
+         $rows[] = array(t('Description'),$description);
+       }
 
-      // Authors.
-      foreach ($mods_xml->name as $name_xml) {
-        $name_parts = array();
-        $role = (string) @$name_xml->role->roleTerm;
-        if ($role) {
-          if ($role == 'author') {
-            foreach ($name_xml->namePart as $name_part) {
-              if ((string) $name_part != '') {
-                // Strip periods off the end.
-                $np = (string) rtrim($name_part, '.');
-                if ($name_part['type'] == 'given') {
-                  $name_parts['first_name'] = (string) $name_part;
-                }
-                if ($name_part['type'] == 'family') {
-                  $name_parts['last_name'] = $np;
-                }
-              }
-            }
-          }
-          if (isset($names_parts['last_name']) && isset($name_parts['first_name'])) {
-            $authors[] = $name_parts['first_name'] . ' ' . $name_parts['last_name'];
-          }
-        }
-      }
-      $author_markup = '';
-      foreach ($authors as $author) {
-        if (empty($author)) {
-          $author_markup = $author;
-        }
-        else {
-          $author_markup .= '<br/>' . $author;
-        }
-      }
+       $format_res = $mods_xml->xpath('/mods:mods/mods:typeOfResource');
+       $format = (string) reset($format_res);
+       if (!empty($format)){
+         $rows[] = array(t('Format'),$format);
+       }
 
-      if (!empty($author_markup)) {
-        $rows[] = array(t('Author'), $author_markup);
-      }
+       $date_res = $mods_xml->xpath('/mods:mods/mods:subject/mods:temporal');
+       $date = (string) reset($date_res);
+       if (!empty($date)){
+         $rows[] = array(t('Date'),$date);
+       }
 
-      // Origin Info.
-      $place_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:place/mods:placeTerm');
-      $place = (string) reset($place_results);
+       $subtitle_results = $mods_xml->xpath('/mods:mods/mods:titleInfo/mods:subTitle');
+       $subtitle = (string) reset($subtitle_results);
 
-      if (!empty($place)) {
-        $rows[] = array(t('Place'), $place);
-      }
+       if (!empty($subtitle)) {
+         $rows[] = array(t('Subtitle'), $subtitle);
+       }
 
-      $publisher_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:publisher');
-      $publisher = (string) reset($publisher_results);
+       $authors = array();
 
-      if (!empty($publisher)) {
-        $rows[] = array(t('Publisher'), $publisher);
-      }
+       // Authors.
+       foreach ($mods_xml->name as $name_xml) {
+         $name_parts = array();
+         $role = (string) @$name_xml->role->roleTerm;
+         if ($role) {
+           if ($role == 'author') {
+             foreach ($name_xml->namePart as $name_part) {
+               if ((string) $name_part != '') {
+                 // Strip periods off the end.
+                 $np = (string) rtrim($name_part, '.');
+                 if ($name_part['type'] == 'given') {
+                   $name_parts['first_name'] = (string) $name_part;
+                 }
+                 if ($name_part['type'] == 'family') {
+                   $name_parts['last_name'] = $np;
+                 }
+               }
+             }
+           }
+           if (isset($names_parts['last_name']) && isset($name_parts['first_name'])) {
+             $authors[] = $name_parts['first_name'] . ' ' . $name_parts['last_name'];
+           }
+         }
+       }
+       $author_markup = '';
+       foreach ($authors as $author) {
+         if (empty($author)) {
+           $author_markup = $author;
+         }
+         else {
+           $author_markup .= '<br/>' . $author;
+         }
+       }
 
-      $date_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:dateIssued');
-      $date = (string) reset($date_results);
+       if (!empty($author_markup)) {
+         $rows[] = array(t('Author'), $author_markup);
+       }
 
-      if (!empty($date)) {
-        $date_format = new DateTime($date);
-        $rows[] = array(t('Date Issued'), date_format($date_format, 'Y-m-d'));
-      }
+       // Origin Info.
+       $place_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:place/mods:placeTerm');
+       $place = (string) reset($place_results);
 
-      // Physical Description.
-      $physical_results = $mods_xml->xpath('/mods:mods/mods:physicalDescription/mods:extent');
-      $physical = (string) reset($physical_results);
+       if (!empty($place)) {
+         $rows[] = array(t('Place'), $place);
+       }
 
-      if (!empty($physical)) {
-        $rows[] = array(t('Physical Description'), $physical);
-      }
+       $publisher_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:publisher');
+       $publisher = (string) reset($publisher_results);
 
-      // Record Info.
-      $record_id_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:recordIdentifier');
-      $record_id = (string) reset($record_id_results);
+       if (!empty($publisher)) {
+         $rows[] = array(t('Publisher'), $publisher);
+       }
 
-      if (!empty($record_id)) {
-        $rows[] = array(t('Record ID'), $record_id);
-      }
+       $date_results = $mods_xml->xpath('/mods:mods/mods:originInfo/mods:dateIssued');
+       $date = (string) reset($date_results);
 
-      $content_source_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:recordContentSource');
-      $content_source = (string) reset($content_source_results);
+       if (!empty($date)) {
+         $date_format = new DateTime($date);
+         $rows[] = array(t('Date Issued'), date_format($date_format, 'Y-m-d'));
+       }
 
-      if (!empty($content_source)) {
-        $rows[] = array(t('Content Source'), $content_source);
-      }
+       // Physical Description.
+       $physical_results = $mods_xml->xpath('/mods:mods/mods:physicalDescription/mods:extent');
+       $physical = (string) reset($physical_results);
 
-      $language_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:languageofCataloging');
-      $language = (string) reset($language_results);
+       if (!empty($physical)) {
+         $rows[] = array(t('Physical Description'), $physical);
+       }
 
-      if (!empty($language)) {
-        $rows[] = array(t('Language'), $language);
-      }
+       // Record Info.
+       $record_id_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:recordIdentifier');
+       $record_id = (string) reset($record_id_results);
 
-      // Identifier.
-      $identifier_results = $mods_xml->xpath('/mods:mods/mods:identifier');
-      $identifier = (string) reset($identifier_results);
+       if (!empty($record_id)) {
+         $rows[] = array(t('Record ID'), $record_id);
+       }
 
-      if (!empty($identifier)) {
-        $rows[] = array(t('Identifier'), $identifier);
-      }
+       $content_source_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:recordContentSource');
+       $content_source = (string) reset($content_source_results);
 
-      // Table markup.
-      $headers = array('Field' => t('Field'), 'Value' => t('Value'));
-      $markup = theme_table(array(
-        'header' => $headers,
-        'rows' => $rows,
-        'attributes' => array(),
-        'caption' => '',
-        'colgroups' => array(),
-        'sticky' => TRUE,
-        'empty' => t('No MODS present!')));
-      return $markup;
-    }
-    else {
-      $xslt_processor = new XSLTProcessor();
-      $xsl = new DOMDocument();
-      $file = drupal_get_path('module', 'manidora') . '/xsl/manidora_mods2html.xsl';
-      $xsl->load($file);
-      $input = new DOMDocument();
+       if (!empty($content_source)) {
+         $rows[] = array(t('Content Source'), $content_source);
+       }
 
-      $did_load = $input->loadXML($mods_text);
+       $language_results = $mods_xml->xpath('/mods:mods/mods:recordInfo/mods:languageofCataloging');
+       $language = (string) reset($language_results);
 
-      if ($did_load) {
-        global $base_url;
-        $xslt_processor->registerPHPFunctions(); // Using PHP functions to inject the collections HTML into the XSL
-        $xslt_processor->importStylesheet($xsl);
-        $xslt_processor->setParameter('', array(
-          'islandoraUrl' => $base_url,
-          'collections' => '<span>'.$collections.'</span>', // 
-        ));
-        $mods_transformed = $xslt_processor->transformToXml($input);
-        return manidora_print_insert_link('print/islandora/object/'.$object->id."/manitoba_metadata") .$mods_transformed;
-      }
-      else {
-        return FALSE;
-      }
-    }
-  }
-  else {
-    return FALSE;
-  }
-}
+       if (!empty($language)) {
+         $rows[] = array(t('Language'), $language);
+       }
+
+       // Identifier.
+       $identifier_results = $mods_xml->xpath('/mods:mods/mods:identifier');
+       $identifier = (string) reset($identifier_results);
+
+       if (!empty($identifier)) {
+         $rows[] = array(t('Identifier'), $identifier);
+       }
+
+       // Table markup.
+       $headers = array('Field' => t('Field'), 'Value' => t('Value'));
+       $markup = theme_table(array(
+         'header' => $headers,
+         'rows' => $rows,
+         'attributes' => array(),
+         'caption' => '',
+         'colgroups' => array(),
+         'sticky' => TRUE,
+         'empty' => t('No MODS present!')));
+       return $markup;
+     }
+     else {
+       $xslt_processor = new XSLTProcessor();
+       $xsl = new DOMDocument();
+       $file = drupal_get_path('module', 'manidora') . '/xsl/manidora_mods2html.xsl';
+       $xsl->load($file);
+       $input = new DOMDocument();
+
+       $did_load = $input->loadXML($mods_text);
+
+       if ($did_load) {
+         global $base_url;
+         $xslt_processor->registerPHPFunctions(); // Using PHP functions to inject the collections HTML into the XSL
+         $xslt_processor->importStylesheet($xsl);
+         $xslt_processor->setParameter('', array(
+           'islandoraUrl' => $base_url,
+           'collections' => '<span>'.$collections.'</span>', // 
+         ));
+         $mods_transformed = $xslt_processor->transformToXml($input);
+         return manidora_print_insert_link('print/islandora/object/'.$object->id."/manitoba_metadata") .$mods_transformed;
+       }
+       else {
+         return FALSE;
+       }
+     }
+   }
+   else {
+     return FALSE;
+   }
+ }
 
 /** 
  * Used to insert the Collections into the mods2html.xsl stylesheet
@@ -502,11 +517,12 @@ function manidora_download_table($islandora_object) {
       );
     }
   }
+  
   // We want TIFFS, JPEG and PDFs at the top of the Downloads list.
   $topA = array();
   $bottomA = array();
   foreach ($rows as $row){
-    if (preg_match('/>(JPG|PDF|TIFF)</',$row['ID'])){
+    if (preg_match('/>(JPG|PDF|TIFF|OBJ)</',$row['ID'])){
       array_push($topA,array('data'=>$row, 'class'=>array('important-download')));
     } else {
       array_push($bottomA,array('data'=>$row));
@@ -515,6 +531,7 @@ function manidora_download_table($islandora_object) {
   sort($topA);
   sort($bottomA);
   $rows = array_merge($topA,$bottomA);
+  
   $table = array(
     '#theme' => 'table',
     '#header' => $headers,
@@ -1087,7 +1104,7 @@ function manidora_islandora_collectioncmodel_islandora_view_object(AbstractObjec
 function manidora_process_islandora_large_image(&$variables) {
   // Override the default text for UofM.
   $islandora_object = $variables['islandora_object'];
-  $variables['image_clip'] = ""; //l(t('Printer Friendly Version'), "islandora/object/{$islandora_object->id}/print", array('attributes' => array('title' => 'Printer Friendly Version', 'id' => 'clip')));
+  $variables['image_clip'] = "";
 }
 
 /**
@@ -1209,3 +1226,30 @@ function manidora_homepage_thumbnail_remove($pid = ""){
   }
   drupal_goto('admin/islandora/manidora/homepage');
 }
+
+/**
+ * Retrieves and renders PBCORE metadata.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing a Fedora object.
+ *
+ * @return string
+ *   The PBCORE metadata markup to be displayed.
+ */
+function manidora_pbcore_metadata($object) {
+  $pbcore_metadata = drupal_get_form('PBCORE Display', $object['PBCORE']->content);
+  return drupal_render($pbcore_metadata);
+}
+
+/**
+ * Implements hook_islandora_xml_form_builder_forms().
+ */
+function manidora_islandora_xml_form_builder_forms() {
+  $module_path = drupal_get_path('module', 'manidora');
+  return array(
+    'PBCORE Display' => array(
+      'form_file' => "$module_path/xml/forms/pbcore_display.xml",
+    ),
+  );
+}
+
