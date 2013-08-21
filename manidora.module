@@ -189,7 +189,7 @@ function manidora_retrieve_metadata_form(AbstractObject $object) {
   $output = '';
   $form = array();
   // Video and audio objects get PBCORE.
-  if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models)) {
+  if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models) && isset($object['PBCORE'])) {
     $output = manidora_pbcore_metadata($object);
   }
   // Grab MODS otherwise.
@@ -215,7 +215,7 @@ function manidora_retrieve_metadata_form(AbstractObject $object) {
 function manidora_metadata_access(AbstractObject $object) {
   if (!in_array('islandora:collectionCModel', $object->models)) {
     if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models)) {
-      if (isset($object['PBCORE'])) {
+      if (isset($object['PBCORE']) || isset($object['MODS'])) {
         return TRUE;
       }
     }
@@ -559,7 +559,8 @@ function manidora_newspaper_search_form($form, &$form_state) {
   $solr_params = array('fl'=>'PID,title_sort_ms');
   $solr_query = '+RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperCModel"';
   
-  $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+  #$path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+  $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
   $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
 
   $solr->setCreateDocuments(0);
@@ -571,6 +572,22 @@ function manidora_newspaper_search_form($form, &$form_state) {
     foreach ($solr_results["response"]["docs"] as $key => $doc){
       if (strlen($doc['title_sort_ms'][0]) > 0){
         $tmpobjects[$doc['PID']] = $doc['title_sort_ms'][0];
+        $sq = 'RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel" AND ancestors_ms:"' . $doc['PID'] .'"';
+        $sp = array('facet'=>'true','facet.range'=>'mods_originInfo_dateIssued_dt', 'f.mods_originInfo_dateIssued_dt.facet.range.start'=>'1800-01-01T00:00:00Z', 'f.mods_originInfo_dateIssued_dt.facet.range.end' => 'NOW', 'f.mods_originInfo_dateIssued_dt.facet.range.gap' => '+1YEAR');
+        $years = $solr->search($sq,0,0,$sp); 
+        $year_array = array();
+        if ($years){
+          $year_result = json_decode($years->getRawResponse(),TRUE);
+          foreach ($year_result['facet_counts']['facet_ranges']['mods_originInfo_dateIssued_dt']['counts'] as $date => $count){
+            if ($count > 0){
+              $year_array[] = substr($date,0,4);
+            }
+          }
+          if (count($year_array)>0){
+            sort($year_array);
+            $tmpobjects[$doc['PID']] .= ' ('.$year_array[0] . '-' . $year_array[count($year_array)-1].')';
+          }
+        }
       }
     }
   }
@@ -589,18 +606,22 @@ function manidora_newspaper_search_form($form, &$form_state) {
   $form['left_column']['exact_phrase'] = array(
     '#type' => 'textfield',
     '#title' => t('With the exact phrase'),
+    '#size' => 50,
   );
   $form['left_column']['least_one'] = array(
     '#type' => 'textfield',
     '#title' => t('With at least one of the words'),
+    '#size' => 50,
   );
   $form['left_column']['all_words'] = array(
     '#type' => 'textfield',
     '#title' => t('With all of the words'),
+    '#size' => 50,
   );
   $form['left_column']['without_words'] = array(
     '#type' => 'textfield',
     '#title' => t('Without all the words'),
+    '#size' => 50,
   );
   $form['left_column']['submit'] = array(
     '#type' => 'submit',
@@ -610,9 +631,9 @@ function manidora_newspaper_search_form($form, &$form_state) {
 
   $form['right_column']['titles'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Search these titles'),
+    '#title' => t('Limit to only these titles'),
     '#options' => $tmpobjects,
-    '#default_value' => array_keys($tmpobjects),
+    #'#default_value' => array_keys($tmpobjects),
   );
   $form['right_column']['select_all'] = array(
     '#type' => 'markup',
@@ -624,6 +645,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
   );
   
   drupal_set_title('Newspaper Search');
+  drupal_set_breadcrumb(array(l('Home','<front>')));
 
   return $form;
 }
@@ -1231,10 +1253,6 @@ function manidora_homepage_thumbnail_admin_validate($form, &$form_state){
         form_error($form,t('Cannot load this PID, please ensure it is in the Fedora Repository.'));
       } else {
         $tn = $fedora_object->getDatastream('TN');
-        ob_start();
-        print_r($tn);
-        $v = ob_get_clean();
-        watchdog('Manidora','datastream <pre>%V</pre>',array('%V'=>$v));
         if (!$tn){
           form_error($form,t('PID (' . $newpid . ') does not have a TN datastream.'));
         }

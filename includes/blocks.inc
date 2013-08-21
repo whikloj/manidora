@@ -126,10 +126,10 @@
 
     $output = <<<EOF
       <ul class="home-tabs-container">
-      <li class="home-tab active"><a id="home-tabs-subjects" class="home-tab-link" href="javascript:void(0)">Subjects</a></li>
-      <li class="home-tab"><a id="home-tabs-collections" class="home-tab-link" href="javascript:void(0)">Collections</a></li>
-      <li class="home-tab"><a id="home-tabs-formats" class="home-tab-link" href="javascript:void(0)">Formats</a></li>
-      <li class="home-tab"><a id="home-tabs-depts" class="home-tab-link" href="javascript:void(0)">Departments</a></li>
+      <li class="home-tab active"><a title="List Collections by Subject" id="home-tabs-subjects" class="home-tab-link" href="javascript:void(0)">Subjects</a></li>
+      <li class="home-tab"><a title="List Collections Alphabetically" id="home-tabs-collections" class="home-tab-link" href="javascript:void(0)">Collections</a></li>
+      <li class="home-tab"><a title="Browse by Format type" id="home-tabs-formats" class="home-tab-link" href="javascript:void(0)">Formats</a></li>
+      <li class="home-tab"><a title="List Collections by UM Faculty or Department" id="home-tabs-depts" class="home-tab-link" href="javascript:void(0)">Departments</a></li>
       </ul>
       <div class="home-panel active" id="home-panel-subjects">
         <div class="column_50 first">
@@ -266,6 +266,7 @@ EOF;
  * Display 16 thumbnails on the homepage from those selected
  */
 function __manidora_homepage_thumbnail_content(){
+  module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
   $num_pics = 16; // How many thumbnails are we displaying
   $num_rows = 2; // Figure out when to break
   $thumbs = variable_get('manidora_thumbnail_pids'); // Get the pids from the variable
@@ -286,12 +287,35 @@ function __manidora_homepage_thumbnail_content(){
     /** 
      * End temporary extension
      */
+    /**
+     * We want to have the image title as mouseover in the block
+     */
+    $solr_query = '+PID:("'.implode('" "',$t_array).'")'; // Search for all the possible PIDs
+    $solr_params = array('fl'=>'PID,dc.title'); // Get the PID and dc.title
+    $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+    #$path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
+    $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
+
+    $solr->setCreateDocuments(0);
+    $results = $solr->search($solr_query,0,100,$solr_params);
+    if ($results){
+      $solr_results = json_decode($results->getRawResponse(), TRUE);
+      $data = array();
+      foreach ($solr_results["response"]["docs"] as $key => $doc){
+        $data[$doc['PID']] = $doc['dc.title'][0];
+      }
+    }
     if (count($t_array)>=$num_pics){
       $picked = array_rand($t_array,$num_pics);
       $output = '<div id="manidora-homepage-thumbs">';
       $count = 0;
       foreach ($picked as $pid){
-        $output .= '<a href="' . url("islandora/object/" . urlencode($t_array[$pid])) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . urlencode($t_array[$pid]) . "/datastream/TN/view") . '" alt="Object '. $t_array[$pid] .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
+        $title = '';
+        // If $data is an array and has a key of the current PID, then we know the title
+        if (isset($data) && is_array($data) && array_key_exists($t_array[$pid],$data)){
+          $title = 'title="'.$data[$t_array[$pid]].'" ';
+        }
+        $output .= '<a '.$title.'href="' . url("islandora/object/" . urlencode($t_array[$pid])) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . urlencode($t_array[$pid]) . "/datastream/TN/view") . '" alt="Object '. $t_array[$pid] .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
         $count += 1;
       }
       $output .= "</div> <!-- /#manidora-homepage-thumbs -->\n";
