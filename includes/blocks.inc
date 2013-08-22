@@ -85,14 +85,17 @@
         ),
       ),
       "Newspapers" => array(
-        "solr_field" => "type_of_resource_mt",
+       /* "solr_field" => "type_of_resource_mt",
         "data" => array(
           "newspaper",
-        ),
+        ),*/
+        "url" => "islandora/object/uofm:libraries",
       ),
       "Books" => array(
-        "solr_field" => "",
-        "data" => array(),
+        "solr_field" => "RELS_EXT_hasModel_uri_ms",
+        "data" => array(
+          "info:fedora/islandora:bookCModel",
+        ),
       ),
       "Moving images" => array(
         "solr_field" => "type_of_resource_mt",
@@ -116,8 +119,8 @@
     );
     
     $departments = array(
-      "Faculty of Architecture" => "",
-      "Faculty of Dentistry" => "uofm:dentalDAMS",
+     // "Faculty of Architecture" => "",
+      //"Faculty of Dentistry" => "uofm:dentalDAMS",
       "Faculty of Medicine Archives" => "uofm:medArchives",
       "Libraries: Archives & Special Collections" => "uofm:archives",
       "Libraries: Newspapers" => "uofm:libraries",
@@ -217,14 +220,19 @@ EOF;
 EOF;
       foreach ($formats as $key => $format){
         $uri = "";
-        if (is_array($format['data']) && count($format['data'])>0){
+        if (array_key_exists('data',$format) && is_array($format['data']) && count($format['data'])>0){
           foreach ($format['data'] as $ele){
             $uri .= (!empty($uri)? " OR ":"") . '"'.$ele.'"';
           }
           $uri = $format['solr_field'].':('.$uri.')';
+          if (!empty($uri)){
+            $uri = l($key,"islandora/search/$uri",array('html'=>TRUE));
+          }
+        } else if (array_key_exists('url',$format)){
+          $uri = l($key,$format['url']);
         }
         if (!empty($uri)){
-          $output .= l($key,"islandora/search/$uri") . "<br />\n";
+          $output .= "$uri<br />\n";
         } else {
           $output .= "$key<br />\n";
         }
@@ -313,9 +321,9 @@ function __manidora_homepage_thumbnail_content(){
         $title = '';
         // If $data is an array and has a key of the current PID, then we know the title
         if (isset($data) && is_array($data) && array_key_exists($t_array[$pid],$data)){
-          $title = 'title="'.$data[$t_array[$pid]].'" ';
+          $title = 'title="' . check_plain($data[$t_array[$pid]]) . '" ';
         }
-        $output .= '<a '.$title.'href="' . url("islandora/object/" . urlencode($t_array[$pid])) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . urlencode($t_array[$pid]) . "/datastream/TN/view") . '" alt="Object '. $t_array[$pid] .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
+        $output .= '<a '.$title.'href="' . url("islandora/object/" . urlencode($t_array[$pid])) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . urlencode($t_array[$pid]) . "/datastream/TN/view") . '" alt="Object '. check_plain($t_array[$pid]) .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
         $count += 1;
       }
       $output .= "</div> <!-- /#manidora-homepage-thumbs -->\n";
