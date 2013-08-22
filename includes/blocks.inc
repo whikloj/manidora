@@ -94,7 +94,7 @@
       "Books" => array(
         "solr_field" => "RELS_EXT_hasModel_uri_ms",
         "data" => array(
-          "info:fedora/islandora:bookCModel",
+          "info:fedora%2Fislandora:bookCModel",
         ),
       ),
       "Moving images" => array(
