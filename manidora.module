@@ -559,8 +559,8 @@ function manidora_newspaper_search_form($form, &$form_state) {
   $solr_params = array('fl'=>'PID,title_sort_ms');
   $solr_query = '+RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperCModel"';
   
-  $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
-  #$path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
+  #$path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+  $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
   $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
 
   $solr->setCreateDocuments(0);
@@ -569,6 +569,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
   $tmpobjects = array();
   if ($results){
     $solr_results = json_decode($results->getRawResponse(), TRUE);
+    $all_years = array();
     foreach ($solr_results["response"]["docs"] as $key => $doc){
       if (strlen($doc['title_sort_ms'][0]) > 0){
         $tmpobjects[$doc['PID']] = $doc['title_sort_ms'][0];
@@ -585,6 +586,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
           }
           if (count($year_array)>0){
             sort($year_array);
+            $all_years = array_merge($all_years, $year_array);
             $tmpobjects[$doc['PID']] .= ' ('.$year_array[0] . '-' . $year_array[count($year_array)-1].')';
           }
         }
@@ -592,14 +594,23 @@ function manidora_newspaper_search_form($form, &$form_state) {
     }
   }
   
+  if (isset($all_years) && count($all_years) > 0){
+    sort($all_years);
+    $all_years = array_unique($all_years);
+  }
+
   $form = array(
     'left_column' => array(
       '#type' => 'container',
-      '#attributes' => array('class'=> array('column-split')),
+      '#attributes' => array('class'=> array('column-split-50')),
     ),
+     'mid_column' => array(
+        '#type' => 'container',
+        '#attributes' => array('class'=> array('column-split-25')),
+      ),
     'right_column' => array(
       '#type' => 'container',
-      '#attributes' => array('class'=> array('column-split')),
+      '#attributes' => array('class'=> array('column-split-25')),
     ),
   );
   
@@ -629,25 +640,108 @@ function manidora_newspaper_search_form($form, &$form_state) {
     '#submit' => array('manidora_newspaper_search_form_submit'),
   );
 
-  $form['right_column']['titles'] = array(
+  $form['mid_column']['titles'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Limit to only these titles'),
     '#options' => $tmpobjects,
     #'#default_value' => array_keys($tmpobjects),
   );
-  $form['right_column']['select_all'] = array(
+  $form['mid_column']['select_all'] = array(
     '#type' => 'markup',
     '#markup' => '<span id="manidora-newspaper-search-select-all"><a href="javascript://" onclick="jQuery(\'#edit-titles input:checkbox\').attr(\'checked\',\'checked\');">'.t('Select').'</a>/<a href="javascript://" onclick="jQuery(\'#edit-titles input:checkbox\').removeAttr(\'checked\');">'.t('Deselect').'</a> all titles</span>',
   );
-  $form['right_column']['browse'] = array(
+  $form['mid_column']['browse'] = array(
     '#type' => 'markup',
     '#markup' => '<p>'.l(t('Browse all newspapers'),'islandora/object/uofm:libraries').'</p>',
   );
+  $form['right_column']['date_text'] = array(
+    '#type' => 'container',
+    '#attributes' => array('class'=> array('date-limiter')),
+    '#prefix' => '<p class="label">'.t('Limit to a date range').'</p>',
+    '#suffix' => '<p>Format (1900/05/23)</p>',
+  );
+  $form['right_column']['date_text']['date_from'] = array(
+    '#type' => 'textfield',
+    '#title' => t('from'),
+    '#size' => 10,
+    '#suffix' => '<span class="date-spacer">'.t('  -  ').'</span>',
+  );
+  $form['right_column']['date_text']['date_to'] = array(
+    '#type' => 'textfield',
+    '#title' => t('to'),
+    '#size' => 10,
+  );
+  if (isset($all_years) && count($all_years) > 0){
+    $form['right_column']['date_range_low'] = array(
+      '#type' => 'hidden',
+      '#value' => $all_years[0],
+    );
+    $form['right_column']['date_range_high'] = array(
+      '#type' => 'hidden',
+      '#value' => $all_years[count($all_years)-1],
+    );
+  }
+  
   
   drupal_set_title('Newspaper Search');
-  drupal_set_breadcrumb(array(l('Home','<front>')));
+  drupal_set_breadcrumb(array());
 
   return $form;
+}
+
+function manidora_newspaper_search_form_validate($form, &$form_state){
+  if (isset($form_state['values']['date_from']) && !empty($form_state['values']['date_from'])){
+    if (!preg_match('/^([0-9]{4})\/?([0-9]{2})?\/?([0-9]{2})?$/',$form_state['values']['date_from'],$bits)){
+      form_set_error('date_from',t('From date must be of the form "YYYY/MM/DD"'));
+    } else {
+      $from['year'] = $bits[1];
+      $from['iso'] = $bits[1];
+      if (count($bits)>2){
+        $from['month'] = $bits[2];
+        $from['iso'] .= $bits[2];
+      }
+      if (count($bits)>3){
+        $from['day'] = $bits[3];
+        $from['iso'] .= $bits[3];
+      }
+      if (array_key_exists('day',$from) && !checkdate($from['month'],$from['day'],$from['year'])){
+        form_set_error('date_from',t('From date was not valid, please ensure your date is of form "YYYY/MM/DD"'));
+      }
+    }
+  }
+  if (isset($form_state['values']['date_to']) && !empty($form_state['values']['date_to'])){
+    if (!preg_match('/^([0-9]{4})\/?([0-9]{2})?\/?([0-9]{2})?$/',$form_state['values']['date_to'],$bits)){
+      form_set_error('date_to',t('To date must be of the form "YYYY/MM/DD"'));
+    } else {
+      $to['year'] = $bits[1];
+      $to['iso'] = $bits[1];
+      if (count($bits)>2){
+        $to['month'] = $bits[2];
+        $to['iso'] .= $bits[2];
+      }
+      if (count($bits)>3){
+        $to['day'] = $bits[3];
+        $to['iso'] .= $bits[3];
+      }
+      if (array_key_exists('day',$to) && !checkdate($to['month'],$to['day'],$to['year'])){
+        form_set_error('date_to',t('To date was not valid, please ensure your date is of form "YYYY/MM/DD"'));
+      }
+    }
+  }
+  if (isset($from) && isset($to)){
+    if ($from['iso'] > $to['iso']){
+      form_set_error('date_from',t('From date cannot be larger than To date'));
+    }
+  }
+  if (isset($form_state['values']['date_range_low'])){
+    if (isset($from) && $from['year'] > $form_state['values']['date_range_high']){
+      form_set_error('date_from',t('Our newspapers only go up to the year (' . t($form_state['values']['date_range_high']) . '), please adjust your date range.'));
+      
+    }
+    if (isset($to) && $to['year'] < $form_state['values']['date_range_low']){
+      form_set_error('date_to',t('Our newspapers only start at the year (' . t($form_state['values']['date_range_low']) . '), please adjust your date range.'));
+    }
+  }
 }
 
 /**
@@ -662,8 +756,9 @@ function manidora_newspaper_search_form($form, &$form_state) {
  *   Its state
  */
 function manidora_newspaper_search_form_submit($form, &$form_state) {
+  global $_islandora_solr_queryclass;
   $query_string = '';
-
+  $params = isset($_islandora_solr_queryclass->internalSolrParams) ? $_islandora_solr_queryclass->internalSolrParams : array();
   if (strlen($form_state['values']['all_words']) > 0) {
     $all_words = $form_state['values']['all_words'];
     $all_array = explode(' ', $all_words);
@@ -732,6 +827,35 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     }
     $query_string .= ')';
   }
+  /* Date limiting */
+  
+  $iso_date = function($date){
+    $date_array = explode('/',$date);
+    if (!isset($date_array[1])){
+      $date_array[1] = '01';
+    }
+    if (!isset($date_array[2])) {
+      $date_array[2] = '01';
+    }
+    return vsprintf('%s-%s-%sT00:00:00Z',$date_array);
+  };
+
+  if (strlen($form_state['values']['date_from']) > 0){
+    $from = $iso_date($form_state['values']['date_from']);
+  }
+    
+  if (strlen($form_state['values']['date_to']) > 0) {
+    $to = $iso_date($form_state['values']['date_to']);
+  } 
+  if (isset($from) || isset($to)){
+    if (!isset($from)){
+      $from = $form_state['values']['date_range_low'] . '-01-01T00:00:00Z';
+    }
+    if (!isset($to)){
+      $to = $form_state['values']['date_range_high'] . '-01-01T00:00:00Z';
+    }
+    $date_limit = 'mods_originInfo_dateIssued_dt:[' . $from . ' TO ' . $to . ']';
+  }
 
   // Did we select at least 1, but not all newspapers
   $selected_papers = array();
@@ -740,16 +864,32 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
       $selected_papers[] = $key;
     }
   }
+  
   $hidden_filter = array('RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:newspaperCModel" "info:fedora/islandora:newspaperIssueCModel")');
   if (count($selected_papers) > 0 && count($selected_papers) < count($form_state['values']['titles'])){
     $hidden_filter = array('ancestors_ms:("'.implode('" "',$selected_papers).'")');
     #$query['f'] = array('ancestors_ms:("'.implode('" "',$selected_papers).'")'); // To show the facet
   }
   $query_string = str_replace('/', '~slsh~', $query_string);
-  $query = array(
+/*  $query = array(
     'type' => 'edismax',
     'hidden_filter' => $hidden_filter,
-  );
+  );*/
+  $params['type'] = 'edismax';
+  $params['hidden_filter'] = $hidden_filter;
+  // Set date filter key if there are no date filters included.
+  if (isset($params['f'])) {
+    foreach ($params['f'] as $key => $f) {
+      if (strpos($f, $facet_field) !== FALSE) {
+        array_splice($params['f'], $key);
+      }
+    }
+    $params['f'][] = $date_limit;
+    $query = array_merge_recursive($params);
+  }
+  else {
+    $query = array_merge_recursive($params, array('f' => array($date_limit)));
+  }
 
   drupal_goto('islandora/search/' . $query_string, array(
     'query' => $query,
@@ -1133,6 +1273,7 @@ function manidora_preprocess_page(&$variables) {
     }
   }
 }
+
 
 /**
  * Implements hook_CMODEL_PID_islandora_view_object_alter().
