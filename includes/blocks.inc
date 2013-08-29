@@ -153,8 +153,8 @@ EOF;
       <div class="home-panel" id="home-panel-collections">
 EOF;
 
-      $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:"uofm:*" AND RELS_EXT_hasModel_uri_mt:"info:fedora/islandora:collectionCModel")';
-      $solr_params = array("fl"=>"PID,dc.title");
+      $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:"uofm:*" AND RELS_EXT_hasModel_uri_mt:("info:fedora/islandora:collectionCModel" "info:fedora/islandora:newspaperCModel"))';
+      $solr_params = array("fl"=>"PID,dc.title",'fq'=>'-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives")');
       try{
         $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
         $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
