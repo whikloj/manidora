@@ -451,10 +451,13 @@ function manidora_download_access($object) {
          global $base_url;
          $xslt_processor->registerPHPFunctions(); // Using PHP functions to inject the collections HTML into the XSL
          $xslt_processor->importStylesheet($xsl);
-         $xslt_processor->setParameter('', array(
+         $param_array = array(
            'islandoraUrl' => $base_url,
-           'collections' => '<span>'.$collections.'</span>', // 
-         ));
+         );
+         if (isset($collections)){
+           $param_array['collections'] = '<span>'.$collections.'</span>';
+         }
+         $xslt_processor->setParameter('', $param_array);
          $mods_transformed = $xslt_processor->transformToXml($input);
          return manidora_print_insert_link('print/islandora/object/'.$object->id."/manitoba_metadata") .$mods_transformed;
        }
@@ -1466,3 +1469,28 @@ function manidora_islandora_xml_form_builder_forms() {
   );
 }
 
+
+/**
+ * Implements hook_islandora_collection_search_form_alter()
+ * 
+ * We don't want the collection search to display on non-collection pages 
+ * as it is unreliable
+ */
+function manidora_form_islandora_collection_search_form_alter(&$form,&$form_state) {
+  $collection_pid = $form['simple']['collection_pid']['#value'];
+  $object = islandora_object_load($collection_pid);
+  $models = $object->relationships->get(FEDORA_MODEL_URI,'hasModel');
+  if ($models) {
+    $collection = FALSE;
+    foreach ($models as $model) {
+      if ($model['object']['value'] == 'islandora:collectionCModel' || $model['object']['value'] == 'islandora:newspaperCModel') {
+        $collection = TRUE;
+      }
+    }
+  }
+  if (isset($collection) && $collection === FALSE) {
+    $form['simple']['collection_select']['#default_value'] = 0;
+    $form['simple']['collection_select']['#access'] = 0;
+  }
+
+} 
