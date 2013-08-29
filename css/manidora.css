@@ -46,10 +46,17 @@
     clear:left;
 }
 
-#manidora-newspaper-search-form .column-split {
+#manidora-newspaper-search-form .column-split-50,
+#manidora-newspaper-search-form .column-split-25 {
     float:left;
-    width:48%;
     overflow:hidden;
+    margin-right: 5px;
+}
+#manidora-newspaper-search-form .column-split-50 {
+    width:48%;
+}
+#manidora-newspaper-search-form .column-split-25 {
+    width: 23%;
 }
 
 
