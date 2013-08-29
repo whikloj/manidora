@@ -1478,9 +1478,15 @@ function manidora_islandora_xml_form_builder_forms() {
  */
 function manidora_form_islandora_collection_search_form_alter(&$form,&$form_state) {
   $collection_pid = $form['simple']['collection_pid']['#value'];
-  $object = islandora_object_load($collection_pid);
-  $models = $object->relationships->get(FEDORA_MODEL_URI,'hasModel');
-  if ($models) {
+  if ($collection_pid && preg_match('/^\w+:[a-zA-Z0-9]+$/',$collection_pid)){
+    try {
+      $object = islandora_object_load($collection_pid);
+      $models = $object->relationships->get(FEDORA_MODEL_URI,'hasModel');      
+    } catch (Exception $e){
+      watchdog('Manidora', 'Failed to load object or models: %s',array('%s'=>$e->getMessage()));
+    }
+  }
+  if (isset($models)) {
     $collection = FALSE;
     foreach ($models as $model) {
       if ($model['object']['value'] == 'islandora:collectionCModel' || $model['object']['value'] == 'islandora:newspaperCModel') {
