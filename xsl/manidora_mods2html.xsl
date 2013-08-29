@@ -31,11 +31,12 @@
         </xsl:if>
         <!--<xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>-->
         <xsl:apply-templates select="mods:abstract"></xsl:apply-templates>
-        <!--<xsl:apply-templates select="mods:name"></xsl:apply-templates>-->
+        
         <xsl:apply-templates select="mods:typeOfResource"></xsl:apply-templates>
         <xsl:apply-templates select="mods:subject/mods:temporal"></xsl:apply-templates>
         <xsl:apply-templates select="mods:subject"></xsl:apply-templates>
         <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:name"></xsl:apply-templates>
         <xsl:apply-templates select="mods:language"></xsl:apply-templates>
         <xsl:apply-templates select="mods:note[@type!=&quot;cid&quot; and @type != &quot;objectID&quot; and @type != &quot;imageID&quot;]"></xsl:apply-templates>
         <xsl:apply-templates select="mods:location/mods:physicalLocation"></xsl:apply-templates>
@@ -109,34 +110,15 @@
   </xsl:template>
 
   <xsl:template match="mods:name">
-    <xsl:choose>
-      <xsl:when test="@type = &apos;organization&apos;">
-        <li>
-          <strong>
-            <xsl:apply-templates select="mods:role/mods:roleTerm"></xsl:apply-templates> - Organization: </strong>
-          <xsl:value-of select="mods:namePart"></xsl:value-of>
-        </li>
-      </xsl:when>
-      <xsl:when test="@type = &apos;personal&apos;">
-        <li>
-          <strong>
-            <xsl:apply-templates select="mods:role/mods:roleTerm"></xsl:apply-templates> - Personal: </strong>
-          <xsl:value-of select="mods:namePart"></xsl:value-of>
-          <xsl:if test="mods:namePart[@type=&apos;date&apos;]">
-            <xsl:value-of select="concat(&apos; &apos;,mods:namePart[@type=&apos;date&apos;])"></xsl:value-of>
-          </xsl:if>
-        </li>
-      </xsl:when>
-      <xsl:when test="@type = &apos;conference&apos;">
-        <li>
-          <strong>
-            <xsl:apply-templates select="mods:role/mods:roleTerm"></xsl:apply-templates> - Conference: </strong>
-          <xsl:for-each select="mods:namePart">
-            <xsl:value-of select="concat(text(),&apos; &apos;)"></xsl:value-of>
-          </xsl:for-each>
-        </li>
-      </xsl:when>
-    </xsl:choose>
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Name</xsl:with-param>
+      <xsl:with-param name="content">
+        <xsl:for-each select="mods:namePart">
+          <xsl:value-of select="concat(text(), &quot; &quot;)" />
+          <xsl:apply-templates select="./following-sibling::*[1][self::mods:role]/mods:roleTerm"/>
+        </xsl:for-each>
+      </xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
   
   <xsl:template match="mods:relatedItem[@type = &apos;host&apos; and mods:titleInfo/mods:title]">
@@ -237,13 +219,27 @@
       <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Subjects</xsl:with-param>
           <xsl:with-param name="content">
-            <xsl:for-each select="mods:topic">
-              <xsl:apply-templates mode="search_link2" select="text()">
-                <xsl:with-param name="field" select="$subject_topic_field"/>
-              </xsl:apply-templates>
-              <xsl:if test="position() &lt; last() or mods:name[@type=&quot;personal&quot;] or mods:titleInfo"><xsl:text>, </xsl:text></xsl:if>
+            <xsl:for-each select="mods:topic|mods:name[@type=&quot;personal&quot;]|mods:titleInfo">
+              <xsl:choose>
+                <xsl:when test="name() = &quot;mods:topic&quot;">
+                  <xsl:apply-templates mode="search_link2" select="text()">
+                     <xsl:with-param name="field" select="$subject_topic_field"/>
+                   </xsl:apply-templates>
+                </xsl:when>
+                <xsl:when test="name() = &quot;mods:name&quot;">
+                  <xsl:apply-templates mode="search_link2" select="mods:namePart[type != &quot;date&quot;]/text()">
+                    <xsl:with-param name="field" select="$subject_name_field"/>
+                  </xsl:apply-templates>
+                </xsl:when>
+                <xsl:when test="name() = &quot;mods:title&quot;">
+                  <xsl:apply-templates mode="search_link2" select="mods:title/text()">
+                    <xsl:with-param name="field" select="$subject_title_field"/>
+                  </xsl:apply-templates>
+                </xsl:when>
+              </xsl:choose>
+              <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
             </xsl:for-each>
-            <xsl:for-each select="mods:name[@type=&quot;personal&quot;]">
+<!--            <xsl:for-each select="mods:name[@type=&quot;personal&quot;]">
               <xsl:apply-templates mode="search_link2" select="mods:namePart/text()">
                 <xsl:with-param name="field" select="$subject_name_field"/>
               </xsl:apply-templates>
@@ -254,39 +250,13 @@
                 <xsl:with-param name="field" select="$subject_title_field"/>
               </xsl:apply-templates>
               <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
-            </xsl:for-each>
+            </xsl:for-each>-->
           </xsl:with-param>
         </xsl:call-template>
     </xsl:if>
-<!--    <xsl:apply-templates mode="subject" select="mods:name[@type=&apos;personal&apos;]"/>
-    <xsl:apply-templates mode="subjectTitle" select="mods:titleInfo"/>-->
   </xsl:template>
-  <!-- Moved into above template -->
-<!--  <xsl:template match="mods:titleInfo" mode="subjectTitle">
-    <li>
-      <strong>Subject - Title: </strong>
-      <xsl:element name="a">
-        <xsl:attribute name="target">_parent</xsl:attribute>
-        <xsl:apply-templates mode="search_link" select="mods:title/text()">
-          <xsl:with-param name="field" select="$subject_title_field"/>
-        </xsl:apply-templates>
-        <xsl:value-of select="mods:title"></xsl:value-of>
-      </xsl:element>
-    </li>
-  </xsl:template>
-  <xsl:template match="mods:name[@type = &apos;personal&apos;]" mode="subject">
-    <li>
-      <strong>Subject - Personal: </strong>
-      <xsl:element name="a">
-        <xsl:attribute name="target">_parent</xsl:attribute>
-        <xsl:apply-templates mode="search_link" select="mods:namePart/text()">
-          <xsl:with-param name="field" select="$subject_name_field"/>
-        </xsl:apply-templates>
-        <xsl:value-of select="mods:namePart"></xsl:value-of>
-      </xsl:element>
-    </li>
-  </xsl:template>-->
   
+
   <xsl:template match="mods:hierarchicalGeographic">
     <xsl:if test="mods:country or mods:province or mods:city">
       <xsl:call-template name="basic_output">
@@ -385,6 +355,7 @@
   </xsl:template>
 
   <xsl:template match="mods:role/mods:roleTerm">
+    <xsl:text>(</xsl:text>
     <xsl:choose>
       <xsl:when test="normalize-space(text()) = &apos;act&apos;">Actor</xsl:when>
       <xsl:when test="normalize-space(text()) = &apos;adp&apos;">Adapter</xsl:when>
@@ -610,6 +581,7 @@
         <xsl:value-of select="normalize-space(text())"></xsl:value-of>
       </xsl:otherwise>
     </xsl:choose>
+    <xsl:text>)</xsl:text>
   </xsl:template>
 
   <!-- Delete text which is not explicitly output. -->
