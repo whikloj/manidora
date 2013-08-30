@@ -121,7 +121,7 @@
     </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:relatedItem[@type = &apos;host&apos; and mods:titleInfo/mods:title]">
+  <xsl:template match="mods:relatedItem[@type = 'host' and mods:titleInfo/mods:title]">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Collection</xsl:with-param>
         <xsl:with-param name="content"><a>
@@ -142,14 +142,14 @@
   </xsl:template>
   
   <!-- BASIC template output -->
-  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type=&quot;volume&quot;]">
+  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type='volume']">
       <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Volume</xsl:with-param>
           <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
       </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type=&quot;issue&quot;]">
+  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type='issue']">
     <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Issue</xsl:with-param>
         <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
