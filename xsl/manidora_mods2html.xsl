@@ -85,7 +85,6 @@
   <xsl:template mode="search_link2" match="text()">
     <xsl:param name="field"/>
     <xsl:variable name="textValue" select="normalize-space(.)"/>
-    
     <a>
         <xsl:attribute name="target">_parent</xsl:attribute>
         <xsl:attribute name="href">
@@ -97,6 +96,17 @@
           <xsl:text>%22</xsl:text>
         </xsl:attribute>
         <xsl:value-of select="."/>
+    </a>
+  </xsl:template>
+  
+  <xsl:template name="searchLink">
+    <xsl:param name="field"/>
+    <xsl:param name="searchVal"/>
+    <xsl:param name="textVal"/>
+    <a>
+      <xsl:attribute name="target">_parent</xsl:attribute>
+      <xsl:attribute name="href"><xsl:value-of select="concat($islandoraUrl,$searchUrl, $field, '%3A%22',normalize-space($searchVal),'%22')"/></xsl:attribute>
+      <xsl:value-of select="$textVal"/>
     </a>
   </xsl:template>
 
@@ -113,12 +123,31 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Name</xsl:with-param>
       <xsl:with-param name="content">
-        <xsl:for-each select="mods:namePart">
-          <xsl:value-of select="concat(text(), ' ')" />
-          <xsl:apply-templates select="mods:role/mods:roleTerm"/>
-        </xsl:for-each>
+        <xsl:apply-templates select="." mode="text_out" />
+        <xsl:text> </xsl:text>
+        <xsl:apply-templates select="mods:role/mods:roleTerm"/>
       </xsl:with-param>
     </xsl:call-template>
+  </xsl:template>
+  
+  <xsl:template match="mods:name" mode="text_out">
+    <!-- Output nameParts as text -->
+    <xsl:choose>
+      <xsl:when test="mods:namePart[@type='family'] and mods:namePart[@type='given']">
+        <xsl:value-of select="mods:namePart[@type='family']"/>
+        <xsl:text>, </xsl:text>
+        <xsl:if test="mods:namePart[@type='termsOfAddress']"><xsl:value-of select="mods:namePart[@type='termsOfAddress']"/><xsl:text> </xsl:text></xsl:if>
+        <xsl:value-of select="mods:namePart[@type='given']"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:for-each select="mods:namePart">
+          <xsl:value-of select="text()" />
+          <xsl:if test="position() &lt; last()">
+            <xsl:text> </xsl:text>
+          </xsl:if>
+        </xsl:for-each>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   
   <xsl:template match="mods:relatedItem[@type = 'host' and mods:titleInfo/mods:title]">
@@ -228,9 +257,11 @@
                    </xsl:apply-templates>
                 </xsl:when>
                 <xsl:when test="name() = 'mods:name'">
-                  <xsl:apply-templates mode="search_link2" select="mods:namePart[not(@type = 'date')]/text()">
+                  <xsl:call-template name="searchLink">
                     <xsl:with-param name="field" select="$subject_name_field"/>
-                  </xsl:apply-templates>
+                    <xsl:with-param name="searchVal"><xsl:apply-templates select="." mode="text_out" /></xsl:with-param>
+                    <xsl:with-param name="textVal"><xsl:apply-templates select="." mode="text_out" /></xsl:with-param>
+                  </xsl:call-template>
                 </xsl:when>
                 <xsl:when test="name() = 'mods:title'">
                   <xsl:apply-templates mode="search_link2" select="mods:title/text()">
@@ -238,7 +269,7 @@
                   </xsl:apply-templates>
                 </xsl:when>
               </xsl:choose>
-              <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
+              <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
             </xsl:for-each>
 <!--            <xsl:for-each select="mods:name[@type=&quot;personal&quot;]">
               <xsl:apply-templates mode="search_link2" select="mods:namePart/text()">
@@ -590,5 +621,5 @@
   <xsl:template match="text()"/>
   <xsl:template match="text()" mode="subject"/>
   <xsl:template match="text()" mode="subjectTitle"/>
+  <xsl:template match="node()" priority="-1"/>
 </xsl:stylesheet>
-
