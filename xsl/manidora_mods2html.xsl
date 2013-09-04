@@ -15,6 +15,8 @@
   <xsl:param name="language_field">language_mt</xsl:param>
   <xsl:param name="member_field">RELS_EXT_isMemberOfCollection_uri_ms</xsl:param>
   <xsl:param name="related_field">related_item_title_mt</xsl:param>
+  
+  <xsl:key name="nameKeys" match="mods:name" use="mods:role/mods:roleTerm" />
 
   
   <xsl:template match="mods:mods">
@@ -30,29 +32,30 @@
           </tr>
         </xsl:if>
         <!--<xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>-->
-        <xsl:apply-templates select="mods:abstract"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:abstract" />
         
-        <xsl:apply-templates select="mods:typeOfResource"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:subject/mods:temporal"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:subject"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:name"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:language"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:note[@type!='cid' and @type != 'objectID' and @type != 'imageID']"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:location/mods:physicalLocation"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:location/mods:shelfLocator"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:identifier[@type='local']"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:typeOfResource" />
+        <xsl:apply-templates select="mods:subject/mods:temporal" />
+        <xsl:apply-templates select="mods:subject" />
+        <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic" />
+        <!--<xsl:apply-templates select="mods:name" />--><!-- 2013-09-04 (whikloj) : Trying to group Author/Creators/etc. -->
+        <xsl:call-template name="groupNames" />
+        <xsl:apply-templates select="mods:language" />
+        <xsl:apply-templates select="mods:note[@type!='cid' and @type != 'objectID' and @type != 'imageID']" />
+        <xsl:apply-templates select="mods:location/mods:physicalLocation" />
+        <xsl:apply-templates select="mods:location/mods:shelfLocator" />
+        <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
+        <xsl:apply-templates select="mods:identifier[@type='local']" />
         <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
-        <xsl:apply-templates select="mods:identifier[@type='hdl']"></xsl:apply-templates>        
+        <xsl:apply-templates select="mods:identifier[@type='hdl']" />
         
-        <xsl:apply-templates select="mods:accessCondition"></xsl:apply-templates><!-- Copyright -->
+        <xsl:apply-templates select="mods:accessCondition" /><!-- Copyright -->
 
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:originInfo/mods:issuance"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:originInfo/mods:frequency"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail" />
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start" />
+        <xsl:apply-templates select="mods:originInfo/mods:issuance" />
+        <xsl:apply-templates select="mods:originInfo/mods:frequency" />
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date" />
     </table>
   </xsl:template>
   
@@ -119,15 +122,42 @@
       </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:name">
+
+  <xsl:template name="groupNames">
+    <xsl:for-each select="mods:name">
+      <xsl:choose>
+        <xsl:when test="count(key('nameKeys',descendant-or-self::mods:roleTerm)) &gt; 1">
+          <xsl:if test="not(./preceding-sibling::node()//mods:roleTerm = descendant-or-self::mods:roleTerm)">
+            <xsl:call-template name="basic_output">
+              <xsl:with-param name="label">Names</xsl:with-param>
+              <xsl:with-param name="content">
+                <xsl:apply-templates select="key('nameKeys',descendant-or-self::mods:roleTerm)" mode="grouping"/>
+              </xsl:with-param>
+            </xsl:call-template>
+        </xsl:if>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="." mode="basic"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:for-each>
+  </xsl:template>
+          
+  <xsl:template match="mods:name" mode="basic">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Name</xsl:with-param>
       <xsl:with-param name="content">
         <xsl:apply-templates select="." mode="text_out" />
         <xsl:text> </xsl:text>
-        <xsl:apply-templates select="mods:role/mods:roleTerm"/>
+        <xsl:apply-templates select="descendant-or-self::mods:roleTerm"/>
       </xsl:with-param>
     </xsl:call-template>
+  </xsl:template>
+  
+  <xsl:template match="mods:name" mode="grouping">
+    <xsl:apply-templates select="." mode="text_out" />
+    <xsl:text> </xsl:text>
+    <xsl:apply-templates select="descendant-or-self::mods:roleTerm"/><br />
   </xsl:template>
   
   <xsl:template match="mods:name" mode="text_out">
@@ -386,7 +416,7 @@
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:role/mods:roleTerm">
+  <xsl:template match="mods:roleTerm">
     <xsl:text>(</xsl:text>
     <xsl:choose>
       <xsl:when test="normalize-space(text()) = 'act'">Actor</xsl:when>
@@ -611,7 +641,7 @@
       <xsl:when test="normalize-space(text()) = 'wam'">Writer of accompanying material</xsl:when>
       <xsl:otherwise>
         <!-- not a code, so we assume full text -->
-        <xsl:value-of select="normalize-space(concat(transform(substring(text(),1,1),$smallcase,$uppercase),substring(text(),2)))"></xsl:value-of>
+        <xsl:value-of select="normalize-space(concat(transform(substring(text(),1,1),$smallcase,$uppercase),transform(substring(text(),2),$uppercase,$smallcase)))"></xsl:value-of>
       </xsl:otherwise>
     </xsl:choose>
     <xsl:text>)</xsl:text>
