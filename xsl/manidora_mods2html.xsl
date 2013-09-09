@@ -61,12 +61,14 @@
   
   <!-- BASIC OUTPUT TEMPLATE -->
   <xsl:template name="basic_output">
-      <xsl:param name="label"/>
-      <xsl:param name="content" />
+    <xsl:param name="label"/>
+    <xsl:param name="content" />
+    <xsl:if test="string-length($label) &gt; 0 and string-length($content) &gt; 0">
       <tr>
           <td class="label"><xsl:value-of select="$label"/>:</td>
           <td><xsl:copy-of select="$content"/></td>
       </tr>
+    </xsl:if>
   </xsl:template>
   <!-- BASIC OUTPUT TEMPLATE -->
  
@@ -105,7 +107,7 @@
   <xsl:template name="searchLink">
     <xsl:param name="field"/>
     <xsl:param name="searchVal"/>
-    <xsl:param name="textVal"/>
+    <xsl:param name="textVal" select="$searchVal"/>
     <a>
       <xsl:attribute name="target">_parent</xsl:attribute>
       <xsl:attribute name="href"><xsl:value-of select="concat($islandoraUrl,$searchUrl, $field, '%3A%22',normalize-space($searchVal),'%22')"/></xsl:attribute>
@@ -126,12 +128,12 @@
   <xsl:template name="groupNames">
     <xsl:for-each select="mods:name">
       <xsl:choose>
-        <xsl:when test="count(key('nameKeys',descendant-or-self::mods:roleTerm)) &gt; 1">
-          <xsl:if test="not(./preceding-sibling::node()//mods:roleTerm = descendant-or-self::mods:roleTerm)">
+        <xsl:when test="count(key('nameKeys',descendant-or-self::mods:roleTerm[1])) &gt; 1">
+          <xsl:if test="not(./preceding-sibling::node()//mods:roleTerm = descendant-or-self::mods:roleTerm[1])">
             <xsl:call-template name="basic_output">
               <xsl:with-param name="label">Names</xsl:with-param>
               <xsl:with-param name="content">
-                <xsl:apply-templates select="key('nameKeys',descendant-or-self::mods:roleTerm)" mode="grouping"/>
+                <xsl:apply-templates select="key('nameKeys',descendant-or-self::mods:roleTerm[1])" mode="grouping"/>
               </xsl:with-param>
             </xsl:call-template>
         </xsl:if>
@@ -149,7 +151,7 @@
       <xsl:with-param name="content">
         <xsl:apply-templates select="." mode="text_out" />
         <xsl:text> </xsl:text>
-        <xsl:apply-templates select="descendant-or-self::mods:roleTerm"/>
+        <xsl:apply-templates select="descendant-or-self::mods:roleTerm[1]"/>
       </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
@@ -157,7 +159,7 @@
   <xsl:template match="mods:name" mode="grouping">
     <xsl:apply-templates select="." mode="text_out" />
     <xsl:text> </xsl:text>
-    <xsl:apply-templates select="descendant-or-self::mods:roleTerm"/><br />
+    <xsl:apply-templates select="descendant-or-self::mods:roleTerm[1]"/><br />
   </xsl:template>
   
   <xsl:template match="mods:name" mode="text_out">
@@ -281,19 +283,20 @@
             <xsl:for-each select="mods:topic|mods:name[@type='personal']|mods:titleInfo">
               <xsl:comment><xsl:value-of select="name()"/></xsl:comment>
               <xsl:choose>
-                <xsl:when test="name() = 'mods:topic'">
-                  <xsl:apply-templates mode="search_link2" select="text()">
+                <xsl:when test="name() = 'mods:topic' or name() = 'topic'">
+                  <xsl:call-template name="searchLink">
                      <xsl:with-param name="field" select="$subject_topic_field"/>
-                   </xsl:apply-templates>
+                     <xsl:with-param name="searchVal" select="text()" />
+                  </xsl:call-template>
                 </xsl:when>
-                <xsl:when test="name() = 'mods:name'">
+                <xsl:when test="name() = 'mods:name' or name() = 'name'">
                   <xsl:call-template name="searchLink">
                     <xsl:with-param name="field" select="$subject_name_field"/>
                     <xsl:with-param name="searchVal"><xsl:apply-templates select="." mode="text_out" /></xsl:with-param>
                     <xsl:with-param name="textVal"><xsl:apply-templates select="." mode="text_out" /></xsl:with-param>
                   </xsl:call-template>
                 </xsl:when>
-                <xsl:when test="name() = 'mods:title'">
+                <xsl:when test="name() = 'mods:title' or name() = 'title'">
                   <xsl:apply-templates mode="search_link2" select="mods:title/text()">
                     <xsl:with-param name="field" select="$subject_title_field"/>
                   </xsl:apply-templates>
@@ -320,7 +323,7 @@
   
 
   <xsl:template match="mods:hierarchicalGeographic">
-    <xsl:if test="mods:country or mods:province or mods:city">
+    <xsl:if test="string-length(mods:country) &gt; 0 or string-length(mods:province) &gt; 0 or string-length(mods:city) &gt; 0">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Place</xsl:with-param>
         <xsl:with-param name="content">
@@ -416,7 +419,14 @@
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:roleTerm">
+  <xsl:template match="mods:roleTerm[@type = 'text']">
+    <xsl:text>(</xsl:text>
+    <xsl:comment><xsl:value-of select="text()"/></xsl:comment>
+    <xsl:value-of select="normalize-space(concat(translate(substring(text(),1,1),$smallcase,$uppercase),translate(substring(text(),2),$uppercase,$smallcase)))" />
+    <xsl:text>)</xsl:text>
+  </xsl:template>
+  
+  <xsl:template match="mods:roleTerm[@type = 'code' or not(@type)]">
     <xsl:text>(</xsl:text>
     <xsl:choose>
       <xsl:when test="normalize-space(text()) = 'act'">Actor</xsl:when>
@@ -641,7 +651,7 @@
       <xsl:when test="normalize-space(text()) = 'wam'">Writer of accompanying material</xsl:when>
       <xsl:otherwise>
         <!-- not a code, so we assume full text -->
-        <xsl:value-of select="normalize-space(concat(transform(substring(text(),1,1),$smallcase,$uppercase),transform(substring(text(),2),$uppercase,$smallcase)))"></xsl:value-of>
+        <xsl:value-of select="normalize-space(concat(translate(substring(text(),1,1),$smallcase,$uppercase),translate(substring(text(),2),$uppercase,$smallcase)))"></xsl:value-of>
       </xsl:otherwise>
     </xsl:choose>
     <xsl:text>)</xsl:text>
