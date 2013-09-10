@@ -103,7 +103,7 @@ function manidora_menu() {
     'type' => MENU_CALLBACK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('manidora_newspaper_search_form'),
-    'access arguments' => array(FEDORA_VIEW_OBJECTS),
+    'access arguments' => array(ISLANDORA_VIEW_OBJECTS),
   );
   $items['admin/islandora/manidora'] = array(
     'title' => t('Manidora'),
@@ -123,14 +123,14 @@ function manidora_menu() {
     'type' => MENU_CALLBACK,
     'page callback' => 'manidora_printable_pdf',
     'page arguments' => array(4, NULL),
-    'access arguments' => array(FEDORA_VIEW_OBJECTS),
+    'access arguments' => array(ISLANDORA_VIEW_OBJECTS),
   );
   $items['islandora/object/%islandora_object/manidora_download_clip'] = array(
     'page callback' => 'manidora_download_clip',
     'page arguments' => array(2),
     'type' => MENU_CALLBACK,
     'access callback' => 'islandora_object_access_callback',
-    'access arguments' => array(FEDORA_VIEW_OBJECTS, 2),
+    'access arguments' => array(ISLANDORA_VIEW_OBJECTS, 2),
     'load arguments' => array(2),
   );
   $items['islandora/object/%islandora_object/manidora_download_clip_pdf'] = array(
@@ -138,7 +138,7 @@ function manidora_menu() {
     'page arguments' => array(2),
     'type' => MENU_CALLBACK,
     'access callback' => 'islandora_object_access_callback',
-    'access arguments' => array(FEDORA_VIEW_OBJECTS, 2),
+    'access arguments' => array(ISLANDORA_VIEW_OBJECTS, 2),
     'load arguments' => array(2),
   );
   $items['admin/islandora/manidora/homepage'] = array(
