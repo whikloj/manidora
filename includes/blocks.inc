@@ -154,7 +154,7 @@ EOF;
 EOF;
 
       $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:"uofm:*" AND RELS_EXT_hasModel_uri_mt:("info:fedora/islandora:collectionCModel" "info:fedora/islandora:newspaperCModel"))';
-      $solr_params = array("fl"=>"PID,dc.title",'fq'=>'-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives")');
+      $solr_params = array("fl"=>"PID,dc.title",'fq'=>'-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives" "uofm:archives")');
       try{
         $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
         $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
@@ -173,7 +173,7 @@ EOF;
           $objects = array();
           $cl = "";
           // Move the items so each letter that exists is an array of those collections 
-          array_walk($tmpobjects, function($v,$k) use (&$objects,&$cl) { if (strtolower(substr($v['title'],0,1)) != $cl){ $cl = strtolower(substr($v['title'],0,1));} if (array_key_exists($cl,$objects) && !is_array($objects[$cl])){ $objects[$cl] = array(); } $objects[$cl][] = $v; });      
+          array_walk($tmpobjects, function($v,$k) use (&$objects,&$cl) { if (substr(strtolower(preg_replace('/^the\s?/i',"",$v['title'])),0,1) != $cl){ $cl = substr(strtolower(preg_replace('/^the\s?/i',"",$v['title'])),0,1);} if (array_key_exists($cl,$objects) && !is_array($objects[$cl])){ $objects[$cl] = array(); } $objects[$cl][] = $v; });      
           $tmp = "";
           foreach ($objects as $letter => $collections){
             $odd = array();
@@ -316,7 +316,6 @@ function __manidora_homepage_thumbnail_content(){
     if (count($t_array)>=$num_pics){
       $picked = array_rand($t_array,$num_pics);
       $output = '<div id="manidora-homepage-thumbs">';
-      $count = 0;
       foreach ($picked as $pid){
         $title = '';
         // If $data is an array and has a key of the current PID, then we know the title
@@ -324,7 +323,6 @@ function __manidora_homepage_thumbnail_content(){
           $title = 'title="' . check_plain($data[$t_array[$pid]]) . '" ';
         }
         $output .= '<a '.$title.'href="' . url("islandora/object/" . urlencode($t_array[$pid])) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . urlencode($t_array[$pid]) . "/datastream/TN/view") . '" alt="Object '. check_plain($t_array[$pid]) .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
-        $count += 1;
       }
       $output .= "</div> <!-- /#manidora-homepage-thumbs -->\n";
     }

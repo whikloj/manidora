@@ -634,7 +634,8 @@ function manidora_newspaper_search_form($form, &$form_state) {
   );
   $form['left_column']['without_words'] = array(
     '#type' => 'textfield',
-    '#title' => t('Without all the words'),
+    '#title' => t('Without these words'),
+    '#suffix' => '<p class="without-words-suffix">'.t('If you are searching for "Winnipeg football" but want to exclude references to the Winnipeg Blue Bombers in your search results, you would enter the words "Blue Bombers" in this box.') . '</p>',
     '#size' => 50,
   );
   $form['left_column']['submit'] = array(
