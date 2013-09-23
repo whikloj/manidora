@@ -15,7 +15,7 @@ require_once dirname(__FILE__) . '/includes/blocks.inc';
  *   path to page we want a printer friendly version of
  */
 function manidora_print_insert_link($path) {
-  return l(t("Printer Friendly Version"), $path . '/print_object', array('attributes'=>array('class'=>array('print-link'))));
+  return l(t("Printer Friendly Version"), $path . '/print', array('attributes'=>array('class'=>array('print-link'),'id'=>'clip')));
 }
 
 /**
