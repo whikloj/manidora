@@ -641,9 +641,13 @@
       <xsl:when test="normalize-space(text()) = 'wde'">Wood-engraver</xsl:when>
       <xsl:when test="normalize-space(text()) = 'wdc'">(Woodcutter)</xsl:when>
       <xsl:when test="normalize-space(text()) = 'wam'">(Writer of accompanying material)</xsl:when>
-      <xsl:otherwise>
+      <xsl:when test="string-length(normalize-space(text())) &gt; 0">
         <!-- not a code, so we assume full text -->
         <xsl:value-of select="normalize-space(concat('(',translate(substring(text(),1,1),$smallcase,$uppercase),translate(substring(text(),2),$uppercase,$smallcase),')'))" />
+      </xsl:when>
+      <xsl:otherwise>
+        <!-- no marcrelator -->
+        &nbsp;
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
