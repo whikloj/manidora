@@ -645,10 +645,6 @@
         <!-- not a code, so we assume full text -->
         <xsl:value-of select="normalize-space(concat('(',translate(substring(text(),1,1),$smallcase,$uppercase),translate(substring(text(),2),$uppercase,$smallcase),')'))" />
       </xsl:when>
-      <xsl:otherwise>
-        <!-- no marcrelator -->
-        &nbsp;
-      </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 
