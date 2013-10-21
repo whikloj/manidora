@@ -42,7 +42,7 @@
         <!--<xsl:apply-templates select="mods:name" />--><!-- 2013-09-04 (whikloj) : Trying to group Author/Creators/etc. -->
         <xsl:call-template name="groupNames" />
         <xsl:apply-templates select="mods:language" />
-        <xsl:apply-templates select="mods:note[not(@type ='cid') and not(@type = 'objectID') and not(@type != 'imageID')]" />
+        <xsl:apply-templates select="mods:note[not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID')]" />
         <xsl:apply-templates select="mods:location/mods:physicalLocation" />
         <xsl:apply-templates select="mods:location/mods:shelfLocator" />
         <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
@@ -145,14 +145,16 @@
   </xsl:template>
           
   <xsl:template match="mods:name" mode="basic">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Name</xsl:with-param>
-      <xsl:with-param name="content">
-        <xsl:apply-templates select="." mode="text_out" />
-        <xsl:text> </xsl:text>
-        <xsl:apply-templates select="descendant-or-self::mods:roleTerm[1]"/>
-      </xsl:with-param>
-    </xsl:call-template>
+    <xsl:if test="string-length(text()) &gt; 0">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Name</xsl:with-param>
+        <xsl:with-param name="content">
+          <xsl:apply-templates select="." mode="text_out" />
+          <xsl:text> </xsl:text>
+          <xsl:apply-templates select="descendant-or-self::mods:roleTerm[1]"/>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
   
   <xsl:template match="mods:name" mode="grouping">
