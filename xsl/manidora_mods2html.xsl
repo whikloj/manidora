@@ -126,7 +126,7 @@
 
 
   <xsl:template name="groupNames">
-    <xsl:for-each select="mods:name">
+    <xsl:for-each select="//mods:name">
       <xsl:choose>
         <xsl:when test="count(key('nameKeys',descendant-or-self::mods:roleTerm[1])) &gt; 1">
           <xsl:if test="not(./preceding-sibling::node()//mods:roleTerm = descendant-or-self::mods:roleTerm[1])">
