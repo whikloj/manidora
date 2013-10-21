@@ -48,13 +48,11 @@
         <xsl:apply-templates select="mods:identifier[@type='local']" />
         <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
         <xsl:apply-templates select="mods:identifier[@type='hdl']" />
-        
+        <xsl:apply-templates select="mods:originInfo"/>
         <xsl:apply-templates select="mods:accessCondition" /><!-- Copyright -->
 
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail" />
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start" />
-        <xsl:apply-templates select="mods:originInfo/mods:issuance" />
-        <xsl:apply-templates select="mods:originInfo/mods:frequency" />
         <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date" />
     </table>
   </xsl:template>
@@ -245,17 +243,37 @@
     </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:originInfo/mods:issuance">
+  <xsl:template match="mods:originInfo">
+    <xsl:apply-templates select="mods:publisher" />
+    <xsl:apply-templates select="mods:issuedDate" />
+    <xsl:apply-templates select="mods:place" />
+  </xsl:template>
+
+  <xsl:template match="mods:publisher">
     <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Issuance</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
-    </xsl:call-template>  </xsl:template>
-  
-  <xsl:template match="mods:originInfo/mods:frequency">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Frequency</xsl:with-param>
+      <xsl:with-param name="label">Publisher</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
+  </xsl:template>
+  
+  <xsl:template match="mods:issuedDate">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Publication date</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+  
+  <xsl:template match="mods:place">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Location</xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="mods:placeTerm"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+  
+  <xsl:template match="mods:placeTerm">
+    <xsl:if test="not(@type) or @type = 'text'">
+      <xsl:value-of select="text()"/><xsl:text> </xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="mods:identifier[@type='local']">
