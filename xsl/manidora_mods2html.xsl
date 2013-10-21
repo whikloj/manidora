@@ -259,8 +259,15 @@
   
   <xsl:template match="mods:originInfo">
     <xsl:apply-templates select="mods:publisher" />
-    <xsl:apply-templates select="mods:issuedDate" />
-    <xsl:apply-templates select="mods:place" />
+    <xsl:apply-templates select="mods:issuedDate|mods:dateCreated" />
+    <xsl:if test="mods:place[string-length(text()|*) &gt; 0]">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Location</xsl:with-param>
+        <xsl:with-param name="content">
+          <xsl:apply-templates select="mods:place/mods:placeTerm"><xsl:sort select="@authority" order="descending"/></xsl:apply-templates>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="mods:publisher">
@@ -270,24 +277,17 @@
     </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:issuedDate">
+  <xsl:template match="mods:issuedDate|mods:dateCreated">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Publication date</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:place[string-length(text()) &gt; 0]">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Location</xsl:with-param>
-      <xsl:with-param name="content"><xsl:apply-templates select="mods:placeTerm"/></xsl:with-param>
-    </xsl:call-template>
-  </xsl:template>
-  
   <xsl:template match="mods:placeTerm">
-    <xsl:if test="not(@type) or @type = 'text'">
-      <xsl:value-of select="text()"/><xsl:text> </xsl:text>
-    </xsl:if>
+    <xsl:value-of select="text()"/>
+    <xsl:if test="last() &gt; 1 and position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
+    <xsl:text> </xsl:text>
   </xsl:template>
 
   <xsl:template match="mods:identifier[@type='local']">
