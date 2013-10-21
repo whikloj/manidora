@@ -233,7 +233,18 @@
   <xsl:template match="mods:relatedItem/mods:location/mods:url">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Source</xsl:with-param>
-      <xsl:with-param name="content"><a><xsl:attribute name="href"><xsl:value-of select="text()"/></xsl:attribute><xsl:value-of select="text()"/></a></xsl:with-param>
+      <xsl:with-param name="content">
+        <a><xsl:attribute name="href"><xsl:value-of select="text()"/></xsl:attribute>
+        <xsl:choose>
+          <xsl:when test="string-length(parent::node()/parent::node()/mods:titleInfo/mods:title) &gt; 0">
+            <xsl:value-of select="../../mods:titleInfo/mods:title" />
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="text()"/>
+          </xsl:otherwise>
+        </xsl:choose>
+        </a>
+      </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
