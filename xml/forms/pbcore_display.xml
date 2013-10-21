@@ -467,6 +467,82 @@
                     </element>
                 </children>
             </element>
+            <element name="rightsSummaries">
+              <properties>
+                <type>defaultable_item</type>
+                <access>TRUE</access>
+                <collapsible>FALSE</collapsible>
+                <disabled>FALSE</disabled>
+                <executes_submit_callback>FALSE</executes_submit_callback>
+                <multiple>FALSE</multiple>
+                <required>FALSE</required>
+                <resizable>FALSE</resizable>
+                <title>Rights statement</title>
+                <tree>TRUE</tree>
+              </properties>
+              <children>
+                <element name="rightsSummary">
+                  <properties>
+                    <type>defaultable_markup</type>
+                    <access>TRUE</access>
+                    <collapsed>FALSE</collapsed>
+                    <collapsible>FALSE</collapsible>
+                    <disabled>FALSE</disabled>
+                    <executes_submit_callback>FALSE</executes_submit_callback>
+                    <multiple>FALSE</multiple>
+                    <required>FALSE</required>
+                    <resizable>FALSE</resizable>
+                    <tree>TRUE</tree>
+                  </properties>
+                  <children>
+                    <element name="0">
+                      <properties>
+                        <type>defaultable_markup</type>
+                        <access>TRUE</access>
+                        <collapsed>FALSE</collapsed>
+                        <collapsible>FALSE</collapsible>
+                        <disabled>FALSE</disabled>
+                        <executes_submit_callback>FALSE</executes_submit_callback>
+                        <multiple>FALSE</multiple>
+                        <required>FALSE</required>
+                        <resizable>FALSE</resizable>
+                        <suffix>. </suffix>
+                        <tree>TRUE</tree>
+                        <actions>
+                          <create>NULL</create>
+                          <read>
+                            <path>self::node()/pb:pbcoreRightsSummary</path>
+                            <context>parent</context>
+                          </read>
+                          <update>NULL</update>
+                          <delete>NULL</delete>
+                        </actions>
+                      </properties>
+                      <children>
+                        <element name="name">
+                          <properties>
+                            <type>defaultable_markup</type>
+                            <access>TRUE</access>
+                            <required>FALSE</required>
+                            <tree>TRUE</tree>
+                            <actions>
+                              <create>NULL</create>
+                              <read>
+                                <path>self::node()/pb:rightsSummary</path>
+                                <context>parent</context>
+                              </read>
+                              <update>NULL</update>
+                              <delete>NULL</delete>
+                            </actions>
+                          </properties>
+                          <children/>
+                        </element>
+                      </children>
+                    </element>
+                  </children>
+                </element>
+              </children>
+            </element>    
             <element name="instantiations">
                 <properties>
                     <type>fieldset</type>
