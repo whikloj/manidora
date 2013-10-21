@@ -17,7 +17,8 @@
   <xsl:param name="related_field">related_item_title_mt</xsl:param>
   
   <xsl:key name="nameKeys" match="mods:name" use="mods:role/mods:roleTerm" />
-
+  
+  <xsl:key name="CCAccessKey" match="mods:accessCondition" use="concat(@type,'+',text())" />
   
   <xsl:template match="mods:mods">
     <table class="manidora-metadata">
@@ -401,7 +402,7 @@
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:accessCondition">
+  <xsl:template match="mods:accessCondition[generate-id() != generate-id(key('CCAccessKey', concat(@type, '+', text()))[1])]">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Copyright</xsl:with-param>
       <xsl:with-param name="content">
@@ -428,7 +429,7 @@
       </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-
+  
   <!--<xsl:template match="mods:note[@type != &quot;cid&quot; or @type != &quot;objectID&quot; or @type != &quot;imageID&quot;]">-->
   <xsl:template match="mods:note">
     <xsl:call-template name="basic_output">
