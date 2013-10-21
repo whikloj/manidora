@@ -402,7 +402,7 @@
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:accessCondition[generate-id() != generate-id(key('CCAccessKey', concat(@type, '+', text()))[1])]">
+  <xsl:template match="mods:accessCondition[not(generate-id() = generate-id(key('CCAccessKey', concat(@type, '+', text()))[1])) or count(key('CCAccessKey',concat(@type,'+',text()))) = 1]">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Copyright</xsl:with-param>
       <xsl:with-param name="content">
