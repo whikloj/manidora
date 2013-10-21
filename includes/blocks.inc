@@ -98,7 +98,8 @@
         ),
       ),
       "Moving images" => array(
-        "solr_field" => "type_of_resource_mt",
+        //"solr_field" => "type_of_resource_mt",
+        "solr_field" => "dc.type",
         "data" => array(
           "moving image",
         ),
