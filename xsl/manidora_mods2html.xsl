@@ -277,7 +277,7 @@
     </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:place">
+  <xsl:template match="mods:place[string-length(text()) &gt; 0]">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Location</xsl:with-param>
       <xsl:with-param name="content"><xsl:apply-templates select="mods:placeTerm"/></xsl:with-param>
