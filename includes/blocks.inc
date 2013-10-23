@@ -323,7 +323,7 @@ function __manidora_homepage_thumbnail_content(){
         if (isset($data) && is_array($data) && array_key_exists($t_array[$pid],$data)){
           $title = 'title="' . check_plain($data[$t_array[$pid]]) . '" ';
         }
-        $output .= '<a '.$title.'href="' . url("islandora/object/" . urlencode($t_array[$pid])) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . urlencode($t_array[$pid]) . "/datastream/TN/view") . '" alt="Object '. check_plain($t_array[$pid]) .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
+        $output .= '<a '.$title.'href="' . url("islandora/object/" . $t_array[$pid]) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . $t_array[$pid] . "/datastream/TN/view") . '" alt="Object '. check_plain($t_array[$pid]) .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
       }
       $output .= "</div> <!-- /#manidora-homepage-thumbs -->\n";
     }
