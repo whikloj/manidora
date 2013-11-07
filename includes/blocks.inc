@@ -17,7 +17,7 @@
      'info' => t('Manidora homepage thumbnails'),
    );
    $blocks['manidora_whats_new'] = array(
-    'info' => t('Manidora whats new'),
+    'info' => t('Manidora what\'s new'),
    );
    return $blocks;
   }
@@ -36,9 +36,9 @@
         $block['subject'] = 'Homepage Thumbnails';
         $block['content'] = __manidora_homepage_thumbnail_content();
         break;
-      case 'manidora_what_new':
+      case 'manidora_whats_new':
         $block['subject'] = 'What\'s New';
-        $block['content'] = manidora_whats_new_block();
+        $block['content'] = __manidora_whats_new_content();
         break;
     }
     return $block;
@@ -338,30 +338,34 @@ function __manidora_homepage_thumbnail_content(){
   return $output;
 }
 
-function manidora_whats_new_block(){
+function __manidora_whats_new_content(){
   module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
-  $query = '+PID:[ "" TO * ] AND -RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ] AND dc.title:[ "" TO * ]';
-  $params = array('fl' => 'PID,dc.title,timestamp', 'sort' => 'timestamp desc');
   $solr = new Apache_Solr_Service($path_parts['host'],$path_parts['port'],$path_parts['path'] . '/');
+  
+  $query = 'dc.title:[ * TO * ]';
+  $params = array('fl' => 'PID,dc.title,timestamp', 'sort' => 'timestamp desc', 'fq' => '-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]');
   $solr->setCreateDocuments(0);
   $results = $solr->search($query,0,4,$params);
   if ($results){
     $solr_results = json_decode($results->getRawResponse(), TRUE);
     $view = '';
-    $tstamp = new Date();
+    $tstamp = new DateTime();
     foreach ($solr_results['response']['docs'] as $doc){
       $tstamp->createFromFormat('Y-m-dTH:i:s.uZ',$doc['timestamp']);
-      $view .= '<div class="views-row"><div class="views-field-thumb">';
+      $title = $doc['dc.title'][0];
+      $stitle = (strlen($title) > 30 ? substr($title,0,strpos($title,' ',27)).'...' : $title);
+      $view .= '<div class="manidora-whats-new-row"><div class="manidora-whats-new-thumb">';
       $view .= '<a href="' . url('islandora/object/' . $doc['PID']) . '">';
-      $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($doc['dc.title']) . '" class="featured-thumb" /></a></div>';
-      $view .= '<div class="views-field-info"><a href="' . url('islandora/object/' . $doc['PID']) . '">' . t($doc['dc.title']) . '</a>';
-      $view .= '<br><span class="views-field-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
+      $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+      $view .= '<div class="manidora-whats-new-info"><a title="' . t($title) . '" href="' . url('islandora/object/' . $doc['PID']) . '">' . t($stitle) . '</a>';
+      $view .= '<br><span class="manidora-whats-new-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
       $view .= '</div>';
     }
-    $output = '<div class="view-content">' . $view . '</div>';
+    $output = '<div class="manidora-whats-new-content">' . $view . '</div>';
     return $output;
   }
+  
 }
     
   

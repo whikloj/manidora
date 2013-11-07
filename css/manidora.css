@@ -72,3 +72,22 @@
     font-size: 0.78em;
     font-style: italic;
 }
+
+.manidora-whats-new-row {
+    clear: left;
+    overflow: hidden;
+    padding: 5px;
+    position: relative;
+}
+
+.manidora-whats-new-info {
+    display: inline-block;
+    font-size: 0.85em;
+    font-weight: bold;
+    max-width: 113px;
+}
+
+.manidora-whats-new-date {
+    color: #444444;
+    font-size: 80%;
+}
