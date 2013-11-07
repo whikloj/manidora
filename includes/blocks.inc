@@ -16,6 +16,9 @@
    $blocks['manidora_homepage_thumbnails'] = array(
      'info' => t('Manidora homepage thumbnails'),
    );
+   $blocks['manidora_whats_new'] = array(
+    'info' => t('Manidora whats new'),
+   );
    return $blocks;
   }
   
@@ -32,6 +35,10 @@
       case 'manidora_homepage_thumbnails':
         $block['subject'] = 'Homepage Thumbnails';
         $block['content'] = __manidora_homepage_thumbnail_content();
+        break;
+      case 'manidora_what_new':
+        $block['subject'] = 'What\'s New';
+        $block['content'] = manidora_whats_new_block();
         break;
     }
     return $block;
@@ -329,6 +336,32 @@ function __manidora_homepage_thumbnail_content(){
     }
   }
   return $output;
+}
+
+function manidora_whats_new_block(){
+  module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
+  $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+  $query = '+PID:[ "" TO * ] AND -RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ] AND dc.title:[ "" TO * ]';
+  $params = array('fl' => 'PID,dc.title,timestamp', 'sort' => 'timestamp desc');
+  $solr = new Apache_Solr_Service($path_parts['host'],$path_parts['port'],$path_parts['path'] . '/');
+  $solr->setCreateDocuments(0);
+  $results = $solr->search($query,0,4,$params);
+  if ($results){
+    $solr_results = json_decode($results->getRawResponse(), TRUE);
+    $view = '';
+    $tstamp = new Date();
+    foreach ($solr_results['response']['docs'] as $doc){
+      $tstamp->createFromFormat('Y-m-dTH:i:s.uZ',$doc['timestamp']);
+      $view .= '<div class="views-row"><div class="views-field-thumb">';
+      $view .= '<a href="' . url('islandora/object/' . $doc['PID']) . '">';
+      $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($doc['dc.title']) . '" class="featured-thumb" /></a></div>';
+      $view .= '<div class="views-field-info"><a href="' . url('islandora/object/' . $doc['PID']) . '">' . t($doc['dc.title']) . '</a>';
+      $view .= '<br><span class="views-field-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
+      $view .= '</div>';
+    }
+    $output = '<div class="view-content">' . $view . '</div>';
+    return $output;
+  }
 }
     
   
