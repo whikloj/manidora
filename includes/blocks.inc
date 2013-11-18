@@ -344,7 +344,7 @@ function __manidora_whats_new_content(){
   $solr = new Apache_Solr_Service($path_parts['host'],$path_parts['port'],$path_parts['path'] . '/');
   
   $query = 'dc.title:[ * TO * ]';
-  $params = array('fl' => 'PID,dc.title,timestamp', 'sort' => 'timestamp desc', 'fq' => '-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]');
+  $params = array('fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms', 'sort' => 'timestamp desc', 'fq' => array('-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]','-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")'));
   $solr->setCreateDocuments(0);
   $results = $solr->search($query,0,4,$params);
   if ($results){
@@ -357,7 +357,11 @@ function __manidora_whats_new_content(){
       $stitle = (strlen($title) > 30 ? substr($title,0,strpos($title,' ',27)).'...' : $title);
       $view .= '<div class="manidora-whats-new-row"><div class="manidora-whats-new-thumb">';
       $view .= '<a href="' . url('islandora/object/' . $doc['PID']) . '">';
-      $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+      if (in_array('TN',$doc['fedora_datastreams_ms'])){
+        $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+      } else {
+        $view .= '<img src="/sites/all/modules/islandora/images/folder.png" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+      }
       $view .= '<div class="manidora-whats-new-info"><a title="' . t($title) . '" href="' . url('islandora/object/' . $doc['PID']) . '">' . t($stitle) . '</a>';
       $view .= '<br><span class="manidora-whats-new-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
       $view .= '</div>';
