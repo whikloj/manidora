@@ -50,6 +50,21 @@ function manidora_drush_command() {
       'manidora',
     ),
   );
+  $items['manidora_regenerate_sequence_nums'] = array(
+    'aliases' => array('uom_compound_fix'),
+    'callback' => 'manidora_regenerate_sequence_batch_setup',
+    'description' => 'Regenerates isSequenceNumberOf<PID> for compound images from mods:identifier@local if it exists',
+    'options' => array(
+      'pid' => array(
+        'description' => 'The compound image PID to run against. If not provided all islandora:compoundCModel objects are run',
+        'value' => 'optional',
+      ),
+    ),
+    'examples' => array(
+      'drush -u 1 uom_compound_fix' => 'Run against all objects with islandora:compoundCModel type',
+      'drush -u 1 uom_compound_fix --pid="uofm:1234"' => 'Run ONLY against uofm:1234',
+    ),
+  );
 
   return $items;
 }
@@ -197,4 +212,94 @@ function drush_manidora_wipe_hocr_doctypes() {
 
   batch_set($batch);
   drush_backend_batch_process();
+}
+
+function manidora_regenerate_sequence_batch_setup(){
+  $pid = drush_get_option('pid', FALSE);
+  
+  
+  drupal_static_reset('islandora_get_tuque_connection');
+  $connection = islandora_get_tuque_connection();
+  if ($pid !== FALSE){
+    $results[]['object']['value'] = $pid;
+  } else {
+    $query = 'select $object $label from <#ri> where (
+      $object <fedora-model:label> $label and
+      $object <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:compoundCModel> and
+      $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>)
+      order by $label';
+    $results = $connection->repository->ri->itqlQuery($query, 'unlimited');
+  }
+  $operations = array();
+  foreach ($results as $compound_object) {
+    array_push($operations, array("manidora_regenerate_sequence_set_rels_ext",
+      array($compound_object['object']['value']),
+      )
+    );
+  }
+  
+  $batch = array(
+      'operations' => $operations,
+      'finished' => 'manidora_regenerate_sequence_finished',
+      'title' => t('Recreating Sequence Numbers for Compound Images'),
+      'init_message' => t('Batch is starting.'),
+      'progress_message' => t('Processed @current out of @total.'),
+      'error_message' => t('Batch has encountered an error.'),
+      'file' => drupal_get_path('module', 'manidora') . '/manidora.drush.inc',
+  );
+  batch_set($batch);
+  $batch =& batch_get();
+  $batch['progressive'] = FALSE;
+  drush_backend_batch_process();
+}
+
+function manidora_regenerate_sequence_set_rels_ext($compound_object, &$context){
+  $context['message'] = 'Setting sequence numbers from MODS record for object: ' . $compound_object;
+  $parts = islandora_compound_object_get_parts($compound_object);
+  if (is_array($parts) && count($parts) > 0){
+    foreach ($parts as $part) {
+      $good = TRUE;
+      $escaped_pid = str_replace(':', '_', $compound_object);
+      $child_object = islandora_object_load($part);
+      $sequence = $child_object->relationships->get(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid");
+      if (is_array($sequence) && count($sequence) == 1){
+        drush_log("Child ($part) of $compound_object already has a sequence number, skipping","ok");
+      } else {
+        $mods_text = $child_object->repository->api->a->getDatastreamDissemination($child_object->id, 'MODS');
+        if ($mods_text) {
+          $mods_xml = new SimpleXMLElement($mods_text);
+          $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
+          // Title info.
+          $mods_id_res = $mods_xml->xpath('/mods:mods/mods:identifier[@type="local"]');
+          $mods_id = (string) reset($mods_id_res);
+          if (!empty($mods_id)){
+            $local_id = intval(substr($mods_id,strrpos($mods_id,'_')+1));
+            if ($local_id == 0){
+              drush_log("Object ($part) has sequence invalid sequence 0 parsed from ($mods_id), not setting",'error');
+            } else {
+              drush_log("Setting sequence number for ($part) of ($compound_object) to ($local_id)","ok");
+              $child_object->relationships->add(ISLANDORA_RELS_EXT_URI, "isSequenceNumberOf$escaped_pid", $local_id, TRUE);
+            }
+          } else {
+            // Missed one, need to report to check manually
+            $good = FALSE;
+          }
+        } else {
+          // Missed one, need to report to check manually
+          $good = FALSE;
+        }
+      }
+      if (!$good){
+        drush_log("Part ($part) of ($compound_object) has no local identifier","warning");
+      }
+    }
+  } else {
+    drush_log("Object ($compound_object) is not a compound or has 0 children",'warning');
+  }
+  
+}
+
+function manidora_regenerate_sequence_finished($success, $results, $operations) {
+  // Print finished message to user.
+  drush_log('Finished updating compound object sequence numbers.','ok');
 }
