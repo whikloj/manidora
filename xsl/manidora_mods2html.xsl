@@ -15,7 +15,10 @@
   <xsl:param name="language_field">language_mt</xsl:param>
   <xsl:param name="member_field">RELS_EXT_isMemberOfCollection_uri_ms</xsl:param>
   <xsl:param name="related_field">related_item_title_mt</xsl:param>
-
+  
+  <xsl:key name="nameKeys" match="mods:name" use="mods:role/mods:roleTerm" />
+  
+  <xsl:key name="CCAccessKey" match="mods:accessCondition" use="concat(@type,'+',text())" />
   
   <xsl:template match="mods:mods">
     <table class="manidora-metadata">
@@ -30,39 +33,41 @@
           </tr>
         </xsl:if>
         <!--<xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>-->
-        <xsl:apply-templates select="mods:abstract"></xsl:apply-templates>
-        <!--<xsl:apply-templates select="mods:name"></xsl:apply-templates>-->
-        <xsl:apply-templates select="mods:typeOfResource"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:subject/mods:temporal"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:subject"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:language"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:note[@type!=&quot;cid&quot; and @type != &quot;objectID&quot; and @type != &quot;imageID&quot;]"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:location/mods:physicalLocation"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:location/mods:shelfLocator"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:identifier[@type=&quot;local&quot;]"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
-        <xsl:apply-templates select="mods:identifier[@type=&quot;hdl&quot;]"></xsl:apply-templates>        
+        <xsl:apply-templates select="mods:abstract" />
         
-        <xsl:apply-templates select="mods:accessCondition"></xsl:apply-templates><!-- Copyright -->
+        <xsl:apply-templates select="mods:typeOfResource" />
+        <xsl:apply-templates select="mods:subject/mods:temporal" />
+        <xsl:apply-templates select="mods:subject" />
+        <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic" />
+        <!--<xsl:apply-templates select="mods:name" />--><!-- 2013-09-04 (whikloj) : Trying to group Author/Creators/etc. -->
+        <xsl:call-template name="groupNames" />
+        <xsl:apply-templates select="mods:language" />
+        <xsl:apply-templates select="mods:note[not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID')]" />
+        <xsl:apply-templates select="mods:location/mods:physicalLocation" />
+        <xsl:apply-templates select="mods:location/mods:shelfLocator" />
+        <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
+        <xsl:apply-templates select="mods:identifier[@type='local']" />
+        <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
+        <xsl:apply-templates select="mods:identifier[@type='hdl']" />
+        <xsl:apply-templates select="mods:originInfo"/>
+        <xsl:apply-templates select="mods:accessCondition" /><!-- Copyright -->
 
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:originInfo/mods:issuance"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:originInfo/mods:frequency"></xsl:apply-templates>
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date"></xsl:apply-templates>
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail" />
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start" />
+        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date" />
     </table>
   </xsl:template>
   
   <!-- BASIC OUTPUT TEMPLATE -->
   <xsl:template name="basic_output">
-      <xsl:param name="label"/>
-      <xsl:param name="content" />
+    <xsl:param name="label"/>
+    <xsl:param name="content" />
+    <xsl:if test="string-length($label) &gt; 0 and string-length($content) &gt; 0">
       <tr>
           <td class="label"><xsl:value-of select="$label"/>:</td>
           <td><xsl:copy-of select="$content"/></td>
       </tr>
+    </xsl:if>
   </xsl:template>
   <!-- BASIC OUTPUT TEMPLATE -->
  
@@ -84,7 +89,6 @@
   <xsl:template mode="search_link2" match="text()">
     <xsl:param name="field"/>
     <xsl:variable name="textValue" select="normalize-space(.)"/>
-    
     <a>
         <xsl:attribute name="target">_parent</xsl:attribute>
         <xsl:attribute name="href">
@@ -98,6 +102,17 @@
         <xsl:value-of select="."/>
     </a>
   </xsl:template>
+  
+  <xsl:template name="searchLink">
+    <xsl:param name="field"/>
+    <xsl:param name="searchVal"/>
+    <xsl:param name="textVal" select="$searchVal"/>
+    <a>
+      <xsl:attribute name="target">_parent</xsl:attribute>
+      <xsl:attribute name="href"><xsl:value-of select="concat($islandoraUrl,$searchUrl, $field, '%3A%22',normalize-space($searchVal),'%22')"/></xsl:attribute>
+      <xsl:value-of select="$textVal"/>
+    </a>
+  </xsl:template>
 
   <xsl:template match="mods:typeOfResource">
       <xsl:call-template name="basic_output">
@@ -108,48 +123,77 @@
       </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:name">
+
+  <xsl:template name="groupNames">
+    <xsl:for-each select="//mods:name">
+      <xsl:choose>
+        <xsl:when test="count(key('nameKeys',descendant-or-self::mods:roleTerm[1])) &gt; 1">
+          <xsl:if test="not(./preceding-sibling::node()//mods:roleTerm = descendant-or-self::mods:roleTerm[1])">
+            <xsl:call-template name="basic_output">
+              <xsl:with-param name="label">Names</xsl:with-param>
+              <xsl:with-param name="content">
+                <xsl:apply-templates select="key('nameKeys',descendant-or-self::mods:roleTerm[1])" mode="grouping"/>
+              </xsl:with-param>
+            </xsl:call-template>
+        </xsl:if>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="." mode="basic"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:for-each>
+  </xsl:template>
+          
+  <xsl:template match="mods:name" mode="basic">
+    <xsl:if test="string-length(text()) &gt; 0">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Name</xsl:with-param>
+        <xsl:with-param name="content">
+          <xsl:apply-templates select="." mode="text_out" />
+          <xsl:text> </xsl:text>
+          <xsl:apply-templates select="descendant-or-self::mods:roleTerm[1]"/>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
+  
+  <xsl:template match="mods:name" mode="grouping">
+    <xsl:apply-templates select="." mode="text_out" />
+    <xsl:text> </xsl:text>
+    <xsl:apply-templates select="descendant-or-self::mods:roleTerm[1]"/><br />
+  </xsl:template>
+  
+  <xsl:template match="mods:name" mode="text_out">
+    <!-- Output nameParts as text -->
     <xsl:choose>
-      <xsl:when test="@type = &apos;organization&apos;">
-        <li>
-          <strong>
-            <xsl:apply-templates select="mods:role/mods:roleTerm"></xsl:apply-templates> - Organization: </strong>
-          <xsl:value-of select="mods:namePart"></xsl:value-of>
-        </li>
+      <xsl:when test="mods:namePart[@type='family'] and mods:namePart[@type='given']">
+        <xsl:value-of select="mods:namePart[@type='family']"/>
+        <xsl:text>, </xsl:text>
+        <xsl:if test="mods:namePart[@type='termsOfAddress']"><xsl:value-of select="mods:namePart[@type='termsOfAddress']"/><xsl:text> </xsl:text></xsl:if>
+        <xsl:value-of select="mods:namePart[@type='given']"/>
       </xsl:when>
-      <xsl:when test="@type = &apos;personal&apos;">
-        <li>
-          <strong>
-            <xsl:apply-templates select="mods:role/mods:roleTerm"></xsl:apply-templates> - Personal: </strong>
-          <xsl:value-of select="mods:namePart"></xsl:value-of>
-          <xsl:if test="mods:namePart[@type=&apos;date&apos;]">
-            <xsl:value-of select="concat(&apos; &apos;,mods:namePart[@type=&apos;date&apos;])"></xsl:value-of>
+      <xsl:otherwise>
+        <xsl:for-each select="mods:namePart">
+          <xsl:value-of select="text()" />
+          <xsl:if test="position() &lt; last()">
+            <xsl:text> </xsl:text>
           </xsl:if>
-        </li>
-      </xsl:when>
-      <xsl:when test="@type = &apos;conference&apos;">
-        <li>
-          <strong>
-            <xsl:apply-templates select="mods:role/mods:roleTerm"></xsl:apply-templates> - Conference: </strong>
-          <xsl:for-each select="mods:namePart">
-            <xsl:value-of select="concat(text(),&apos; &apos;)"></xsl:value-of>
-          </xsl:for-each>
-        </li>
-      </xsl:when>
+        </xsl:for-each>
+      </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
   
-  <xsl:template match="mods:relatedItem[@type = &apos;host&apos; and mods:titleInfo/mods:title]">
+  <xsl:template match="mods:relatedItem[@type = 'host' and mods:titleInfo/mods:title]">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Collection</xsl:with-param>
         <xsl:with-param name="content"><a>
               <xsl:attribute name="href">
                   <xsl:choose>
                       <xsl:when test="mods:identifier">
-                          <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $member_field, &apos;%3A%22&apos;,normalize-space(mods:identifier), &apos;%22&apos;)"></xsl:value-of>
+                          <xsl:value-of select="concat($islandoraUrl, $searchUrl, '?f%5B0%5D=', $member_field, '%3A%22',normalize-space(mods:identifier), '%22')"></xsl:value-of>
                       </xsl:when>
                       <xsl:otherwise>
-                          <xsl:value-of select="concat($islandoraUrl, $searchUrl, &apos;?f%5B0%5D=&apos;, $related_field, &apos;%3A%22&apos;,normalize-space(mods:titleInfo/mods:title), &apos;%22&apos;)"></xsl:value-of>
+                          <xsl:value-of select="concat($islandoraUrl, $searchUrl, '?f%5B0%5D=', $related_field, '%3A%22',normalize-space(mods:titleInfo/mods:title), '%22')"></xsl:value-of>
                       </xsl:otherwise>
                   </xsl:choose>
               </xsl:attribute>
@@ -160,14 +204,14 @@
   </xsl:template>
   
   <!-- BASIC template output -->
-  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type=&quot;volume&quot;]">
+  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type='volume']">
       <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Volume</xsl:with-param>
           <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
       </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type=&quot;issue&quot;]">
+  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type='issue']">
     <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Issue</xsl:with-param>
         <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
@@ -191,7 +235,18 @@
   <xsl:template match="mods:relatedItem/mods:location/mods:url">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Source</xsl:with-param>
-      <xsl:with-param name="content"><a><xsl:attribute name="href"><xsl:value-of select="text()"/></xsl:attribute><xsl:value-of select="text()"/></a></xsl:with-param>
+      <xsl:with-param name="content">
+        <a><xsl:attribute name="href"><xsl:value-of select="text()"/></xsl:attribute>
+        <xsl:choose>
+          <xsl:when test="string-length(parent::node()/parent::node()/mods:titleInfo/mods:title) &gt; 0">
+            <xsl:value-of select="../../mods:titleInfo/mods:title" />
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="text()"/>
+          </xsl:otherwise>
+        </xsl:choose>
+        </a>
+      </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
@@ -202,27 +257,47 @@
     </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:originInfo/mods:issuance">
+  <xsl:template match="mods:originInfo">
+    <xsl:apply-templates select="mods:publisher" />
+    <xsl:apply-templates select="mods:issuedDate|mods:dateCreated" />
+    <xsl:if test="mods:place[string-length(text()|*) &gt; 0]">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Publication location</xsl:with-param>
+        <xsl:with-param name="content">
+          <xsl:apply-templates select="mods:place/mods:placeTerm"><xsl:sort select="@authority" order="descending"/></xsl:apply-templates>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="mods:publisher">
     <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Issuance</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
-    </xsl:call-template>  </xsl:template>
-  
-  <xsl:template match="mods:originInfo/mods:frequency">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Frequency</xsl:with-param>
+      <xsl:with-param name="label">Publisher</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
+  
+  <xsl:template match="mods:issuedDate|mods:dateCreated">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Publication date</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+  
+  <xsl:template match="mods:placeTerm">
+    <xsl:value-of select="text()"/>
+    <xsl:if test="last() &gt; 1 and position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
+    <xsl:text> </xsl:text>
+  </xsl:template>
 
-  <xsl:template match="mods:identifier[@type=&quot;local&quot;]">
+  <xsl:template match="mods:identifier[@type='local']">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Local Identifier</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:identifier[@type=&quot;hdl&quot;]">
+  <xsl:template match="mods:identifier[@type='hdl']">
       <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Permalink</xsl:with-param>
           <xsl:with-param name="content"><a>
@@ -233,17 +308,35 @@
   </xsl:template>
   
   <xsl:template match="mods:subject">
-    <xsl:if test="mods:topic or mods:name[@type=&quot;personal&quot;] or mods:titleInfo">
+    <xsl:if test="mods:topic or mods:name[@type='personal'] or mods:titleInfo">
       <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Subjects</xsl:with-param>
           <xsl:with-param name="content">
-            <xsl:for-each select="mods:topic">
-              <xsl:apply-templates mode="search_link2" select="text()">
-                <xsl:with-param name="field" select="$subject_topic_field"/>
-              </xsl:apply-templates>
-              <xsl:if test="position() &lt; last() or mods:name[@type=&quot;personal&quot;] or mods:titleInfo"><xsl:text>, </xsl:text></xsl:if>
+            <xsl:for-each select="mods:topic|mods:name[@type='personal']|mods:titleInfo">
+              <xsl:comment><xsl:value-of select="name()"/></xsl:comment>
+              <xsl:choose>
+                <xsl:when test="name() = 'mods:topic' or name() = 'topic'">
+                  <xsl:call-template name="searchLink">
+                     <xsl:with-param name="field" select="$subject_topic_field"/>
+                     <xsl:with-param name="searchVal" select="text()" />
+                  </xsl:call-template>
+                </xsl:when>
+                <xsl:when test="name() = 'mods:name' or name() = 'name'">
+                  <xsl:call-template name="searchLink">
+                    <xsl:with-param name="field" select="$subject_name_field"/>
+                    <xsl:with-param name="searchVal"><xsl:apply-templates select="." mode="text_out" /></xsl:with-param>
+                    <xsl:with-param name="textVal"><xsl:apply-templates select="." mode="text_out" /></xsl:with-param>
+                  </xsl:call-template>
+                </xsl:when>
+                <xsl:when test="name() = 'mods:title' or name() = 'title'">
+                  <xsl:apply-templates mode="search_link2" select="mods:title/text()">
+                    <xsl:with-param name="field" select="$subject_title_field"/>
+                  </xsl:apply-templates>
+                </xsl:when>
+              </xsl:choose>
+              <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
             </xsl:for-each>
-            <xsl:for-each select="mods:name[@type=&quot;personal&quot;]">
+<!--            <xsl:for-each select="mods:name[@type=&quot;personal&quot;]">
               <xsl:apply-templates mode="search_link2" select="mods:namePart/text()">
                 <xsl:with-param name="field" select="$subject_name_field"/>
               </xsl:apply-templates>
@@ -254,41 +347,15 @@
                 <xsl:with-param name="field" select="$subject_title_field"/>
               </xsl:apply-templates>
               <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
-            </xsl:for-each>
+            </xsl:for-each>-->
           </xsl:with-param>
         </xsl:call-template>
     </xsl:if>
-<!--    <xsl:apply-templates mode="subject" select="mods:name[@type=&apos;personal&apos;]"/>
-    <xsl:apply-templates mode="subjectTitle" select="mods:titleInfo"/>-->
   </xsl:template>
-  <!-- Moved into above template -->
-<!--  <xsl:template match="mods:titleInfo" mode="subjectTitle">
-    <li>
-      <strong>Subject - Title: </strong>
-      <xsl:element name="a">
-        <xsl:attribute name="target">_parent</xsl:attribute>
-        <xsl:apply-templates mode="search_link" select="mods:title/text()">
-          <xsl:with-param name="field" select="$subject_title_field"/>
-        </xsl:apply-templates>
-        <xsl:value-of select="mods:title"></xsl:value-of>
-      </xsl:element>
-    </li>
-  </xsl:template>
-  <xsl:template match="mods:name[@type = &apos;personal&apos;]" mode="subject">
-    <li>
-      <strong>Subject - Personal: </strong>
-      <xsl:element name="a">
-        <xsl:attribute name="target">_parent</xsl:attribute>
-        <xsl:apply-templates mode="search_link" select="mods:namePart/text()">
-          <xsl:with-param name="field" select="$subject_name_field"/>
-        </xsl:apply-templates>
-        <xsl:value-of select="mods:namePart"></xsl:value-of>
-      </xsl:element>
-    </li>
-  </xsl:template>-->
   
+
   <xsl:template match="mods:hierarchicalGeographic">
-    <xsl:if test="mods:country or mods:province or mods:city">
+    <xsl:if test="string-length(mods:country) &gt; 0 or string-length(mods:province) &gt; 0 or string-length(mods:city) &gt; 0">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Place</xsl:with-param>
         <xsl:with-param name="content">
@@ -348,21 +415,21 @@
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:accessCondition">
+  <xsl:template match="mods:accessCondition[not(generate-id() = generate-id(key('CCAccessKey', concat(@type, '+', text()))[1])) or count(key('CCAccessKey',concat(@type,'+',text()))) = 1]">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Copyright</xsl:with-param>
       <xsl:with-param name="content">
         <xsl:choose>
-          <xsl:when test="normalize-space(@type) = &apos;Creative Commons License&apos;">
+          <xsl:when test="normalize-space(@type) = 'Creative Commons License'">
             <div class="manidora-commons-license">
               <a rel="license" target="_new">
-                <xsl:attribute name="href"><xsl:value-of select="concat(&apos;http://creativecommons.org/licenses/&apos;,normalize-space(text()))"/></xsl:attribute>
+                <xsl:attribute name="href"><xsl:value-of select="concat('http://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
                 <img alt="Creative Commons License" style="border-width:0;">
-                  <xsl:attribute name="src"><xsl:value-of select="concat(&apos;http://i.creativecommons.org/l/&apos;,normalize-space(text()),&apos;88x31.png&apos;)"/></xsl:attribute>
+                  <xsl:attribute name="src"><xsl:value-of select="concat('http://i.creativecommons.org/l/',normalize-space(text()),'88x31.png')"/></xsl:attribute>
                 </img>
               </a>
               This work is licensed under a <a rel="license" target="_new">
-                <xsl:attribute name="href"><xsl:value-of select="concat(&apos;http://creativecommons.org/licenses/&apos;,normalize-space(text()))"/></xsl:attribute>
+                <xsl:attribute name="href"><xsl:value-of select="concat('http://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
                 Creative Commons License</a>
             </div>
           </xsl:when>
@@ -375,7 +442,7 @@
       </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-
+  
   <!--<xsl:template match="mods:note[@type != &quot;cid&quot; or @type != &quot;objectID&quot; or @type != &quot;imageID&quot;]">-->
   <xsl:template match="mods:note">
     <xsl:call-template name="basic_output">
@@ -384,231 +451,232 @@
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:role/mods:roleTerm">
+  <xsl:template match="mods:roleTerm">
     <xsl:choose>
-      <xsl:when test="normalize-space(text()) = &apos;act&apos;">Actor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;adp&apos;">Adapter</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;anl&apos;">Analyst</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;anm&apos;">Animator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ann&apos;">Annotator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;app&apos;">Applicant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;arc&apos;">Architect</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;arr&apos;">Arranger</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;acp&apos;">Art copyist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;art&apos;">Artist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ard&apos;">Artistic director</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;asg&apos;">Assignee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;asn&apos;">Associated name</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;att&apos;">Attributed name</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;auc&apos;">Auctioneer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;aut&apos;">Author</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;aqt&apos;">Author in quotations or text extracts</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;aft&apos;">Author of afterword, colophon, etc.</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;aud&apos;">Author of dialog</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;aui&apos;">Author of introduction, etc.</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;aus&apos;">Author of screenplay, etc.</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ant&apos;">Bibliographic antecedent</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;bnd&apos;">Binder</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;bdd&apos;">Binding designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;blw&apos;">Blurb writer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;bkd&apos;">Book designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;bkp&apos;">Book producer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;bjd&apos;">Bookjacket designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;bpd&apos;">Bookplate designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;bsl&apos;">Bookseller</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cll&apos;">Calligrapher</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ctg&apos;">Cartographer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cns&apos;">Censor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;chr&apos;">Choreographer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cng&apos;">Cinematographer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cli&apos;">Client</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;clb&apos;">Collaborator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;col&apos;">Collector</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;clt&apos;">Collotyper</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;clr&apos;">Colorist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cmm&apos;">Commentator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cwt&apos;">Commentator for written text</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;com&apos;">Compiler</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cpl&apos;">Complainant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cpt&apos;">Complainant-appellant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cpe&apos;">Complainant-appellee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cmp&apos;">Composer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cmt&apos;">Compositor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ccp&apos;">Conceptor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cnd&apos;">Conductor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;con&apos;">Conservator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;csl&apos;">Consultant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;csp&apos;">Consultant to a project</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cos&apos;">Contestant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cot&apos;">Contestant-appellant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;coe&apos;">Contestant-appellee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cts&apos;">Contestee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ctt&apos;">Contestee-appellant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cte&apos;">Contestee-appellee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ctr&apos;">Contractor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ctb&apos;">Contributor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cpc&apos;">Copyright claimant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cph&apos;">Copyright holder</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;crr&apos;">Corrector</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;crp&apos;">Correspondent</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cst&apos;">Costume designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cov&apos;">Cover designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cre&apos;">Creator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;cur&apos;">Curator of an exhibition</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dnc&apos;">Dancer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dtc&apos;">Data contributor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dtm&apos;">Data manager</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dte&apos;">Dedicatee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dto&apos;">Dedicator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dfd&apos;">Defendant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dft&apos;">Defendant-appellant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dfe&apos;">Defendant-appellee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dgg&apos;">Degree grantor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dln&apos;">Delineator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dpc&apos;">Depicted</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dpt&apos;">Depositor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dsr&apos;">Designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;drt&apos;">Director</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dis&apos;">Dissertant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dbp&apos;">Distribution place</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dst&apos;">Distributor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dnr&apos;">Donor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;drm&apos;">Draftsman</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;dub&apos;">Dubious author</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;edt&apos;">Editor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;elg&apos;">Electrician</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;elt&apos;">Electrotyper</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;eng&apos;">Engineer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;egr&apos;">Engraver</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;etr&apos;">Etcher</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;evp&apos;">Event place</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;exp&apos;">Expert</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;fac&apos;">Facsimilist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;fld&apos;">Field director</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;flm&apos;">Film editor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;fpy&apos;">First party</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;frg&apos;">Forger</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;fmo&apos;">Former owner</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;fnd&apos;">Funder</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;gis&apos;">Geographic information specialist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;hnr&apos;">Honoree</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;hst&apos;">Host</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ilu&apos;">Illuminator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ill&apos;">Illustrator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ins&apos;">Inscriber</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;itr&apos;">Instrumentalist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ive&apos;">Interviewee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ivr&apos;">Interviewer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;inv&apos;">Inventor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lbr&apos;">Laboratory</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ldr&apos;">Laboratory director</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;led&apos;">Lead</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lsa&apos;">Landscape architect</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;len&apos;">Lender</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lil&apos;">Libelant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lit&apos;">Libelant-appellant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lie&apos;">Libelant-appellee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lel&apos;">Libelee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;let&apos;">Libelee-appellant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lee&apos;">Libelee-appellee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lbt&apos;">Librettist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lse&apos;">Licensee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lso&apos;">Licensor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lgd&apos;">Lighting designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ltg&apos;">Lithographer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;lyr&apos;">Lyricist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;mfr&apos;">Manufacturer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;mrb&apos;">Marbler</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;mrk&apos;">Markup editor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;mdc&apos;">Metadata contact</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;mte&apos;">Metal-engraver</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;mod&apos;">Moderator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;mon&apos;">Monitor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;mcp&apos;">Music copyist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;msd&apos;">Musical director</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;mus&apos;">Musician</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;nrt&apos;">Narrator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;opn&apos;">Opponent</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;orm&apos;">Organizer of meeting</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;org&apos;">Originator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;oth&apos;">Other</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;own&apos;">Owner</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ppm&apos;">Papermaker</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pta&apos;">Patent applicant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pth&apos;">Patent holder</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pat&apos;">Patron</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;prf&apos;">Performer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pma&apos;">Permitting agency</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pht&apos;">Photographer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ptf&apos;">Plaintiff</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ptt&apos;">Plaintiff-appellant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pte&apos;">Plaintiff-appellee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;plt&apos;">Platemaker</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;prt&apos;">Printer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pop&apos;">Printer of plates</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;prm&apos;">Printmaker</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;prc&apos;">Process contact</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pro&apos;">Producer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pmm&apos;">Production manager</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;prd&apos;">Production personnel</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;prg&apos;">Programmer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pdr&apos;">Project director</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pfr&apos;">Proofreader</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pup&apos;">Publication place</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pbl&apos;">Publisher</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;pbd&apos;">Publishing director</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ppt&apos;">Puppeteer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rcp&apos;">Recipient</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rce&apos;">Recording engineer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;red&apos;">Redactor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ren&apos;">Renderer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rpt&apos;">Reporter</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rps&apos;">Repository</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rth&apos;">Research team head</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rtm&apos;">Research team member</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;res&apos;">Researcher</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rsp&apos;">Respondent</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rst&apos;">Respondent-appellant</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rse&apos;">Respondent-appellee</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rpy&apos;">Responsible party</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rsg&apos;">Restager</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rev&apos;">Reviewer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;rbr&apos;">Rubricator&quot;</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;sce&apos;">Scenarist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;sad&apos;">Scientific advisor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;scr&apos;">Scribe</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;scl&apos;">Sculptor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;spy&apos;">Second party</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;sec&apos;">Secretary</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;std&apos;">Set designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;sgn&apos;">Signer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;sng&apos;">Singer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;sds&apos;">Sound designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;spk&apos;">Speaker</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;spn&apos;">Sponsor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;stm&apos;">Stage manager</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;stn&apos;">Standards body</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;str&apos;">Stereotyper</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;stl&apos;">Storyteller</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;sht&apos;">Supporting host</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;srv&apos;">Surveyor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;tch&apos;">Teacher</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;tcd&apos;">Technical director</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;ths&apos;">Thesis advisor</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;trc&apos;">Transcriber</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;trl&apos;">Translator</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;tyd&apos;">Type designer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;tyg&apos;">Typographer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;uvp&apos;">University place</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;vdg&apos;">Videographer</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;voc&apos;">Vocalist</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;wit&apos;">Witness</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;wde&apos;">Wood-engraver</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;wdc&apos;">Woodcutter</xsl:when>
-      <xsl:when test="normalize-space(text()) = &apos;wam&apos;">Writer of accompanying material</xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="normalize-space(text())"></xsl:value-of>
-      </xsl:otherwise>
+      <xsl:when test="normalize-space(text()) = 'act'">(Actor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'adp'">(Adapter)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'anl'">(Analyst)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'anm'">(Animator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ann'">(Annotator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'app'">(Applicant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'arc'">(Architect)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'arr'">(Arranger)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'acp'">(Art copyist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'art'">(Artist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ard'">(Artistic director)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'asg'">(Assignee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'asn'">(Associated name)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'att'">(Attributed name)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'auc'">(Auctioneer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'aut'">(Author)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'aqt'">(Author in quotations or text extracts)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'aft'">(Author of afterword, colophon, etc.)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'aud'">(Author of dialog)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'aui'">(Author of introduction, etc.)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'aus'">(Author of screenplay, etc.)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ant'">(Bibliographic antecedent)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'bnd'">(Binder)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'bdd'">(Binding designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'blw'">(Blurb writer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'bkd'">(Book designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'bkp'">(Book producer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'bjd'">(Bookjacket designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'bpd'">(Bookplate designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'bsl'">(Bookseller)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cll'">(Calligrapher)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ctg'">(Cartographer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cns'">(Censor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'chr'">(Choreographer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cng'">(Cinematographer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cli'">(Client)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'clb'">(Collaborator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'col'">(Collector)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'clt'">(Collotyper)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'clr'">(Colorist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cmm'">(Commentator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cwt'">(Commentator for written text)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'com'">(Compiler)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cpl'">(Complainant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cpt'">(Complainant-appellant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cpe'">(Complainant-appellee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cmp'">(Composer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cmt'">(Compositor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ccp'">(Conceptor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cnd'">(Conductor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'con'">(Conservator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'csl'">(Consultant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'csp'">(Consultant to a project)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cos'">(Contestant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cot'">(Contestant-appellant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'coe'">(Contestant-appellee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cts'">(Contestee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ctt'">(Contestee-appellant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cte'">(Contestee-appellee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ctr'">(Contractor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ctb'">(Contributor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cpc'">(Copyright claimant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cph'">(Copyright holder)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'crr'">(Corrector)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'crp'">(Correspondent)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cst'">(Costume designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cov'">(Cover designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cre'">(Creator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'cur'">(Curator of an exhibition)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dnc'">(Dancer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dtc'">(Data contributor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dtm'">(Data manager)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dte'">(Dedicatee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dto'">(Dedicator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dfd'">(Defendant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dft'">(Defendant-appellant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dfe'">(Defendant-appellee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dgg'">(Degree grantor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dln'">(Delineator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dpc'">(Depicted)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dpt'">(Depositor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dsr'">(Designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'drt'">(Director)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dis'">(Dissertant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dbp'">(Distribution place)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dst'">(Distributor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dnr'">(Donor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'drm'">(Draftsman)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'dub'">(Dubious author)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'edt'">(Editor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'elg'">(Electrician)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'elt'">(Electrotyper)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'eng'">(Engineer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'egr'">(Engraver)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'etr'">(Etcher)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'evp'">(Event place)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'exp'">(Expert)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'fac'">(Facsimilist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'fld'">(Field director)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'flm'">(Film editor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'fpy'">(First party)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'frg'">(Forger)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'fmo'">(Former owner)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'fnd'">(Funder)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'gis'">(Geographic information specialist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'hnr'">(Honoree)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'hst'">(Host)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ilu'">(Illuminator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ill'">(Illustrator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ins'">(Inscriber)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'itr'">(Instrumentalist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ive'">(Interviewee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ivr'">(Interviewer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'inv'">(Inventor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lbr'">(Laboratory)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ldr'">(Laboratory director)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'led'">(Lead)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lsa'">(Landscape architect)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'len'">(Lender)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lil'">(Libelant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lit'">(Libelant-appellant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lie'">(Libelant-appellee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lel'">(Libelee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'let'">(Libelee-appellant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lee'">(Libelee-appellee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lbt'">(Librettist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lse'">(Licensee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lso'">(Licensor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lgd'">(Lighting designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ltg'">(Lithographer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'lyr'">(Lyricist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'mfr'">(Manufacturer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'mrb'">(Marbler)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'mrk'">(Markup editor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'mdc'">(Metadata contact)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'mte'">(Metal-engraver)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'mod'">(Moderator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'mon'">(Monitor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'mcp'">(Music copyist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'msd'">(Musical director)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'mus'">(Musician)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'nrt'">(Narrator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'opn'">(Opponent)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'orm'">(Organizer of meeting)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'org'">(Originator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'oth'">(Other)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'own'">(Owner)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ppm'">(Papermaker)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pta'">(Patent applicant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pth'">(Patent holder)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pat'">(Patron)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'prf'">(Performer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pma'">(Permitting agency)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pht'">(Photographer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ptf'">(Plaintiff)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ptt'">(Plaintiff-appellant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pte'">(Plaintiff-appellee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'plt'">(Platemaker)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'prt'">(Printer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pop'">(Printer of plates)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'prm'">(Printmaker)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'prc'">(Process contact)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pro'">(Producer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pmm'">(Production manager)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'prd'">(Production personnel)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'prg'">(Programmer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pdr'">(Project director)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pfr'">(Proofreader)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pup'">(Publication place)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pbl'">(Publisher)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'pbd'">(Publishing director)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ppt'">(Puppeteer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rcp'">(Recipient)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rce'">(Recording engineer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'red'">(Redactor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ren'">(Renderer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rpt'">(Reporter)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rps'">(Repository)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rth'">(Research team head)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rtm'">(Research team member)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'res'">(Researcher)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rsp'">(Respondent)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rst'">(Respondent-appellant)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rse'">(Respondent-appellee)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rpy'">(Responsible party)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rsg'">(Restager)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rev'">(Reviewer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'rbr'">(Rubricator&quot;)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'sce'">(Scenarist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'sad'">(Scientific advisor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'scr'">(Scribe)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'scl'">(Sculptor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'spy'">(Second party)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'sec'">(Secretary)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'std'">(Set designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'sgn'">(Signer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'sng'">(Singer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'sds'">(Sound designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'spk'">(Speaker)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'spn'">(Sponsor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'stm'">(Stage manager)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'stn'">(Standards body)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'str'">(Stereotyper)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'stl'">(Storyteller)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'sht'">(Supporting host)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'srv'">(Surveyor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'tch'">(Teacher)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'tcd'">(Technical director)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'ths'">(Thesis advisor)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'trc'">(Transcriber)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'trl'">(Translator)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'tyd'">(Type designer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'tyg'">(Typographer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'uvp'">(University place)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'vdg'">(Videographer)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'voc'">(Vocalist)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'wit'">(Witness)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'wde'">Wood-engraver</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'wdc'">(Woodcutter)</xsl:when>
+      <xsl:when test="normalize-space(text()) = 'wam'">(Writer of accompanying material)</xsl:when>
+      <xsl:when test="string-length(normalize-space(text())) &gt; 0">
+        <!-- not a code, so we assume full text -->
+        <xsl:value-of select="normalize-space(concat('(',translate(substring(text(),1,1),$smallcase,$uppercase),translate(substring(text(),2),$uppercase,$smallcase),')'))" />
+      </xsl:when>
     </xsl:choose>
   </xsl:template>
 
@@ -616,5 +684,5 @@
   <xsl:template match="text()"/>
   <xsl:template match="text()" mode="subject"/>
   <xsl:template match="text()" mode="subjectTitle"/>
+  <xsl:template match="node()" priority="-1"/>
 </xsl:stylesheet>
-

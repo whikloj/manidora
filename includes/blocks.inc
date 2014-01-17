@@ -16,6 +16,9 @@
    $blocks['manidora_homepage_thumbnails'] = array(
      'info' => t('Manidora homepage thumbnails'),
    );
+   $blocks['manidora_whats_new'] = array(
+    'info' => t('Manidora what\'s new'),
+   );
    return $blocks;
   }
   
@@ -32,6 +35,10 @@
       case 'manidora_homepage_thumbnails':
         $block['subject'] = 'Homepage Thumbnails';
         $block['content'] = __manidora_homepage_thumbnail_content();
+        break;
+      case 'manidora_whats_new':
+        $block['subject'] = 'What\'s New';
+        $block['content'] = __manidora_whats_new_content();
         break;
     }
     return $block;
@@ -85,17 +92,21 @@
         ),
       ),
       "Newspapers" => array(
-        "solr_field" => "type_of_resource_mt",
+       /* "solr_field" => "type_of_resource_mt",
         "data" => array(
           "newspaper",
-        ),
+        ),*/
+        "url" => "islandora/object/uofm:libraries",
       ),
       "Books" => array(
-        "solr_field" => "",
-        "data" => array(),
+        "solr_field" => "RELS_EXT_hasModel_uri_ms",
+        "data" => array(
+          "info:fedora%2Fislandora:bookCModel",
+        ),
       ),
       "Moving images" => array(
-        "solr_field" => "type_of_resource_mt",
+        //"solr_field" => "type_of_resource_mt",
+        "solr_field" => "dc.type",
         "data" => array(
           "moving image",
         ),
@@ -116,8 +127,8 @@
     );
     
     $departments = array(
-      "Faculty of Architecture" => "",
-      "Faculty of Dentistry" => "uofm:dentalDAMS",
+     // "Faculty of Architecture" => "",
+      //"Faculty of Dentistry" => "uofm:dentalDAMS",
       "Faculty of Medicine Archives" => "uofm:medArchives",
       "Libraries: Archives & Special Collections" => "uofm:archives",
       "Libraries: Newspapers" => "uofm:libraries",
@@ -126,10 +137,10 @@
 
     $output = <<<EOF
       <ul class="home-tabs-container">
-      <li class="home-tab active"><a id="home-tabs-subjects" class="home-tab-link" href="javascript:void(0)">Subjects</a></li>
-      <li class="home-tab"><a id="home-tabs-collections" class="home-tab-link" href="javascript:void(0)">Collections</a></li>
-      <li class="home-tab"><a id="home-tabs-formats" class="home-tab-link" href="javascript:void(0)">Formats</a></li>
-      <li class="home-tab"><a id="home-tabs-depts" class="home-tab-link" href="javascript:void(0)">Departments</a></li>
+      <li class="home-tab active"><a title="List Collections by Subject" id="home-tabs-subjects" class="home-tab-link" href="javascript:void(0)">Subjects</a></li>
+      <li class="home-tab"><a title="List Collections Alphabetically" id="home-tabs-collections" class="home-tab-link" href="javascript:void(0)">Collections</a></li>
+      <li class="home-tab"><a title="Browse by Format type" id="home-tabs-formats" class="home-tab-link" href="javascript:void(0)">Formats</a></li>
+      <li class="home-tab"><a title="List Collections by UM Faculty or Department" id="home-tabs-depts" class="home-tab-link" href="javascript:void(0)">Departments</a></li>
       </ul>
       <div class="home-panel active" id="home-panel-subjects">
         <div class="column_50 first">
@@ -150,8 +161,8 @@ EOF;
       <div class="home-panel" id="home-panel-collections">
 EOF;
 
-      $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:"uofm:*" AND RELS_EXT_hasModel_uri_mt:"info:fedora/islandora:collectionCModel")';
-      $solr_params = array("fl"=>"PID,dc.title");
+      $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:"uofm:*" AND RELS_EXT_hasModel_uri_mt:("info:fedora/islandora:collectionCModel" "info:fedora/islandora:newspaperCModel"))';
+      $solr_params = array("fl"=>"PID,dc.title",'fq'=>'-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives" "uofm:archives")');
       try{
         $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
         $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
@@ -170,7 +181,7 @@ EOF;
           $objects = array();
           $cl = "";
           // Move the items so each letter that exists is an array of those collections 
-          array_walk($tmpobjects, function($v,$k) use (&$objects,&$cl) { if (strtolower(substr($v['title'],0,1)) != $cl){ $cl = strtolower(substr($v['title'],0,1));} if (array_key_exists($cl,$objects) && !is_array($objects[$cl])){ $objects[$cl] = array(); } $objects[$cl][] = $v; });      
+          array_walk($tmpobjects, function($v,$k) use (&$objects,&$cl) { if (substr(strtolower(preg_replace('/^the\s?/i',"",$v['title'])),0,1) != $cl){ $cl = substr(strtolower(preg_replace('/^the\s?/i',"",$v['title'])),0,1);} if (array_key_exists($cl,$objects) && !is_array($objects[$cl])){ $objects[$cl] = array(); } $objects[$cl][] = $v; });      
           $tmp = "";
           foreach ($objects as $letter => $collections){
             $odd = array();
@@ -217,13 +228,19 @@ EOF;
 EOF;
       foreach ($formats as $key => $format){
         $uri = "";
-        if (is_array($format['data']) && count($format['data'])>0){
+        if (array_key_exists('data',$format) && is_array($format['data']) && count($format['data'])>0){
           foreach ($format['data'] as $ele){
-            $uri .= (!empty($uri)? " OR ":"") . $format['solr_field'].":(".$ele.")";
+            $uri .= (!empty($uri)? " OR ":"") . '"'.$ele.'"';
           }
+          $uri = $format['solr_field'].':('.$uri.')';
+          if (!empty($uri)){
+            $uri = l($key,"islandora/search/$uri",array('html'=>TRUE));
+          }
+        } else if (array_key_exists('url',$format)){
+          $uri = l($key,$format['url']);
         }
         if (!empty($uri)){
-          $output .= l($key,"islandora/search/$uri") . "<br />\n";
+          $output .= "$uri<br />\n";
         } else {
           $output .= "$key<br />\n";
         }
@@ -265,6 +282,7 @@ EOF;
  * Display 16 thumbnails on the homepage from those selected
  */
 function __manidora_homepage_thumbnail_content(){
+  module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
   $num_pics = 16; // How many thumbnails are we displaying
   $num_rows = 2; // Figure out when to break
   $thumbs = variable_get('manidora_thumbnail_pids'); // Get the pids from the variable
@@ -285,18 +303,73 @@ function __manidora_homepage_thumbnail_content(){
     /** 
      * End temporary extension
      */
+    /**
+     * We want to have the image title as mouseover in the block
+     */
+    $solr_query = '+PID:("'.implode('" "',$t_array).'")'; // Search for all the possible PIDs
+    $solr_params = array('fl'=>'PID,dc.title'); // Get the PID and dc.title
+    $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+    #$path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
+    $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
+
+    $solr->setCreateDocuments(0);
+    $results = $solr->search($solr_query,0,100,$solr_params);
+    if ($results){
+      $solr_results = json_decode($results->getRawResponse(), TRUE);
+      $data = array();
+      foreach ($solr_results["response"]["docs"] as $key => $doc){
+        $data[$doc['PID']] = $doc['dc.title'][0];
+      }
+    }
     if (count($t_array)>=$num_pics){
       $picked = array_rand($t_array,$num_pics);
       $output = '<div id="manidora-homepage-thumbs">';
-      $count = 0;
       foreach ($picked as $pid){
-        $output .= '<a href="' . url("islandora/object/" . urlencode($t_array[$pid])) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . urlencode($t_array[$pid]) . "/datastream/TN/view") . '" alt="Object '. $t_array[$pid] .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
-        $count += 1;
+        $title = '';
+        // If $data is an array and has a key of the current PID, then we know the title
+        if (isset($data) && is_array($data) && array_key_exists($t_array[$pid],$data)){
+          $title = 'title="' . check_plain($data[$t_array[$pid]]) . '" ';
+        }
+        $output .= '<a '.$title.'href="' . url("islandora/object/" . $t_array[$pid]) .'" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . $t_array[$pid] . "/datastream/TN/view") . '" alt="Object '. check_plain($t_array[$pid]) .'" class="manidora-homepage-thumb-img" /></a>' . "\n";
       }
       $output .= "</div> <!-- /#manidora-homepage-thumbs -->\n";
     }
   }
   return $output;
+}
+
+function __manidora_whats_new_content(){
+  module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
+  $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
+  $solr = new Apache_Solr_Service($path_parts['host'],$path_parts['port'],$path_parts['path'] . '/');
+  
+  $query = 'dc.title:[ * TO * ]';
+  $params = array('fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms', 'sort' => 'timestamp desc', 'fq' => array('-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]','-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")'));
+  $solr->setCreateDocuments(0);
+  $results = $solr->search($query,0,4,$params);
+  if ($results){
+    $solr_results = json_decode($results->getRawResponse(), TRUE);
+    $view = '';
+    $tstamp = new DateTime();
+    foreach ($solr_results['response']['docs'] as $doc){
+      $tstamp->createFromFormat('Y-m-dTH:i:s.uZ',$doc['timestamp']);
+      $title = $doc['dc.title'][0];
+      $stitle = (strlen($title) > 30 ? substr($title,0,strpos($title,' ',27)).'...' : $title);
+      $view .= '<div class="manidora-whats-new-row"><div class="manidora-whats-new-thumb">';
+      $view .= '<a href="' . url('islandora/object/' . $doc['PID']) . '">';
+      if (in_array('TN',$doc['fedora_datastreams_ms'])){
+        $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+      } else {
+        $view .= '<img src="/sites/all/modules/islandora/images/folder.png" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+      }
+      $view .= '<div class="manidora-whats-new-info"><a title="' . t($title) . '" href="' . url('islandora/object/' . $doc['PID']) . '">' . t($stitle) . '</a>';
+      $view .= '<br><span class="manidora-whats-new-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
+      $view .= '</div>';
+    }
+    $output = '<div class="manidora-whats-new-content">' . $view . '</div>';
+    return $output;
+  }
+  
 }
     
   

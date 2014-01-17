@@ -4,6 +4,9 @@
     Author     : dgi
     Description:
         Purpose of the stylesheet follows.
+    
+    2013-06-14 (whikloj) : 
+        XSL was changed from list to table
 */
 
 .manidora-metadata {
@@ -41,4 +44,50 @@
 
 .coll_letter_box {
     clear:left;
+}
+
+#manidora-newspaper-search-form .column-split-50,
+#manidora-newspaper-search-form .column-split-25 {
+    float:left;
+    overflow:hidden;
+    margin-right: 5px;
+}
+#manidora-newspaper-search-form .column-split-50 {
+    width:48%;
+}
+#manidora-newspaper-search-form .column-split-25 {
+    width: 23%;
+}
+
+
+#manidora-newspaper-search-form .form-item-titles {
+  margin-bottom: 5px;
+}
+#edit-titles {
+  border: 1px solid black;
+  background-color: #fff;
+  padding: 4px;
+}
+.without-words-suffix {
+    font-size: 0.78em;
+    font-style: italic;
+}
+
+.manidora-whats-new-row {
+    clear: left;
+    overflow: hidden;
+    padding: 5px;
+    position: relative;
+}
+
+.manidora-whats-new-info {
+    display: inline-block;
+    font-size: 0.85em;
+    font-weight: bold;
+    max-width: 113px;
+}
+
+.manidora-whats-new-date {
+    color: #444444;
+    font-size: 80%;
 }
