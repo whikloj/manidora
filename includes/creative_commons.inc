@@ -248,13 +248,6 @@ function manidora_creative_commons_find_creative_commons_mods_element($document)
 }
 
 /**
- * Hacks up the URL to fit with existing manitoba URLs.
- */
-function manidora_creative_commons_hack_up_url($url) {
-  return str_replace('http://creativecommons.org/licenses/', '', $url);
-}
-
-/**
  * Creates a new element for accessCondition, inserts the CC URL and appends.
  */
 function manidora_creative_commons_create_new_element($document, $url) {
