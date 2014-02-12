@@ -1520,7 +1520,7 @@ function manidora_element_info_alter(&$type) {
  */
 function manidora_creative_commons_hack_up_url_value_callback(&$element, $input, &$form_state) {
   return manidora_creative_commons_hack_up_url(
-    xml_form_elements_creative_commons_value_callback(&$element, $input, &$form_state)
+    xml_form_elements_creative_commons_value_callback($element, $input, $form_state)
   );
 }
 
