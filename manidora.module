@@ -1220,24 +1220,6 @@ function manidora_islandora_newspaperPageCModel_islandora_object_ingested($objec
 }
 
 /**
- * Implements hook_CMODEL_PID_DSID_islandora_datastream_alter().
- */
-function manidora_islandora_datastream_ingested($object, $datastream) {
-  $image_content_models = array(
-    'islandora:sp_large_image_cmodel',
-    'islandora:sp_basic_image',
-  );
-  if ($datastream->id == 'OBJ' && array_intersect($object->models, $image_content_models)) {
-    // We are changing an image...
-    if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1)) {
-      // We have our flag set, let's go!
-      module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
-      islandora_ocr_derive_datastreams($datastream, array());
-    }
-  }
-}
-
-/**
  * Implements hook_CMODEL_PID_islandora_solr_object_result_alter().
  *
  * Puts the Solr query terms into the object URL so that viewers can use them
@@ -1529,4 +1511,78 @@ function manidora_creative_commons_hack_up_url_value_callback(&$element, $input,
  */
 function manidora_creative_commons_hack_up_url($url) {
   return str_replace('http://creativecommons.org/licenses/', '', $url);
+}
+
+/**
+ * Implements hook_islandora_derivative().
+ */
+function manidora_islandora_derivative(AbstractObject $object) {
+  $derivatives = array();
+
+  $image_content_models = array(
+    'islandora:sp_large_image_cmodel',
+    'islandora:sp_basic_image',
+  );
+  if (array_intersect($object->models, $image_content_models)) {
+    // We are changing an image...
+    if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1)) {
+      $base = array(
+        'source_dsid' => 'OBJ',
+        'file' => drupal_get_path('module', 'islandora_ocr') . '/includes/derivatives.inc',
+      );
+      $derivatives[] = $base + array(
+        'destination_dsid' => 'OCR',
+        'function' => array('islandora_ocr_derive_ocr'),
+      );
+      $derivatives[] = $base + array(
+        'destination_dsid' => 'HOCR',
+        'function' => array('islandora_ocr_derive_hocr'),
+      );
+    }
+  }
+
+  $derivatives[] = array(
+    'source_dsid' => 'OCR',
+    'destination_dsid' => NULL,
+    'function' => array('manidora_aggregate_ocr_in_parents'),
+    'file' => drupal_get_path('module', 'manidora') . '/includes/compound_ocr_aggregation.inc',
+  );
+
+  return $derivatives;
+}
+
+/**
+ * Implements hook_islandora_datastream_purged().
+ */
+function manidora_islandora_datastream_purged(AbstractObject $object, $dsid) {
+  if ($dsid == 'OCR') {
+    module_load_include('inc', 'manidora', 'includes/compound_ocr_aggregation');
+    manidora_scrub_aggregated_ocr($object->id);
+  }
+}
+
+/**
+ * Implements hook_islandora_object_purged().
+ */
+function manidora_islandora_object_purged($pid) {
+  module_load_include('inc', 'manidora', 'includes/compound_ocr_aggregation');
+  manidora_scrub_aggregated_ocr($pid);
+}
+
+/**
+ * Implements hook_islandora_compound_object_children_added_to_parent().
+ */
+function manidora_islandora_compound_object_children_added_to_parent($objects, $parent_pids) {
+  $parent_objects = array_filter(array_map('islandora_object_load', $parent_pids));
+  module_load_include('inc', 'manidora', 'includes/compound_ocr_aggregation');
+  array_map('manidora_aggregate_child_ocr', $parent_objects);
+}
+
+/**
+ * Implements hook_islandora_compound_object_children_removed_from_parent().
+ */
+function manidora_islandora_compound_object_children_removed_from_parent($objects, $parent_pids) {
+  $parent_objects = array_filter(array_map('islandora_object_load', $parent_pids));
+  module_load_include('inc', 'manidora', 'includes/compound_ocr_aggregation');
+  array_map('manidora_aggregate_child_ocr', $parent_objects);
 }
