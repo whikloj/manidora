@@ -1463,6 +1463,24 @@ function manidora_islandora_xml_form_builder_forms() {
     'PBCORE Display' => array(
       'form_file' => "$module_path/xml/forms/pbcore_display.xml",
     ),
+    'UofM Basic Image MODS form' => array(
+      'form_file' => "$module_path/xml/forms/uofm_basic_image_mods_form.xml",
+    ),
+    'UofM Book MODS form' => array(
+      'form_file' => "$module_path/xml/forms/uofm_book_mods_form.xml",
+    ),
+    'UofM Large Image MODS form' => array(
+      'form_file' => "$module_path/xml/forms/uofm_large_image_mods_form.xml"
+    ),
+    'UofM Newspaper MODS form' => array(
+      'form_file' => "$module_path/xml/forms/uofm_newspaper_mods_form.xml",
+    ),
+    'UofM Newspaper Issue MODS form' => array(
+      'form_file' => "$module_path/xml/forms/uofm_newspaper_issue_mods_form.xml",
+    ),
+    'UofM PDF MODS form' => array(
+      'form_file' => "$module_path/xml/forms/uofm_pdf_mods_form.xml",
+    ),
   );
 }
 
@@ -1520,7 +1538,7 @@ function manidora_element_info_alter(&$type) {
  */
 function manidora_creative_commons_hack_up_url_value_callback(&$element, $input, &$form_state) {
   return manidora_creative_commons_hack_up_url(
-    xml_form_elements_creative_commons_value_callback(&$element, $input, &$form_state)
+    xml_form_elements_creative_commons_value_callback($element, $input, $form_state)
   );
 }
 
@@ -1529,4 +1547,60 @@ function manidora_creative_commons_hack_up_url_value_callback(&$element, $input,
  */
 function manidora_creative_commons_hack_up_url($url) {
   return str_replace('http://creativecommons.org/licenses/', '', $url);
+}
+
+/**
+ * Implements hook_islandora_xml_form_builder_form_associations().
+ */
+function manidora_islandora_xml_form_builder_form_associations() {
+  return array(
+    'uofm_basic_image_mods_form' => array(
+      'content_model' => 'islandora:sp_basic_image',
+      'form_name' => 'UofM Basic Image MODS form',
+      'dsid' => 'MODS',
+      'title_field' => array('titleInfo', 'title'),
+      'transform' => 'mods_to_dc.xsl',
+      'template' => FALSE,
+    ),
+    'uofm_book_mods_form' => array(
+      'content_model' => 'islandora:bookCModel',
+      'form_name' => 'UofM Book MODS form',
+      'dsid' => 'MODS',
+      'title_field' => array('titleInfo', 'title'),
+      'transform' => 'mods_to_dc.xsl',
+      'template' => FALSE,
+    ),
+    'uofm_large_image_mods_form' => array(
+      'content_model' => 'islandora:sp_large_image_cmodel',
+      'form_name' => 'UofM Large Image MODS form',
+      'dsid' => 'MODS',
+      'title_field' => array('titleInfo', 'title'),
+      'transform' => 'mods_to_dc.xsl',
+      'template' => FALSE,
+    ),
+    'uofm_newspaper_mods_form' => array(
+      'content_model' => 'islandora:newspaperCModel',
+      'form_name' => 'UofM Newspaper MODS form',
+      'dsid' => 'MODS',
+      'title_field' => array('titleInfo', 'title'),
+      'transform' => 'mods_to_dc.xsl',
+      'template' => FALSE,
+    ),
+    'uofm_newspaper_issue_mods_form' => array(
+      'content_model' => 'islandora:newspaperIssueCModel',
+      'form_name' => 'UofM Newspaper Issue MODS form',
+      'dsid' => 'MODS',
+      'title_field' => array('titleInfo', 'title'),
+      'transform' => 'mods_to_dc.xsl',
+      'template' => FALSE,
+    ),
+    'uofm_pdf_mods_form' => array(
+      'content_model' => 'islandora:sp_pdf',
+      'form_name' => 'UofM PDF MODS form',
+      'dsid' => 'MODS',
+      'title_field' => array('titleInfo', 'title'),
+      'transform' => 'mods_to_dc.xsl',
+      'template' => FALSE,
+    ),
+  );
 }
