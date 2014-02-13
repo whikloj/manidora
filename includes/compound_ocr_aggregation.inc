@@ -73,8 +73,8 @@ function manidora_aggregate_child_ocr(AbstractObject $object) {
     $datastream->mimeType = 'text/plain';
     $datastream->label = 'Aggregated child OCR';
   }
-  // XXX: Does the autocommit-disabling stuff work on RELS-INT? If so, this
-  // looks like a good place it could be used.
+
+  $datastream->relationships->autoCommit = FALSE;
   $datastream->relationships->remove(ISLANDORA_RELS_INT_URI, 'manidora-aggregated-from');
 
   // Get children.
@@ -92,6 +92,7 @@ function manidora_aggregate_child_ocr(AbstractObject $object) {
     file_put_contents($temp_file, $child_object['OCR']->content . "\n", FILE_APPEND);
     $datastream->relationships->add(ISLANDORA_RELS_INT_URI, 'manidora-aggregated-from', $child_object->id . '/OCR');
   }
+  $datastream->relationships->commitRelationships();
 
   // Add file of aggregated OCR to object.
   $datastream->setContentFromFile($temp_file);
