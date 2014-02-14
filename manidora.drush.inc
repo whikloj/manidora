@@ -216,7 +216,7 @@ function drush_manidora_wipe_hocr_doctypes() {
 /**
  * Batch operation.
  */
-function manidora_batch_aggregate_ocr($before_date, &$context) {
+function manidora_batch_aggregate_compound_ocr($before_date, &$context) {
   if ($before_date) {
     $before_date_filter = "FILTER(!bound(?datastream) || ?datastream_date < '$before_date'^^<http://www.w3.org/2001/XMLSchema#dateTime>)";
   }
@@ -228,7 +228,7 @@ function manidora_batch_aggregate_ocr($before_date, &$context) {
   }
   $rels_predicate = variable_get('islandora_compound_object_relationship', 'isConstituentOf');
   $query = <<<EOQ
-SELECT ?object ?object_date ?datastream_date
+SELECT DISTINCT ?object ?datastream_date
 WHERE {
   {
     ?subject <fedora-rels-ext:$rels_predicate> ?object .
@@ -257,6 +257,7 @@ EOQ;
   // If there were no results, we're finished.
   $context['finished'] = empty($results);
 
+  module_load_include('inc', 'manidora', 'includes/compound_ocr_aggregation');
   foreach ($results as $result) {
     $object = islandora_object_load($result['object']['value']);
     manidora_aggregate_child_ocr($object);
