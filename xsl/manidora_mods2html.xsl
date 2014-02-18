@@ -264,7 +264,7 @@
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Publication location</xsl:with-param>
         <xsl:with-param name="content">
-          <xsl:apply-templates select="mods:place/mods:placeTerm"><xsl:sort select="@authority" order="descending"/></xsl:apply-templates>
+          <xsl:apply-templates select="mods:place/mods:placeTerm[string-length(text()) &gt; 0]"><xsl:sort select="@authority" order="descending"/></xsl:apply-templates>
         </xsl:with-param>
       </xsl:call-template>
     </xsl:if>
