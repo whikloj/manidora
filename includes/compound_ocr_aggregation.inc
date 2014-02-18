@@ -19,6 +19,7 @@ function manidora_aggregate_ocr_in_parents(AbstractObject $object, $force = FALS
     return $value['object']['value'];
   };
   $parent_pids = array_map($map_to_pid, $parent_relationships);
+  $parent_pids = array_unique($parent_pids);
 
   // For each parent, aggregate children.
   $output = array(
@@ -82,7 +83,10 @@ function manidora_aggregate_child_ocr(AbstractObject $object) {
 
   // For each child, append OCR to temp file.
   $temp_file = drupal_tempnam('temporary://', 'compound_ocr');
-  file_put_contents($temp_file, '');
+
+  // XXX: The file has to contain at least one character, as the
+  // modifyDatastream fails to set the datastream to be empty when an empty file is used.
+  file_put_contents($temp_file, " ");
   foreach ($child_pids as $child_pid) {
     $child_object = islandora_object_load($child_pid);
     if (!isset($child_object['OCR'])) {
@@ -117,7 +121,7 @@ function manidora_scrub_aggregated_ocr($pid) {
   $rels_int = ISLANDORA_RELS_INT_URI;
   $query = <<<EOQ
 PREFIX islandora-rels-int: <$rels_int>
-SELECT ?obj
+SELECT DISTINCT ?obj
 WHERE {
   ?obj <fedora-view:disseminates> ?datastream .
   ?datastream <fedora-view:disseminationType> <info:fedora/*/OCR> ;
