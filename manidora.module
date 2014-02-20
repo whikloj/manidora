@@ -276,7 +276,7 @@ function manidora_download_access($object) {
    if ($parent_collections){
      $collections = "";
      foreach ($parent_collections as $c){
-       $collections .= l($c->label,'islandora/objects/'.$c->id) . "<br />";
+       $collections .= l($c->label,'islandora/object/'.$c->id) . "<br />";
      }
    }
 
@@ -1035,8 +1035,8 @@ function manidora_printable_pdf($pid, $url = NULL) {
  */
 function manidora_retrieve_header_text($pid) {
   $object = islandora_object_load($pid);
-  if (isset($object['MODS'])) {
-    $mods = $object['MODS']->content;
+  if (isset($object['MODS']) && strlen($mods = $object['MODS']->content) > 0) {
+    //$mods = $object['MODS']->content;
     $xml = new SimpleXMLElement($mods);
 
     $title = '';
