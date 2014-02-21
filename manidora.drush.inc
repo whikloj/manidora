@@ -50,6 +50,20 @@ function manidora_drush_command() {
       'manidora',
     ),
   );
+  $items['manidora-aggregate-compound-ocr'] = array(
+    'options' => array(
+      'before' => array(
+        'description' => 'Compound parents from before the given date with be transformed. If not provided, all compound object will be processed.',
+        'value' => 'optional',
+      ),
+    ),
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
+    'drupal dependencies' => array(
+      'islandora_compound_object',
+      'islandora',
+      'manidora',
+    )
+  );
   $items['manidora_regenerate_sequence_nums'] = array(
     'aliases' => array('uom_compound_fix'),
     'callback' => 'manidora_regenerate_sequence_batch_setup',
@@ -214,10 +228,89 @@ function drush_manidora_wipe_hocr_doctypes() {
   drush_backend_batch_process();
 }
 
+/**
+ * Batch operation.
+ */
+function manidora_batch_aggregate_compound_ocr($before_date, &$context) {
+  if ($before_date) {
+    $before_date_filter = "FILTER(!bound(?datastream) || ?datastream_date < '$before_date'^^<http://www.w3.org/2001/XMLSchema#dateTime>)";
+  }
+  elseif (isset($context['results']['first_altered_date'])) {
+    $before_date_filter = "FILTER(!bound(?datastream) || ?datastream_date < '{$context['results']['first_altered_date']}'^^<http://www.w3.org/2001/XMLSchema#dateTime>)";
+  }
+  else {
+    $before_date_filter = '';
+  }
+  $rels_predicate = variable_get('islandora_compound_object_relationship', 'isConstituentOf');
+  $query = <<<EOQ
+SELECT DISTINCT ?object ?datastream_date
+WHERE {
+  {
+    ?subject <fedora-rels-ext:$rels_predicate> ?object .
+  }
+  UNION
+  {
+    ?object <fedora-model:hasModel> <info:fedora/islandora:compoundCModel> .
+  }
+  ?object <fedora-model:state> <fedora-model:Active> .
+  OPTIONAL {
+    ?object <fedora-view:disseminates> ?datastream .
+    ?datastream <fedora-model:state> <fedora-model:Active> ;
+                <fedora-view:disseminationType> <info:fedora/*/OCR> ;
+                <fedora-view:lastModifiedDate> ?datastream_date .
+  }
+  $before_date_filter
+}
+ORDER BY ?datastream_date
+LIMIT 10
+EOQ;
+
+  $connection = islandora_get_tuque_connection();
+
+  $results = $connection->repository->ri->sparqlQuery($query);
+
+  // If there were no results, we're finished.
+  $context['finished'] = empty($results);
+
+  module_load_include('inc', 'manidora', 'includes/compound_ocr_aggregation');
+  foreach ($results as $result) {
+    $object = islandora_object_load($result['object']['value']);
+    manidora_aggregate_child_ocr($object);
+    $datastream = $object['OCR'];
+    if (!$before_date && !isset($context['results']['first_altered_date'])) {
+      // The resource index calls it "lastModifiedDate"...  Looks like objects
+      // call it "createdDate"...  Hurray inconsistencies!
+      $context['results']['first_altered_date'] = (string) $datastream->createdDate;
+    }
+    $context['message'] = dt('Aggregated OCR in @pid.', array(
+      '@pid' => $object->id,
+    ));
+  }
+}
+
+/**
+ * Drush callback.
+ */
+function drush_manidora_aggregate_compound_ocr() {
+  $batch = array(
+    'operations' => array(
+      array(
+        'manidora_batch_aggregate_compound_ocr', array(
+          drush_get_option('before', FALSE),
+        ),
+      ),
+    ),
+    'title' => dt('Aggregating OCR from compound children into parents...'),
+  );
+
+  batch_set($batch);
+  drush_backend_batch_process();
+}
+
 function manidora_regenerate_sequence_batch_setup(){
   $pid = drush_get_option('pid', FALSE);
-  
-  
+
+
   drupal_static_reset('islandora_get_tuque_connection');
   $connection = islandora_get_tuque_connection();
   if ($pid !== FALSE){
@@ -237,7 +330,7 @@ function manidora_regenerate_sequence_batch_setup(){
       )
     );
   }
-  
+
   $batch = array(
       'operations' => $operations,
       'finished' => 'manidora_regenerate_sequence_finished',
@@ -296,10 +389,11 @@ function manidora_regenerate_sequence_set_rels_ext($compound_object, &$context){
   } else {
     drush_log("Object ($compound_object) is not a compound or has 0 children",'warning');
   }
-  
+
 }
 
 function manidora_regenerate_sequence_finished($success, $results, $operations) {
   // Print finished message to user.
   drush_log('Finished updating compound object sequence numbers.','ok');
 }
+
