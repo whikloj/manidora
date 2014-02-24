@@ -75,7 +75,7 @@
      
      $formats = array(
        "Images" => array(
-         "solr_field" => "type_of_resource_mt",
+         "solr_field" => "type_of_resource_facet_ms",
          "data" => array(
            "glass lantern slide",
            "photograph",
@@ -85,7 +85,7 @@
           ),
         ),
       "Text" => array(
-        "solr_field" => "type_of_resource_mt",
+        "solr_field" => "type_of_resource_facet_ms",
         "data" => array(
           "text",
           "textual record",
@@ -105,21 +105,21 @@
         ),
       ),
       "Moving images" => array(
-        "solr_field" => "type_of_resource_mt",
+        "solr_field" => "type_of_resource_facet_ms",
         //"solr_field" => "dc.type",
         "data" => array(
           "moving image",
         ),
       ),
       "Sound recordings" => array(
-        "solr_field" => "type_of_resource_mt",
+        "solr_field" => "type_of_resource_facet_ms",
         "data" => array(
           "sound recording",
           "sound recording - nonmusical",
         ),
       ),
       "Mixed material" => array(
-        "solr_field" => "type_of_resource_mt",
+        "solr_field" => "type_of_resource_facet_ms",
         "data" => array(
           "mixed material",
         ),
