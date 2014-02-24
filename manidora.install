@@ -1,8 +1,162 @@
 <?php
 /**
  * @file
- * Holds manidora uninstall.
+ * Holds manidora install/uninstall hooks.
  */
+
+/**
+ * Implements hook_install().
+ */
+function manidora_install() {
+  // Taxonomy setup.
+  // The type install.
+  taxonomy_vocabulary_save((object) array(
+      'name' => 'General Tags',
+      'machine_name' => 'manidora_general_tags',
+      'description'' => 'General Tags',
+    )
+  );
+  // Each tag install.
+  $tags = array (
+    'acrylic',
+    'acrylic retention',
+    'anatomy',
+    'attached gingiva',
+    'beading',
+    'bolus',
+    'bone loss',
+    'bone resorption',
+    'bone spicules',
+    'breast vertical dimension',
+    'buccal contour',
+    'buccal frena',
+    'calculus',
+    'candida',
+    'candidiasis',
+    'circumvallate papilla',
+    'clinical remount',
+    'combination clasp',
+    'combination syndrome',
+    'complete denture',
+    'composite resin',
+    'compound',
+    'coronoid process',
+    'cyst',
+    'denture adjustment',
+    'denture flange',
+    'denture periphery',
+    'denture stomatitis',
+    'dentures',
+    'disto-buccal space',
+    'doggie denture',
+    'early verrucous carcinoma',
+    'edentulous',
+    'enlarged tongue',
+    'enter bolus exit balance',
+    'epulis fissuratum',
+    'erthroleukoplakia',
+    'f sound',
+    'facial profile',
+    'festooning',
+    'fibroma',
+    'fibromatosis',
+    'fovea palatini',
+    'frenal resection',
+    'fungal',
+    'gold',
+    'gold foil',
+    'half t-clasp',
+    'hamular notch',
+    'heavy square ridges',
+    'horizontal overjet',
+    'horizontal overlap',
+    'humour',
+    'hyperplasia',
+    'immediate',
+    'incisal length',
+    'incisive papilla',
+    'inflamed incisive papilla',
+    'inflamed tissue',
+    'inflammatory fibrous hyperplasia',
+    'inflammatory papillary hyperplasia',
+    'infrabulge',
+    'intaglio',
+    'interarch records',
+    'interim partial',
+    'inuit',
+    'ivory',
+    'kelly's syndrome',
+    'keratinized tissue',
+    'labial frena',
+    'labial frenum',
+    'landmarks',
+    'lateral border',
+    'leukoplakia',
+    'lichen planus',
+    'lichenoid mucositis',
+    'lip biting',
+    'lip irritation',
+    'lip support',
+    'mandibular',
+    'mandibular plane angle',
+    'mandibular tori',
+    'maxilla',
+    'maxillary',
+    'mid-palatal raphe',
+    'muco-gingival involvement',
+    'nasal spine',
+    'nasolabial line angle',
+    'neutral zone',
+    'occlusal relations',
+    'occlusion',
+    'oral hygiene',
+    'overdenture',
+    'palatal',
+    'palatal mandibular raphe',
+    'palatal nerve',
+    'papillary hyperplasia',
+    'papilloma',
+    'parallel ridges',
+    'pathology',
+    'peripheries',
+    'phonetics',
+    'posterior',
+    'reduction',
+    'reline',
+    'repair',
+    'resorption pattern',
+    'rugae',
+    'short incisors',
+    'singulum rest',
+    'square maxilla',
+    'stabilized base',
+    'suction cup denture',
+    'surgery',
+    'surgical resection',
+    'sutures',
+    'tissue conditioning',
+    'tongue',
+    'tooth arrangement',
+    'tooth setup',
+    'tooth wear',
+    'tori',
+    'tori reduction',
+    'trial denture',
+    'tuberosity',
+    'varicose tongue',
+    'verruca vulgaris',
+    'verrucous',
+    'vertical dimension of occlusion',
+    'vulcanite',
+    'wax up',
+    'wrought wire clasp',
+  );
+  foreach ($tags as $key => $tag) {
+    ;
+  }
+}
+
+}
 
 /**
  * Implements hook_uninstall().
@@ -17,3 +171,4 @@ function manidora_uninstall() {
     variable_del($variable);
   }
 }
+
