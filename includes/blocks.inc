@@ -339,12 +339,20 @@ function __manidora_homepage_thumbnail_content(){
 }
 
 function __manidora_whats_new_content(){
+  global $user;
   module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
   $solr = new Apache_Solr_Service($path_parts['host'],$path_parts['port'],$path_parts['path'] . '/');
   
   $query = 'dc.title:[ * TO * ]';
-  $params = array('fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms', 'sort' => 'timestamp desc', 'fq' => array('-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]','-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")'));
+  $params = array(
+    'fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms', 
+    'sort' => 'timestamp desc', 
+    'fq' => array(
+      '-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]',
+      '-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")'
+    ),
+  );
   $solr->setCreateDocuments(0);
   $results = $solr->search($query,0,4,$params);
   if ($results){
@@ -352,12 +360,21 @@ function __manidora_whats_new_content(){
     $view = '';
     $tstamp = new DateTime();
     foreach ($solr_results['response']['docs'] as $doc){
+      $access = 'public';
+      if (array_key_exists('RELS_EXT_restrictedState_literal_ms',$doc) && $doc['RELS_EXT_restrictedState_literal_ms'] == 'hidden'){
+        $access = 'hidden';
+        foreach ($doc['RELS_EXT_canSeeRestricted_uri_ms'] as $role_list){ 
+          $role_num = substr($role_list,strrpos($role_list,'/'));
+          if ($logged_in && array_key_exists())
+        }
+      }
       $tstamp->createFromFormat('Y-m-dTH:i:s.uZ',$doc['timestamp']);
       $title = $doc['dc.title'][0];
       $stitle = (strlen($title) > 30 ? substr($title,0,strpos($title,' ',27)).'...' : $title);
       $view .= '<div class="manidora-whats-new-row"><div class="manidora-whats-new-thumb">';
       $view .= '<a href="' . url('islandora/object/' . $doc['PID']) . '">';
-      if (in_array('TN',$doc['fedora_datastreams_ms'])){
+      if (in_array('TN',$doc['fedora_datastreams_ms']) || (array_key_exists('RELS_EXT_restrictedState_literal_ms',$doc) && $doc['RELS_EXT_restrictedState_literal_ms'] != 'hidden')){
+        if (array_key_exists('RELS_EXT_restrictedState_literal_ms',$doc) && )
         $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
       } else {
         $view .= '<img src="/sites/all/modules/islandora/images/folder.png" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
