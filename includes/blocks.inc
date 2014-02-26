@@ -343,7 +343,12 @@ function __manidora_whats_new_content(){
   module_load_include('php','islandora_solr','SolrPhpClient/Apache/Solr/Service');
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
   $solr = new Apache_Solr_Service($path_parts['host'],$path_parts['port'],$path_parts['path'] . '/');
-  
+  $view_roles = array();
+  if ($logged_in){
+    foreach ($user->roles as $r => $rl){
+      $view_roles[] = url('admin/people/permissions/role/edit/' . $r);
+    }
+  }
   $query = 'dc.title:[ * TO * ]';
   $params = array(
     'fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms', 
@@ -360,22 +365,22 @@ function __manidora_whats_new_content(){
     $view = '';
     $tstamp = new DateTime();
     foreach ($solr_results['response']['docs'] as $doc){
-      $access = 'public';
-      if (array_key_exists('RELS_EXT_restrictedState_literal_ms',$doc) && $doc['RELS_EXT_restrictedState_literal_ms'] == 'hidden'){
-        $access = 'hidden';
-        foreach ($doc['RELS_EXT_canSeeRestricted_uri_ms'] as $role_list){ 
-          $role_num = substr($role_list,strrpos($role_list,'/'));
-          if ($logged_in && array_key_exists())
-        }
+      $perm = __manidora_check_restricted_permissions($doc,$view_roles);
+      if ( $perm == 2 ) {
+        // hidden so we skip it
+        continue;
       }
       $tstamp->createFromFormat('Y-m-dTH:i:s.uZ',$doc['timestamp']);
       $title = $doc['dc.title'][0];
       $stitle = (strlen($title) > 30 ? substr($title,0,strpos($title,' ',27)).'...' : $title);
       $view .= '<div class="manidora-whats-new-row"><div class="manidora-whats-new-thumb">';
       $view .= '<a href="' . url('islandora/object/' . $doc['PID']) . '">';
-      if (in_array('TN',$doc['fedora_datastreams_ms']) || (array_key_exists('RELS_EXT_restrictedState_literal_ms',$doc) && $doc['RELS_EXT_restrictedState_literal_ms'] != 'hidden')){
-        if (array_key_exists('RELS_EXT_restrictedState_literal_ms',$doc) && )
+      if (in_array('TN',$doc['fedora_datastreams_ms'])){
+        if ($perm == 1) {
+          $view .= '<img src="' . url(drupal_get_path('module','islandora_restricted') . '/images/access_denied.png') . '" alt="' . t($title) . ' - Restricted" class="featured-thumb" /></a></div>';
+        } else {
         $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+        }
       } else {
         $view .= '<img src="/sites/all/modules/islandora/images/folder.png" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
       }
@@ -388,5 +393,26 @@ function __manidora_whats_new_content(){
   }
   
 }
-    
+ 
+/**
+ * Check to see if What's New can show this.
+ *
+ * $doc : Mixed array of a Solr Document
+ * $roles : Users roles modified to structured used by islandora_restricted
+ *
+ * return int : 0 => public, 1 => restricted, 2 => hidden
+ */
+function __manidora_check_restricted_permissions($doc,$roles){
+  if (array_key_exists('RELS_EXT_restrictedState_literal_ms',$doc)){
+    if (count(array_intersect($roles,$doc['RELS_EXT_canSeeRestricted_uri_ms'])) > 0 ){
+      // If the person has the role, then it is public to them regardless if it is hidden or restricted
+      return 0;
+    } else if ($doc['RELS_EXT_restrictedState_literal_ms'] == 'hidden'){ 
+      return 2;
+    } else if ($doc['RELS_EXT_restrictedState_literal_ms'] == 'restricted'){ 
+      return 1;
+    }
+  } 
+  return 0;
+}   
   
