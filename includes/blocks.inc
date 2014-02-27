@@ -344,7 +344,8 @@ function __manidora_whats_new_content(){
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr')); 
   $solr = new Apache_Solr_Service($path_parts['host'],$path_parts['port'],$path_parts['path'] . '/');
   $view_roles = array();
-  if ($logged_in){
+  if (user_is_logged_in()){
+    $view_roles[] = url('user/' . $user->uid);
     foreach ($user->roles as $r => $rl){
       $view_roles[] = url('admin/people/permissions/role/edit/' . $r);
     }
