@@ -350,55 +350,54 @@ function __manidora_whats_new_content(){
       $view_roles[] = url('admin/people/permissions/role/edit/' . $r);
     }
   }
-  $query = 'dc.title:[ * TO * ]';
-  $params = array(
-    'fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms', 
-    'sort' => 'timestamp desc', 
-    'fq' => array(
-      '-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]',
-      '-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")'
-    ),
-  );
-  $solr->setCreateDocuments(0);
-  $results = $solr->search($query,0,20,$params);
-  if ($results){
-    $solr_results = json_decode($results->getRawResponse(), TRUE);
-    $view = '';
-    $tstamp = new DateTime();
-    $count = 0;
-    foreach ($solr_results['response']['docs'] as $doc){
-      if ($count >= 4) {
-        // grab more results as we hide hidden ones, so count off 4.
-        break;
-      }
-      $perm = __manidora_check_restricted_permissions($doc,$view_roles);
-      if ( $perm == 2 ) {
-        // hidden so we skip it
-        continue;
-      }
-      $tstamp->createFromFormat('Y-m-dTH:i:s.uZ',$doc['timestamp']);
-      $title = $doc['dc.title'][0];
-      $stitle = (strlen($title) > 30 ? substr($title,0,strpos($title,' ',27)).'...' : $title);
-      $view .= '<div class="manidora-whats-new-row"><div class="manidora-whats-new-thumb">';
-      $view .= '<a href="' . url('islandora/object/' . $doc['PID']) . '">';
-      if (in_array('TN',$doc['fedora_datastreams_ms'])){
-        if ($perm == 1) {
-          $view .= '<img src="' . url(drupal_get_path('module','islandora_restricted') . '/images/access_denied.png') . '" alt="' . t($title) . ' - Restricted" class="featured-thumb" /></a></div>';
-        } else {
-        $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+  $count = 0;
+  while ($count < 4) {
+    $query = 'dc.title:[ * TO * ]';
+    $params = array(
+      'fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms', 
+      'sort' => 'timestamp desc', 
+      'fq' => array(
+        '-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]',
+        '-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")'
+      ),
+    );
+    $solr->setCreateDocuments(0);
+    $results = $solr->search($query,0,10,$params);
+    if ($results){
+      $solr_results = json_decode($results->getRawResponse(), TRUE);
+      $view = '';
+      $tstamp = new DateTime();
+      
+      foreach ($solr_results['response']['docs'] as $doc){
+
+        $perm = __manidora_check_restricted_permissions($doc,$view_roles);
+        if ( $perm == 2 ) {
+          // hidden so we skip it
+          continue;
         }
-      } else {
-        $view .= '<img src="/sites/all/modules/islandora/images/folder.png" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+        $tstamp->createFromFormat('Y-m-dTH:i:s.uZ',$doc['timestamp']);
+        $title = $doc['dc.title'][0];
+        $stitle = (strlen($title) > 30 ? substr($title,0,strpos($title,' ',27)).'...' : $title);
+        $view .= '<div class="manidora-whats-new-row"><div class="manidora-whats-new-thumb">';
+        $view .= '<a href="' . url('islandora/object/' . $doc['PID']) . '">';
+        if (in_array('TN',$doc['fedora_datastreams_ms'])){
+          if ($perm == 1) {
+            $view .= '<img src="' . url(drupal_get_path('module','islandora_restricted') . '/images/access_denied.png') . '" alt="' . t($title) . ' - Restricted" class="featured-thumb" /></a></div>';
+          } else {
+          $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+          }
+        } else {
+          $view .= '<img src="/sites/all/modules/islandora/images/folder.png" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
+        }
+        $view .= '<div class="manidora-whats-new-info"><a title="' . t($title) . '" href="' . url('islandora/object/' . $doc['PID']) . '">' . t($stitle) . '</a>';
+        $view .= '<br><span class="manidora-whats-new-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
+        $view .= '</div>';
+        $count += 1;
       }
-      $view .= '<div class="manidora-whats-new-info"><a title="' . t($title) . '" href="' . url('islandora/object/' . $doc['PID']) . '">' . t($stitle) . '</a>';
-      $view .= '<br><span class="manidora-whats-new-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
-      $view .= '</div>';
-      $count += 1;
     }
     $output = '<div class="manidora-whats-new-content">' . $view . '</div>';
     return $output;
   }
-  
 }
  
 /**
