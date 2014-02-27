@@ -360,12 +360,17 @@ function __manidora_whats_new_content(){
     ),
   );
   $solr->setCreateDocuments(0);
-  $results = $solr->search($query,0,4,$params);
+  $results = $solr->search($query,0,20,$params);
   if ($results){
     $solr_results = json_decode($results->getRawResponse(), TRUE);
     $view = '';
     $tstamp = new DateTime();
+    $count = 0;
     foreach ($solr_results['response']['docs'] as $doc){
+      if ($count >= 4) {
+        // grab more results as we hide hidden ones, so count off 4.
+        break;
+      }
       $perm = __manidora_check_restricted_permissions($doc,$view_roles);
       if ( $perm == 2 ) {
         // hidden so we skip it
@@ -388,6 +393,7 @@ function __manidora_whats_new_content(){
       $view .= '<div class="manidora-whats-new-info"><a title="' . t($title) . '" href="' . url('islandora/object/' . $doc['PID']) . '">' . t($stitle) . '</a>';
       $view .= '<br><span class="manidora-whats-new-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
       $view .= '</div>';
+      $count += 1;
     }
     $output = '<div class="manidora-whats-new-content">' . $view . '</div>';
     return $output;
@@ -408,9 +414,9 @@ function __manidora_check_restricted_permissions($doc,$roles){
     if (count(array_intersect($roles,$doc['RELS_EXT_canSeeRestricted_uri_ms'])) > 0 ){
       // If the person has the role, then it is public to them regardless if it is hidden or restricted
       return 0;
-    } else if ($doc['RELS_EXT_restrictedState_literal_ms'] == 'hidden'){ 
+    } else if (in_array('hidden',$doc['RELS_EXT_restrictedState_literal_ms'])){ 
       return 2;
-    } else if ($doc['RELS_EXT_restrictedState_literal_ms'] == 'restricted'){ 
+    } else if (in_array('restricted',$doc['RELS_EXT_restrictedState_literal_ms'])){ 
       return 1;
     }
   } 
