@@ -369,7 +369,9 @@ function __manidora_whats_new_content(){
       $tstamp = new DateTime();
       
       foreach ($solr_results['response']['docs'] as $doc){
-
+        if ($count >= 4) {
+          break;
+        }
         $perm = __manidora_check_restricted_permissions($doc,$view_roles);
         if ( $perm == 2 ) {
           // hidden so we skip it
