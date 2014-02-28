@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @file
- * Holds manidora install/uninstall hooks.
+ * Holds Manidora install/uninstall hooks.
  */
 
 /**
@@ -11,11 +12,12 @@ function manidora_install() {
   // Taxonomy setup.
   // The type install.
   taxonomy_vocabulary_save((object) array(
-      'name' => 'General Tags',
-      'machine_name' => 'manidora_general_tags',
-      'description'' => 'General Tags',
+      'name' => 'General Dental Tags',
+      'machine_name' => 'manidora_general_dental_tags',
+      'description' => 'General Dental Tags',
     )
   );
+  $vocabulary = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
   // Each tag install.
   $tags = array (
     'acrylic',
@@ -85,7 +87,7 @@ function manidora_install() {
     'interim partial',
     'inuit',
     'ivory',
-    'kelly's syndrome',
+    "kelly's syndrome",
     'keratinized tissue',
     'labial frena',
     'labial frenum',
@@ -151,18 +153,20 @@ function manidora_install() {
     'wax up',
     'wrought wire clasp',
   );
-  foreach ($tags as $key => $tag) {
-    ;
+  foreach ($tags as $name) {
+    taxonomy_term_save((object) array(
+      'vid' => $vocabulary->vid,
+      'name' => $name,
+    ));
   }
-}
-
 }
 
 /**
  * Implements hook_uninstall().
  */
 function manidora_uninstall() {
-
+  $vocabulary = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
+  taxonomy_vocabulary_delete($vocabulary->vid);
   // Removing variables.
   $variables = array(
     'manidora_collection_solr_field',

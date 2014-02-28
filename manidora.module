@@ -156,7 +156,12 @@ function manidora_menu() {
     'type'=> MENU_CALLBACK,
     'access arguments' => array('administer site configuration'),
   );
-
+  $items['islandora/manitoba/autocomplete_general_dental_tags'] = array(
+    'page callback' => 'manidora_autocomplete_general_dental_tags',
+    'page arguments' => array(3),
+    'access callback' => TRUE,
+    'type'=> MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -1463,6 +1468,9 @@ function manidora_islandora_xml_form_builder_forms() {
     'UofM PDF MODS form' => array(
       'form_file' => "$module_path/xml/forms/uofm_pdf_mods_form.xml",
     ),
+    'UofM Dental MODS form' => array(
+      'form_file' => "$module_path/xml/forms/uofm_dental_mods_form.xml",
+    ),
   );
 }
 
@@ -1659,5 +1667,100 @@ function manidora_islandora_xml_form_builder_form_associations() {
       'transform' => 'mods_to_dc.xsl',
       'template' => FALSE,
     ),
+    'uofm_dental_mods_form' => array(
+      'content_model' => 'islandora:sp_large_image_cmodel',
+      'form_name' => 'UofM Dental MODS form',
+      'dsid' => 'MODS',
+      'title_field' => array('titleInfo', 'title'),
+      'transform' => 'mods_to_dc.xsl',
+      'self_transform' => 'cleanup_dentist_form_mods.xsl',
+      'template' => FALSE,
+    ),
+  );
+}
+
+/**
+ * Autocomplete field for the manidora Dental form General Tags.
+ */
+function manidora_autocomplete_general_dental_tags($query = '') {
+  $vocabulary = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
+  $terms = taxonomy_term_load_multiple(array(), array('vid' => $vocabulary->vid));
+  $output = array();
+  foreach($terms as $term) {
+    if (substr_compare($term->name, $query, 0, strlen($query), TRUE) == 0) {
+      $output[$term->name] = $term->name;
+    }
+  }
+  echo json_encode($output);
+  exit();
+}
+
+/**
+ * Fix up the form hiding and showing components as needed.
+ */
+function manidora_dentist_form_after_build_callback(array $form, array &$form_state) {
+  $dental = &$form['dental'];
+  $optional = &$dental['optional'];
+  // Display or hide optional fields according to the selected value of title.
+  $title = isset($form_state['values']['dental']['title']) ? $form_state['values']['dental']['title'] : '';
+  foreach(element_children($optional) as $i) {
+    $accessible = (strpos($title, $i) !== FALSE);
+    $child = &$optional[$i];
+    $child['#access'] = $accessible;
+    if ($child['#type'] == 'fieldset') {
+      foreach(element_children($child) as $j) {
+        $grand_child = &$child[$j];
+        $grand_child['#access'] = $accessible;
+      }
+    }
+  }
+  dsm($form);
+  return $form;
+}
+
+/**
+ * Allows access to the element based on the value of another form element.
+ */
+function manidora_dentist_form_process_optional(array $element, array &$form_state) {
+  $title = isset($form_state['values']['dental']['title']) ? $form_state['values']['dental']['title'] : '';
+  foreach(element_children($element) as $i) {
+    $accessible = (strpos($title, $i) !== FALSE);
+    $child = &$element[$i];
+    $child['#access'] = $accessible;
+    foreach(element_children($child) as $j) {
+      $grand_child = &$child[$j];
+      $grand_child['#access'] = $accessible;
+    }
+  }
+  return $element;
+}
+
+/**
+ * Makes the empty value of a checkbox, the empty string rather than 0.
+ */
+function manidora_checkbox_value_callback($element, $input = FALSE, $form_state = array()) {
+  if ($input === FALSE) {
+    // Default value comes from the XML.
+    return isset($element['#default_value']) && $element['#default_value'] == $element['#return_value'];
+  }
+  return $input === 0 ? '' : $input;
+}
+
+/**
+ * The ajax callback responsible for rendering the optional tags.
+ * @param array $form
+ * @param array $form_state
+ */
+function manidora_dental_form_tags_ajax_callback(array $form, array &$form_state) {
+  return $form['dental']['optional'];
+}
+
+/**
+ * Implements hook_xml_form_builder_get_self_transforms().
+ */
+function manidora_xml_form_builder_get_self_transforms() {
+  $module_path = drupal_get_path('module', 'manidora');
+  return array(
+    'cleanup_dentist_form_mods.xsl' => "$module_path/xsl/cleanup_dentist_form_mods.xsl",
   );
 }
