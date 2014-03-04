@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:pb="http://www.pbcore.org/PBCore/PBCoreNamespace.html" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" version="1.0">
+<xsl:stylesheet xmlns:pb="http://www.pbcore.org/PBCore/PBCoreNamespace.html" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:php="http://php.net/xsl" version="1.0">
   <xsl:param name="islandoraUrl"/>
   <xsl:param name="collections"/>
   <xsl:variable name="smallcase">abcdefghijklmnopqrstuvwxyz</xsl:variable>
@@ -71,15 +71,26 @@
   <!-- BASIC OUTPUT TEMPLATE -->
  
   <xsl:template match="pb:pbcoreInstantiation">
-    <tr>
-      <td colspan="2">
-        Instantiation
-      </td>
-    </tr>
+    <xsl:choose>
+      <xsl:when test="last() &gt; 1">
+        <!-- More than one instantiation -->
+        <tr>
+          <td colspan="2">
+            <span class="instantiation-label">Instantiation <xsl:value-of select="position()"/></span>
+            <table>
+              <xsl:attribute name="class"><xsl:value-of select="concat('pbcore-instantiation-',position())"/></xsl:attribute>
+              <xsl:apply-templates />
+            </table>
+          </td>
+        </tr>
+      </xsl:when>
+      <xsl:otherwise> <!-- only one instantiation -->
+        <xsl:apply-templates />
+      </xsl:otherwise>
+    </xsl:choose>
     <!--<xsl:apply-templates select="pb:instantiationMediaType"/>
     <xsl:apply-templates select="pb:instantiationFileSize"/>
     <xsl:apply-templates select="pb:instantiationDuration"/>-->
-    <xsl:apply-templates />
   </xsl:template>
 
 
@@ -136,21 +147,14 @@
 
 
   <xsl:template name="groupNames">
-    <xsl:for-each select="//(pb:pbcoreCreator|pb:pbcoreContributor)">
+    <xsl:for-each select="//pb:pbcoreCreator">
       <xsl:choose>
-        <xsl:when test="count(key('nameKeys',descendant-or-self::pb:creatorRole[1])) &gt; 1 or count(key('nameKeys', descendant-or-self::pb:contributorRole[1])) &gt; 1">
-          <xsl:if test="not(./preceding-sibling::node()//pb:creatorRole = descendant-or-self::pb:creatorRole[1]) and not(./preceding-sibling::node()//pb:contributorRole = descendant-or-self::pb:contributorRole[1])">
+        <xsl:when test="count(key('creatorKeys',descendant-or-self::pb:creatorRole[1])) &gt; 1">
+          <xsl:if test="not(./preceding-sibling::node()//pb:creatorRole = descendant-or-self::pb:creatorRole[1])">
             <xsl:call-template name="basic_output">
               <xsl:with-param name="label">Names</xsl:with-param>
               <xsl:with-param name="content">
-                <xsl:choose>
-                  <xsl:when test="string-length(descendant-or-self::pb:creatorRole[1]/text()) &gt; 0">
-                    <xsl:apply-templates select="key('nameKeys',descendant-or-self::pb:creatorRole[1])" mode="grouping"/>
-                  </xsl:when>
-                  <xsl:when test="string-length(descendant-or-self::pb:contributorRole[1]/text()) &gt; 0">
-                    <xsl:apply-templates select="key('nameKeys',descendant-or-self::pb:creatorRole[1])" mode="grouping"/>
-                  </xsl:when>
-                </xsl:choose>                  
+                <xsl:apply-templates select="key('nameKeys',descendant-or-self::pb:creatorRole[1])" mode="grouping"/>
               </xsl:with-param>
             </xsl:call-template>
         </xsl:if>
@@ -169,7 +173,14 @@
         <xsl:with-param name="content">
           <xsl:apply-templates select="." mode="text_out" />
           <xsl:text> </xsl:text>
-          <xsl:apply-templates select="descendant-or-self::(pb:creatorRole|pb:contributorRole)[1]"/>
+          <xsl:choose>
+            <xsl:when test="name() = 'pbcoreCreator'">
+              <xsl:apply-templates select="descendant-or-self::pb:creatorRole"/>
+            </xsl:when>
+            <xsl:when test="name() = 'pbcoreContributor'">
+              <xsl:apply-templates select="descendant-or-self::pb:contributorRole"/>
+            </xsl:when>
+          </xsl:choose>
         </xsl:with-param>
       </xsl:call-template>
     </xsl:if>
@@ -178,7 +189,14 @@
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="grouping">
     <xsl:apply-templates select="." mode="text_out" />
     <xsl:text> </xsl:text>
-    <xsl:apply-templates select="descendant-or-self::(pb:creatorRole|pb:contributorRole)[1]"/><br />
+    <xsl:choose>
+      <xsl:when test="name() = 'pbcoreCreator'">
+        <xsl:apply-templates select="descendant-or-self::pb:creatorRole"/>
+      </xsl:when>
+      <xsl:when test="name() = 'pbcoreContributor'">
+        <xsl:apply-templates select="descendant-or-self::pb:contributorRole"/>
+      </xsl:when>
+    </xsl:choose><br />
   </xsl:template>
   
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="text_out">
@@ -204,7 +222,7 @@
       
   <xsl:template match="pb:pbcoreDescription">
     <xsl:call-template name="basic_output">
-      <xsl:with-param name="label"><xsl:value select="@descriptionType" /></xsl:with-param>
+      <xsl:with-param name="label"><xsl:value-of select="@descriptionType" /></xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
