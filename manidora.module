@@ -190,7 +190,8 @@ function manidora_retrieve_metadata_form(AbstractObject $object) {
   $form = array();
   // Video and audio objects get PBCORE.
   if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models) && isset($object['PBCORE'])) {
-    $output = manidora_pbcore_metadata($object);
+    //$output = manidora_pbcore_metadata($object);
+    $output = manidora_pbcore_transform($object); 
   }
   // Grab MODS otherwise.
   else {
@@ -470,6 +471,50 @@ function manidora_download_access($object) {
      return FALSE;
    }
  }
+
+/**
+ * Display custom look to PB Core metadata
+ */
+function manidora_pbcore_transform($object){
+  module_load_include('inc', 'islandora', 'includes/utilities'); // To get the islandora functions
+
+  $pbcore_text = $object->repository->api->a->getDatastreamDissemination($object->id, 'PBCORE');
+  $parent_collections = islandora_get_parents_from_rels_ext($object);
+
+  if ($parent_collections){
+    $collections = "";
+    foreach ($parent_collections as $c){
+      $collections .= l($c->label,'islandora/object/'.$c->id) . "<br />";
+    }
+  }
+  if ($pbcore_text) {
+    $xslt_processor = new XSLTProcessor();
+    $xsl = new DOMDocument();
+    $file = drupal_get_path('module', 'manidora') . '/xsl/manidora_pbcore2html.xsl';
+    $xsl->load($file);
+    $input = new DOMDocument();
+
+    $did_load = $input->loadXML($pbcore_text);
+
+    if ($did_load) {
+      global $base_url;
+      $xslt_processor->registerPHPFunctions(); // Using PHP functions to inject the collections HTML into the XSL
+      $xslt_processor->importStylesheet($xsl);
+      $param_array = array(
+        'islandoraUrl' => $base_url,
+      );
+      if (isset($collections)){
+        $param_array['collections'] = '<span>'.$collections.'</span>';
+      }
+      $xslt_processor->setParameter('', $param_array);
+      $mods_transformed = $xslt_processor->transformToXml($input);
+      return manidora_print_insert_link('print/islandora/object/'.$object->id."/manitoba_metadata") .$mods_transformed;
+    }
+  } else {
+    return FALSE;
+  }
+}
+
 
 /**
  * Used to insert the Collections into the mods2html.xsl stylesheet
