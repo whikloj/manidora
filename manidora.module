@@ -1692,7 +1692,6 @@ function manidora_autocomplete_general_dental_tags($query = '') {
     }
   }
   echo drupal_json_output($output);
-  exit();
 }
 
 /**
