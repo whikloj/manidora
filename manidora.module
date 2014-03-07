@@ -933,11 +933,16 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
         array_splice($params['f'], $key);
       }
     }
-    $params['f'][] = $date_limit;
+    if (isset($date_limit)) {
+      $params['f'][] = $date_limit;
+    }
     $query = array_merge_recursive($params);
   }
-  else {
+  else if (isset($date_limit)){
     $query = array_merge_recursive($params, array('f' => array($date_limit)));
+  }
+  else {
+    $query = $params;
   }
 
   drupal_goto('islandora/search/' . $query_string, array(
@@ -1194,9 +1199,13 @@ function manidora_process_islandora_object_print(array &$variables) {
  */
 function manidora_download_clip_pdf(AbstractObject $object) {
   if (isset($_GET['clip'])) {
-    $is_https = isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on';
-    $http_protocol = $is_https ? 'https' : 'http';
-    $url = $http_protocol . '://' . $_SERVER['HTTP_HOST'] . $_GET['clip'];
+    $url = $_GET['clip'];
+    if (! preg_match('/^https?:/',$url)) {
+      // Only add server name if it isn't there already
+      $is_https = isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on';
+      $http_protocol = $is_https ? 'https' : 'http';
+      $url = $http_protocol . '://' . $_SERVER['HTTP_HOST'] . $url;
+    }
     manidora_printable_pdf($object->id, $url);
   }
   exit();
@@ -1705,4 +1714,8 @@ function manidora_islandora_xml_form_builder_form_associations() {
       'template' => FALSE,
     ),
   );
+}
+
+function manidora_islandora_object_access($op, $object, $user) {
+  
 }
