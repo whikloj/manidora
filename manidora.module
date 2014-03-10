@@ -1712,6 +1712,18 @@ function manidora_dentist_form_process_optional(array $element, array &$form_sta
 }
 
 /**
+ * Add link to description for general tags, when the user can edit the terms.
+ */
+function manidora_dentist_form_process_general_tags(array &$element) {
+  if (user_access('Edit terms in General Dental Tags')) {
+    $element['general']['#description'] = t('Add / Edit available tags <a href="@url">here</a>.', array(
+                                 '@url' => url('admin/structure/taxonomy/manidora_general_dental_tags'),
+                               ));
+  }
+  return $element;
+}
+
+/**
  * Makes the empty value of a checkbox, the empty string rather than 0.
  */
 function manidora_checkbox_value_callback($element, $input = FALSE, $form_state = array()) {
@@ -1719,7 +1731,7 @@ function manidora_checkbox_value_callback($element, $input = FALSE, $form_state 
     // Default value comes from the XML.
     return isset($element['#default_value']) && $element['#default_value'] == $element['#return_value'];
   }
-  else if ($input === NULL || empty($input)) {
+  elseif ($input === NULL || empty($input)) {
     return '';
   }
   else {

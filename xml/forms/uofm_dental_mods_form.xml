@@ -1643,6 +1643,9 @@
           <resizable>FALSE</resizable>
           <title>Dental Information</title>
           <tree>TRUE</tree>
+          <after_build>
+              <function key="0">manidora_dentist_form_process_general_tags</function>
+          </after_build>
         </properties>
         <children>
           <element name="title">
