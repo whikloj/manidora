@@ -9,14 +9,46 @@
  * Implements hook_install().
  */
 function manidora_install() {
-  // Taxonomy setup.
-  // The type install.
-  taxonomy_vocabulary_save((object) array(
-      'name' => 'General Dental Tags',
-      'machine_name' => 'manidora_general_dental_tags',
-      'description' => 'General Dental Tags',
-    )
+  manidora_add_dental_taxonomy();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function manidora_uninstall() {
+  // Delete dental taxonomy.
+  manidora_remove_dental_taxonomy();
+  // Removing variables.
+  $variables = array(
+    'manidora_collection_solr_field',
   );
+  foreach ($variables as $variable) {
+    variable_del($variable);
+  }
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function manidora_update_7100() {
+  // Add Taxonomy terms if they are not present.
+  manidora_add_dental_taxonomy();
+}
+
+/**
+ * Creates the Dental taxonomy.
+ */
+function manidora_add_dental_taxonomy() {
+  $vocabulary = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
+  // Create the Vocabulary if it doesn't exist.
+  if ($vocabulary === FALSE) {
+    taxonomy_vocabulary_save((object) array(
+        'name' => 'General Dental Tags',
+        'machine_name' => 'manidora_general_dental_tags',
+        'description' => 'General Dental Tags',
+      )
+    );
+  }
   $vocabulary = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
   // Each tag install.
   $tags = array (
@@ -154,25 +186,20 @@ function manidora_install() {
     'wrought wire clasp',
   );
   foreach ($tags as $name) {
-    taxonomy_term_save((object) array(
-      'vid' => $vocabulary->vid,
-      'name' => $name,
-    ));
+    $term = taxonomy_get_term_by_name($name, 'manidora_general_dental_tags');
+    if (empty($term)) {
+      taxonomy_term_save((object) array(
+          'vid' => $vocabulary->vid,
+          'name' => $name,
+        ));
+    }
   }
 }
 
 /**
- * Implements hook_uninstall().
+ * Delete's the Dental taxonomy.
  */
-function manidora_uninstall() {
+function manidora_remove_dental_taxonomy() {
   $vocabulary = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
   taxonomy_vocabulary_delete($vocabulary->vid);
-  // Removing variables.
-  $variables = array(
-    'manidora_collection_solr_field',
-  );
-  foreach ($variables as $variable) {
-    variable_del($variable);
-  }
 }
-
