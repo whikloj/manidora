@@ -9,3 +9,4 @@ dependencies[] = islandora_solr
 dependencies[] = print
 dependencies[] = print_pdf
 dependencies[] = islandora_compound_object
+dependencies[] = taxonomy

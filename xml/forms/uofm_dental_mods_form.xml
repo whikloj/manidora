@@ -1,0 +1,3663 @@
+<?xml version="1.0"?>
+<definition version="3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <properties>
+    <root_name>mods</root_name>
+    <schema_uri>http://www.loc.gov/standards/mods/v3/mods-3-4.xsd</schema_uri>
+    <namespaces default="http://www.loc.gov/mods/v3">
+      <namespace prefix="mods">http://www.loc.gov/mods/v3</namespace>
+      <namespace prefix="xsi">http://www.w3.org/2001/XMLSchema-instance</namespace>
+      <namespace prefix="xlink">http://www.w3.org/1999/xlink</namespace>
+    </namespaces>
+  </properties>
+  <form>
+    <properties>
+      <type>form</type>
+      <access>TRUE</access>
+      <collapsed>FALSE</collapsed>
+      <collapsible>FALSE</collapsible>
+      <disabled>FALSE</disabled>
+      <executes_submit_callback>FALSE</executes_submit_callback>
+      <multiple>FALSE</multiple>
+      <required>FALSE</required>
+      <resizable>FALSE</resizable>
+      <tree>TRUE</tree>
+      <actions>
+        <create>NULL</create>
+        <read>
+          <path>//mods:mods[1]</path>
+          <context>document</context>
+        </read>
+        <update>NULL</update>
+        <delete>NULL</delete>
+      </actions>
+    </properties>
+    <children>
+      <element name="titleInfo">
+        <properties>
+          <type>markup</type>
+          <access>TRUE</access>
+          <required>FALSE</required>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>element</type>
+              <prefix>NULL</prefix>
+              <value>titleInfo</value>
+            </create>
+            <read>
+              <path>mods:titleInfo</path>
+              <context>parent</context>
+            </read>
+            <update>NULL</update>
+            <delete>NULL</delete>
+          </actions>
+        </properties>
+        <children>
+          <element name="title">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <description>Title of image.</description>
+              <required>TRUE</required>
+              <title>Title</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>element</type>
+                  <prefix>NULL</prefix>
+                  <value>title</value>
+                </create>
+                <read>
+                  <path>mods:title</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+          <element name="subTitle">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>Sub Title</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>element</type>
+                  <prefix>NULL</prefix>
+                  <value>subTitle</value>
+                </create>
+                <read>
+                  <path>mods:subTitle</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+        </children>
+      </element>
+      <element name="name">
+        <properties>
+          <type>tabs</type>
+          <access>TRUE</access>
+          <required>FALSE</required>
+          <title>Name</title>
+          <tree>TRUE</tree>
+        </properties>
+        <children>
+          <element name="0">
+            <properties>
+              <type>tabpanel</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>element</type>
+                  <prefix>NULL</prefix>
+                  <value>name</value>
+                </create>
+                <read>
+                  <path>mods:name</path>
+                  <context>parent</context>
+                </read>
+                <update>NULL</update>
+                <delete>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </delete>
+              </actions>
+            </properties>
+            <children>
+              <element name="type">
+                <properties>
+                  <type>select</type>
+                  <access>TRUE</access>
+                  <default_value>personal</default_value>
+                  <options>
+                    <corporate>corporate</corporate>
+                    <personal>personal</personal>
+                  </options>
+                  <required>FALSE</required>
+                  <title>Type</title>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>attribute</type>
+                      <prefix>NULL</prefix>
+                      <value>type</value>
+                    </create>
+                    <read>
+                      <path>@type</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>NULL</delete>
+                  </actions>
+                </properties>
+                <children/>
+              </element>
+              <element name="namePart">
+                <properties>
+                  <type>textfield</type>
+                  <access>TRUE</access>
+                  <required>FALSE</required>
+                  <title>Name</title>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>xml</type>
+                      <prefix>NULL</prefix>
+                      <value>&lt;namePart&gt;%value%&lt;/namePart&gt;</value>
+                    </create>
+                    <read>
+                      <path>mods:namePart</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+                <children/>
+              </element>
+              <element name="role">
+                <properties>
+                  <type>textfield</type>
+                  <access>TRUE</access>
+                  <description>Select a role from this vocabulary -
+                                        http://id.loc.gov/vocabulary/relators.html - e.g. Artist,
+                                        Creator, Designer, Engraver, Illustrator, Photographer,
+                                        Printmaker, etc.</description>
+                  <required>FALSE</required>
+                  <title>Role</title>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>xml</type>
+                      <prefix>NULL</prefix>
+                      <value>&lt;role&gt;&lt;roleTerm authority="marcrelator"
+                                                type="text"&gt;%value%&lt;/roleTerm&gt;&lt;/role&gt;</value>
+                    </create>
+                    <read>
+                      <path>mods:role/mods:roleTerm</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+                <children/>
+              </element>
+            </children>
+          </element>
+        </children>
+      </element>
+      <element name="typeOfResource">
+        <properties>
+          <type>select</type>
+          <access>TRUE</access>
+          <default_value>still image</default_value>
+          <options>
+            <text>text</text>
+            <cartographic>cartographic</cartographic>
+            <index key="notated music">notated music</index>
+            <index key="sound recording">sound recording</index>
+            <index key="sound recording-musical">sound recording-musical</index>
+            <index key="sound recording-nonmusical">sound recording-nonmusical</index>
+            <index key="moving image">moving image</index>
+            <index key="three dimensional object">three dimensional object</index>
+            <index key="software, multimedia">software, multimedia</index>
+            <index key="mixed material">mixed material</index>
+            <index key="still image">still image</index>
+          </options>
+          <required>FALSE</required>
+          <title>Type of Resource</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>element</type>
+              <prefix>NULL</prefix>
+              <value>typeOfResource</value>
+            </create>
+            <read>
+              <path>mods:typeOfResource</path>
+              <context>parent</context>
+            </read>
+            <update>
+              <path>self::node()</path>
+              <context>self</context>
+            </update>
+            <delete>NULL</delete>
+          </actions>
+        </properties>
+        <children/>
+      </element>
+      <element name="genre">
+        <properties>
+          <type>textfield</type>
+          <access>TRUE</access>
+          <description>A term that best describes the genre of the image. A excellent
+                        source for terms is the Thesaurus for Graphic Materials from the Library of
+                        Congress - http://www.loc.gov/pictures/collection/tgm/</description>
+          <required>FALSE</required>
+          <title>Genre</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>xml</type>
+              <prefix>NULL</prefix>
+              <value>&lt;genre authority="lctgm"&gt;%value%&lt;/genre&gt;</value>
+            </create>
+            <read>
+              <path>mods:genre</path>
+              <context>parent</context>
+            </read>
+            <update>
+              <path>self::node()</path>
+              <context>self</context>
+            </update>
+            <delete>NULL</delete>
+          </actions>
+        </properties>
+        <children/>
+      </element>
+      <element name="originInfo">
+        <properties>
+          <type>fieldset</type>
+          <access>TRUE</access>
+          <required>FALSE</required>
+          <title>Origin Information</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>element</type>
+              <prefix>NULL</prefix>
+              <value>originInfo</value>
+            </create>
+            <read>
+              <path>mods:originInfo</path>
+              <context>parent</context>
+            </read>
+            <update>NULL</update>
+            <delete>NULL</delete>
+          </actions>
+        </properties>
+        <children>
+          <element name="dateCreated">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <description>Enter date in the format YYYY-MM-DD.</description>
+              <required>FALSE</required>
+              <title>Date Created</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>element</type>
+                  <prefix>NULL</prefix>
+                  <value>dateCreated</value>
+                </create>
+                <read>
+                  <path>mods:dateCreated</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+          <element name="publisher">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>Publisher</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>element</type>
+                  <prefix>NULL</prefix>
+                  <value>publisher</value>
+                </create>
+                <read>
+                  <path>mods:publisher</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+          <element name="country">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>Country</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>xml</type>
+                  <prefix>NULL</prefix>
+                  <value>&lt;place&gt;&lt;placeTerm authority="marccountry"
+                                        type="code"&gt;%value%&lt;/placeTerm&gt;&lt;/place&gt;</value>
+                </create>
+                <read>
+                  <path>mods:place/mods:placeTerm[@type = "code"]</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+          <element name="place">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>Place</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>xml</type>
+                  <prefix>NULL</prefix>
+                  <value>&lt;place&gt;&lt;placeTerm
+                                        type="text"&gt;%value%&lt;/placeTerm&gt;&lt;/place&gt;</value>
+                </create>
+                <read>
+                  <path>mods:place/mods:placeTerm[@type = "text"]</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+        </children>
+      </element>
+      <element name="languages">
+        <properties>
+          <type>tags</type>
+          <access>TRUE</access>
+          <description>Select a three letter iso639-2b language code from &lt;a href="http://www.loc.gov/standards/iso639-2/php/code_list.php" target="_blank"&gt;http://www.loc.gov/standards/iso639-2/php/code_list.php&lt;/a&gt;</description>
+          <required>FALSE</required>
+          <title>Language</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>element</type>
+              <prefix>NULL</prefix>
+              <value>language</value>
+            </create>
+            <read>
+              <path>mods:language</path>
+              <context>parent</context>
+            </read>
+            <update>
+              <path>self::node()</path>
+              <context>self</context>
+            </update>
+            <delete>
+              <path>self::node()</path>
+              <context>self</context>
+            </delete>
+          </actions>
+        </properties>
+        <children>
+          <element name="0">
+            <properties>
+              <type>tag</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>xml</type>
+                  <prefix>NULL</prefix>
+                  <value>&lt;languageTerm authority="iso639-2b" type="code"&gt;%value%&lt;/languageTerm&gt;</value>
+                </create>
+                <read>
+                  <path>mods:languageTerm</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+        </children>
+      </element>
+      <element name="abstract">
+        <properties>
+          <type>textarea</type>
+          <access>TRUE</access>
+          <required>FALSE</required>
+          <title>Description</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>element</type>
+              <prefix>NULL</prefix>
+              <value>abstract</value>
+            </create>
+            <read>
+              <path>mods:abstract</path>
+              <context>parent</context>
+            </read>
+            <update>
+              <path>self::node()</path>
+              <context>self</context>
+            </update>
+            <delete>NULL</delete>
+          </actions>
+        </properties>
+        <children/>
+      </element>
+      <element name="identifier">
+        <properties>
+          <type>textfield</type>
+          <access>TRUE</access>
+          <required>FALSE</required>
+          <title>Identifier (local)</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>xml</type>
+              <prefix>NULL</prefix>
+              <value>&lt;identifier type="local"&gt;%value%&lt;/identifier&gt;</value>
+            </create>
+            <read>
+              <path>mods:identifier[@type="local"]</path>
+              <context>parent</context>
+            </read>
+            <update>
+              <path>self::node()</path>
+              <context>self</context>
+            </update>
+            <delete>NULL</delete>
+          </actions>
+        </properties>
+        <children/>
+      </element>
+      <element name="physicalDescription">
+        <properties>
+          <type>fieldset</type>
+          <access>TRUE</access>
+          <required>FALSE</required>
+          <title>Physical Description</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>element</type>
+              <prefix>NULL</prefix>
+              <value>physicalDescription</value>
+            </create>
+            <read>
+              <path>mods:physicalDescription</path>
+              <context>parent</context>
+            </read>
+            <update>NULL</update>
+            <delete>NULL</delete>
+          </actions>
+        </properties>
+        <children>
+          <element name="form">
+            <properties>
+              <type>select</type>
+              <access>TRUE</access>
+              <default_value>nonprojected graphic</default_value>
+              <description>A designation of a particular physical presentation of a resource, including the physical form or medium of material for a resource.</description>
+              <options>
+                <videorecording>videorecording</videorecording>
+                <unspecified>unspecified</unspecified>
+                <text>text</text>
+                <index key="tactile material">tactile material</index>
+                <index key="sound recording">sound recording</index>
+                <index key="remote-sensing image">remote-sensing image</index>
+                <index key="projected graphic">projected graphic</index>
+                <index key="notated music">notated music</index>
+                <index key="nonprojected graphic">nonprojected graphic</index>
+                <index key="motion picture">motion picture</index>
+                <microform>microform</microform>
+                <map>map</map>
+                <kit>kit</kit>
+                <globe>globe</globe>
+                <index key="electronic resource">electronic resource</index>
+              </options>
+              <required>FALSE</required>
+              <title>Form</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>xml</type>
+                  <prefix>NULL</prefix>
+                  <value>&lt;form authority="marcform"&gt;%value%&lt;/form&gt;</value>
+                </create>
+                <read>
+                  <path>mods:form</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+          <element name="extent">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>Extent</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>element</type>
+                  <prefix>NULL</prefix>
+                  <value>extent</value>
+                </create>
+                <read>
+                  <path>mods:extent</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+        </children>
+      </element>
+      <element name="note">
+        <properties>
+          <type>textarea</type>
+          <access>TRUE</access>
+          <required>FALSE</required>
+          <title>Note</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>element</type>
+              <prefix>NULL</prefix>
+              <value>note</value>
+            </create>
+            <read>
+              <path>mods:note[not(@*)]</path>
+              <context>parent</context>
+            </read>
+            <update>
+              <path>self::node()</path>
+              <context>self</context>
+            </update>
+            <delete>NULL</delete>
+          </actions>
+        </properties>
+        <children/>
+      </element>
+      <element name="subject">
+        <properties>
+          <type>fieldset</type>
+          <access>TRUE</access>
+          <collapsed>FALSE</collapsed>
+          <collapsible>FALSE</collapsible>
+          <disabled>FALSE</disabled>
+          <executes_submit_callback>FALSE</executes_submit_callback>
+          <multiple>FALSE</multiple>
+          <required>FALSE</required>
+          <resizable>FALSE</resizable>
+          <title>Subject</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>element</type>
+              <prefix>NULL</prefix>
+              <value>subject</value>
+            </create>
+            <read>
+              <path>mods:subject[not(@displayLabel)]</path>
+              <context>parent</context>
+            </read>
+            <update>NULL</update>
+            <delete>NULL</delete>
+          </actions>
+        </properties>
+        <children>
+          <element name="topic">
+            <properties>
+              <type>tags</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>Topic</title>
+              <tree>TRUE</tree>
+            </properties>
+            <children>
+              <element name="0">
+                <properties>
+                  <type>tag</type>
+                  <access>TRUE</access>
+                  <required>FALSE</required>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>element</type>
+                      <prefix>NULL</prefix>
+                      <value>topic</value>
+                    </create>
+                    <read>
+                      <path>mods:topic</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+                <children/>
+              </element>
+            </children>
+          </element>
+          <element name="geographic">
+            <properties>
+              <type>tags</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>Geographic</title>
+              <tree>TRUE</tree>
+            </properties>
+            <children>
+              <element name="0">
+                <properties>
+                  <type>tag</type>
+                  <access>TRUE</access>
+                  <required>FALSE</required>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>element</type>
+                      <prefix>NULL</prefix>
+                      <value>geographic</value>
+                    </create>
+                    <read>
+                      <path>mods:geographic</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+                <children/>
+              </element>
+            </children>
+          </element>
+          <element name="temporals">
+            <properties>
+              <type>tabs</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <tree>TRUE</tree>
+            </properties>
+            <children>
+              <element name="0">
+                <properties>
+                  <type>tabpanel</type>
+                  <access>TRUE</access>
+                  <required>FALSE</required>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>element</type>
+                      <prefix>NULL</prefix>
+                      <value>temporal</value>
+                    </create>
+                    <read>
+                      <path>mods:temporal</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+                <children>
+                  <element name="temporal">
+                    <properties>
+                      <type>datepicker</type>
+                      <access>TRUE</access>
+                      <description>Enter date in the format YYYY-MM-DD.</description>
+                      <required>FALSE</required>
+                      <title>Temporal</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>NULL</create>
+                        <read>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                        </update>
+                        <delete>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                        </delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                </children>
+              </element>
+            </children>
+          </element>
+          <element name="name">
+            <properties>
+              <type>tabs</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <tree>TRUE</tree>
+            </properties>
+            <children>
+              <element name="0">
+                <properties>
+                  <type>tabpanel</type>
+                  <access>TRUE</access>
+                  <required>FALSE</required>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>element</type>
+                      <prefix>NULL</prefix>
+                      <value>name</value>
+                    </create>
+                    <read>
+                      <path>mods:name</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+                <children>
+                  <element name="namePart">
+                    <properties>
+                      <type>textfield</type>
+                      <access>TRUE</access>
+                      <required>FALSE</required>
+                      <title>Name</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>namePart</value>
+                        </create>
+                        <read>
+                          <path>mods:namePart</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                  <element name="date">
+                    <properties>
+                      <type>datepicker</type>
+                      <access>TRUE</access>
+                      <required>FALSE</required>
+                      <title>Date</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>xml</type>
+                          <prefix>NULL</prefix>
+                          <value>&lt;namePart type="date"&gt;%value%&lt;/namePart&gt;</value>
+                        </create>
+                        <read>
+                          <path>namePart[@type="date"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                  <element name="role">
+                    <properties>
+                      <type>textfield</type>
+                      <access>TRUE</access>
+                      <required>FALSE</required>
+                      <title>Role</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>xml</type>
+                          <prefix>NULL</prefix>
+                          <value>&lt;role&gt;&lt;roleTerm authority="marcrelator" type="text"&gt;%value%&lt;/roleTerm&gt;&lt;/role&gt;</value>
+                        </create>
+                        <read>
+                          <path>mods:role/mods:roleTerm</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                </children>
+              </element>
+            </children>
+          </element>
+          <element name="geographicTabs">
+            <properties>
+              <type>tabs</type>
+              <access>TRUE</access>
+              <collapsed>FALSE</collapsed>
+              <collapsible>FALSE</collapsible>
+              <disabled>FALSE</disabled>
+              <executes_submit_callback>FALSE</executes_submit_callback>
+              <multiple>FALSE</multiple>
+              <required>FALSE</required>
+              <resizable>FALSE</resizable>
+              <tree>TRUE</tree>
+            </properties>
+            <children>
+              <element name="hierarchicalGeographic">
+                <properties>
+                  <type>tabpanel</type>
+                  <access>TRUE</access>
+                  <collapsed>FALSE</collapsed>
+                  <collapsible>FALSE</collapsible>
+                  <disabled>FALSE</disabled>
+                  <executes_submit_callback>FALSE</executes_submit_callback>
+                  <multiple>FALSE</multiple>
+                  <required>FALSE</required>
+                  <resizable>FALSE</resizable>
+                  <title>Geographic Information</title>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>element</type>
+                      <prefix>NULL</prefix>
+                      <value>hierarchicalGeographic</value>
+                    </create>
+                    <read>
+                      <path>mods:hierarchicalGeographic</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+                <children>
+                  <element name="continent">
+                    <properties>
+                      <type>select</type>
+                      <access>TRUE</access>
+                      <collapsed>FALSE</collapsed>
+                      <collapsible>FALSE</collapsible>
+                      <default_value>North America</default_value>
+                      <disabled>FALSE</disabled>
+                      <executes_submit_callback>FALSE</executes_submit_callback>
+                      <multiple>FALSE</multiple>
+                      <options>
+                        <Asia>Asia</Asia>
+                        <Africa>Africa</Africa>
+                        <Europe>Europe</Europe>
+                        <index key="North America">North America</index>
+                        <index key="South America">South America</index>
+                      </options>
+                      <required>FALSE</required>
+                      <resizable>FALSE</resizable>
+                      <title>Continent</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>continent</value>
+                        </create>
+                        <read>
+                          <path>mods:continent</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                  <element name="country">
+                    <properties>
+                      <type>textfield</type>
+                      <access>TRUE</access>
+                      <description>Name of a country, i.e. a political entity
+                                                considered a country.</description>
+                      <required>FALSE</required>
+                      <title>Country</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>country</value>
+                        </create>
+                        <read>
+                          <path>mods:country</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                  <element name="province">
+                    <properties>
+                      <type>textfield</type>
+                      <access>TRUE</access>
+                      <description>Includes first order political divisions called
+                                                provinces within a country, e.g. in Canada.</description>
+                      <required>FALSE</required>
+                      <title>Province</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>province</value>
+                        </create>
+                        <read>
+                          <path>mods:province</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                  <element name="region">
+                    <properties>
+                      <type>textfield</type>
+                      <access>TRUE</access>
+                      <description>Includes regions that have status as a
+                                                jurisdiction, usually incorporating more than one first
+                                                level jurisdiction.</description>
+                      <required>FALSE</required>
+                      <title>Region</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>region</value>
+                        </create>
+                        <read>
+                          <path>mods:region</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                  <element name="county">
+                    <properties>
+                      <type>textfield</type>
+                      <access>TRUE</access>
+                      <description>Name of the largest local administrative unit in
+                                                various countries, e.g. England.</description>
+                      <required>FALSE</required>
+                      <title>County</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>county</value>
+                        </create>
+                        <read>
+                          <path>mods:county</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                  <element name="city">
+                    <properties>
+                      <type>textfield</type>
+                      <access>TRUE</access>
+                      <description>Name of an inhabited place incorporated as a city,
+                                                town, etc.</description>
+                      <required>FALSE</required>
+                      <title>City</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>city</value>
+                        </create>
+                        <read>
+                          <path>mods:city</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                  <element name="citySection">
+                    <properties>
+                      <type>textfield</type>
+                      <access>TRUE</access>
+                      <description>Name of a smaller unit within a populated place,
+                                                e.g., neighborhoods, parks, or streets.</description>
+                      <required>FALSE</required>
+                      <title>City Section</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>citySection</value>
+                        </create>
+                        <read>
+                          <path>mods:citySection</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                </children>
+              </element>
+            </children>
+          </element>
+          <element name="cartographics">
+            <properties>
+              <type>fieldset</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>Cartographics</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>element</type>
+                  <prefix>NULL</prefix>
+                  <value>cartographics</value>
+                </create>
+                <read>
+                  <path>mods:cartographics</path>
+                  <context>parent</context>
+                </read>
+                <update>NULL</update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children>
+              <element name="coordinates">
+                <properties>
+                  <type>textfield</type>
+                  <access>TRUE</access>
+                  <description>Contains a statement of coordinates covered by the
+                                        resource.</description>
+                  <required>FALSE</required>
+                  <title>Coordinates</title>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>element</type>
+                      <prefix>NULL</prefix>
+                      <value>coordinates</value>
+                    </create>
+                    <read>
+                      <path>mods:coordinates</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>NULL</delete>
+                  </actions>
+                </properties>
+                <children/>
+              </element>
+            </children>
+          </element>
+        </children>
+      </element>
+      <element name="location">
+        <properties>
+          <type>fieldset</type>
+          <access>TRUE</access>
+          <required>FALSE</required>
+          <title>Location</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>element</type>
+              <prefix>NULL</prefix>
+              <value>location</value>
+            </create>
+            <read>
+              <path>mods:location</path>
+              <context>parent</context>
+            </read>
+            <update>
+              <path>self::node()</path>
+              <context>self</context>
+            </update>
+            <delete>
+              <path>self::node()</path>
+              <context>self</context>
+            </delete>
+          </actions>
+        </properties>
+        <children>
+          <element name="physicalLocations">
+            <properties>
+              <type>tabs</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <tree>TRUE</tree>
+            </properties>
+            <children>
+              <element name="0">
+                <properties>
+                  <type>tabpanel</type>
+                  <access>TRUE</access>
+                  <required>FALSE</required>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>element</type>
+                      <prefix>NULL</prefix>
+                      <value>physicalLocation</value>
+                    </create>
+                    <read>
+                      <path>mods:physicalLocation</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+                <children>
+                  <element name="physicalLocation">
+                    <properties>
+                      <type>textfield</type>
+                      <access>TRUE</access>
+                      <required>FALSE</required>
+                      <title>Physical Location</title>
+                      <tree>TRUE</tree>
+                      <actions>
+                        <create>NULL</create>
+                        <read>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                        </update>
+                        <delete>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                        </delete>
+                      </actions>
+                    </properties>
+                    <children/>
+                  </element>
+                </children>
+              </element>
+            </children>
+          </element>
+          <element name="shelfLocator">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <description>Optional (eg. Archives Number).</description>
+              <required>FALSE</required>
+              <title>Shelf Locator</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>element</type>
+                  <prefix>NULL</prefix>
+                  <value>shelfLocator</value>
+                </create>
+                <read>
+                  <path>mods:shelfLocator</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+        </children>
+      </element>
+      <element name="relatedItem">
+        <properties>
+          <type>fieldset</type>
+          <access>TRUE</access>
+          <required>FALSE</required>
+          <title>Related Item</title>
+          <tree>TRUE</tree>
+          <actions>
+            <create>
+              <path>self::node()</path>
+              <context>parent</context>
+              <schema/>
+              <type>xml</type>
+              <prefix>NULL</prefix>
+              <value>&lt;relatedItem type="original"&gt;%value%&lt;/relatedItem&gt;</value>
+            </create>
+            <read>
+              <path>mods:relatedItem[@type="original"]</path>
+              <context>parent</context>
+            </read>
+            <update>
+              <path>self::node()</path>
+              <context>self</context>
+            </update>
+            <delete>
+              <path>self::node()</path>
+              <context>self</context>
+            </delete>
+          </actions>
+        </properties>
+        <children>
+          <element name="title">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>Title</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>xml</type>
+                  <prefix>NULL</prefix>
+                  <value>&lt;titleInfo&gt;&lt;title&gt;%value%&lt;/title&gt;&lt;/titleInfo&gt;</value>
+                </create>
+                <read>
+                  <path>mods:titleInfo/mods:title</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+          <element name="url">
+            <properties>
+              <type>textfield</type>
+              <access>TRUE</access>
+              <required>FALSE</required>
+              <title>URL</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>xml</type>
+                  <prefix>NULL</prefix>
+                  <value>&lt;location&gt;&lt;url&gt;%value%&lt;/url&gt;&lt;/location&gt;</value>
+                </create>
+                <read>
+                  <path>mods:location/mods:url</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+        </children>
+      </element>
+      <element name="dental">
+        <properties>
+          <type>fieldset</type>
+          <access>TRUE</access>
+          <collapsed>FALSE</collapsed>
+          <collapsible>FALSE</collapsible>
+          <disabled>FALSE</disabled>
+          <executes_submit_callback>FALSE</executes_submit_callback>
+          <multiple>FALSE</multiple>
+          <required>FALSE</required>
+          <resizable>FALSE</resizable>
+          <title>Dental Information</title>
+          <tree>TRUE</tree>
+          <after_build>
+              <function key="0">manidora_dentist_form_process_general_tags</function>
+          </after_build>
+        </properties>
+        <children>
+          <element name="title">
+            <properties>
+              <type>select</type>
+              <access>TRUE</access>
+              <collapsed>FALSE</collapsed>
+              <collapsible>FALSE</collapsible>
+              <disabled>FALSE</disabled>
+              <executes_submit_callback>FALSE</executes_submit_callback>
+              <multiple>FALSE</multiple>
+              <ajax>
+                <callback>manidora_dental_form_tags_ajax_callback</callback>
+                <wrapper>dental-optional-wrapper</wrapper>
+              </ajax>
+              <options>
+                <option key="Anatomy">Anatomy</option>
+                <option key="implants - fixed - multiple - full">implants - fixed - multiple - full</option>
+                <option key="implants - fixed - multiple - partial">implants - fixed - multiple - partial</option>
+                <option key="implants - fixed - single - full">implants - fixed - single - full</option>
+                <option key="implants - fixed - single - partial">implants - fixed - single - partial</option>
+                <option key="implants - maxillofacial - extraoral">implants - maxillofacial - extraoral</option>
+                <option key="implants - maxillofacial - intraoral - cancer">implants - maxillofacial - intraoral - cancer</option>
+                <option key="implants - maxillofacial - intraoral - congenital">implants - maxillofacial - intraoral - congenital</option>
+                <option key="implants - maxillofacial - intraoral - trauma">implants - maxillofacial - intraoral - trauma</option>
+                <option key="implants - removable - complete - lower">implants - removable - complete - lower</option>
+                <option key="implants - removable - complete - upper">implants - removable - complete - upper</option>
+                <option key="implants - removable - partial - free-end">implants - removable - partial - free-end</option>
+                <option key="implants - removable - partial - tooth borne">implants - removable - partial - tooth borne</option>
+                <option key="natural tissues - fixed - multiple - full">natural tissues - fixed - multiple - full</option>
+                <option key="natural tissues - fixed - single - full">natural tissues - fixed - single - full</option>
+                <option key="natural tissues - maxillofacial - extraoral">natural tissues - maxillofacial - extraoral</option>
+                <option key="natural tissues - maxillofacial - intraoral - cancer">natural tissues - maxillofacial - intraoral - cancer</option>
+                <option key="natural tissues - maxillofacial - intraoral - congenital">natural tissues - maxillofacial - intraoral - congenital</option>
+                <option key="natural tissues - maxillofacial - intraoral - trauma">natural tissues - maxillofacial - intraoral - trauma</option>
+                <option key="natural tissues - removable - complete - both">natural tissues - removable - complete - both</option>
+                <option key="natural tissues - removable - complete - lower">natural tissues - removable - complete - lower</option>
+                <option key="natural tissues - removable - complete - upper">natural tissues - removable - complete - upper</option>
+                <option key="natural tissues - removable - complete over partial">natural tissues - removable - complete over partial</option>
+                <option key="natural tissues - removable - partial - free-end">natural tissues - removable - partial - free-end</option>
+                <option key="natural tissues - removable - partial - tooth borne">natural tissues - removable - partial - tooth borne</option>
+                <option key="Pathology">Pathology</option>
+              </options>
+              <required>FALSE</required>
+              <resizable>FALSE</resizable>
+              <title>Title</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>xml</type>
+                  <prefix>NULL</prefix>
+                  <value>&lt;subject displayLabel="title"&gt;&lt;topic&gt;%value%&lt;/topic&gt;&lt;/subject&gt;</value>
+                </create>
+                <read>
+                  <path>mods:subject[@displayLabel="title"]/mods:topic</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+          <element name="subject">
+            <properties>
+              <type>select</type>
+              <access>TRUE</access>
+              <collapsed>FALSE</collapsed>
+              <collapsible>FALSE</collapsible>
+              <disabled>FALSE</disabled>
+              <executes_submit_callback>FALSE</executes_submit_callback>
+              <multiple>FALSE</multiple>
+              <options>
+                <option key="Examination">Examination</option>
+                <option key="Pre-treatment records">Pre-treatment records</option>
+                <option key="Preliminary impressions">Preliminary impressions</option>
+                <option key="Tooth preparations">Tooth preparations</option>
+                <option key="Final impressions">Final impressions</option>
+                <option key="Jaw relation records">Jaw relation records</option>
+                <option key="Try in">Try in</option>
+                <option key="Delivery">Delivery</option>
+                <option key="Laboratory procedures">Laboratory procedures</option>
+                <option key="Completed treatment">Completed treatment</option>
+                <option key="Pre-prosthetic treatment">Pre-prosthetic treatment</option>
+              </options>
+              <required>FALSE</required>
+              <resizable>FALSE</resizable>
+              <title>Subject</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>xml</type>
+                  <prefix>NULL</prefix>
+                  <value>&lt;subject displayLabel="subject"&gt;&lt;topic&gt;%value%&lt;/topic&gt;&lt;/subject&gt;</value>
+                </create>
+                <read>
+                  <path>mods:subject[@displayLabel="subject"]/mods:topic</path>
+                  <context>parent</context>
+                </read>
+                <update>
+                  <path>self::node()</path>
+                  <context>self</context>
+                </update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children/>
+          </element>
+          <element name="optional">
+            <properties>
+              <prefix>&lt;div id="dental-optional-wrapper"&gt;</prefix>
+              <suffix>&lt;/div&gt;</suffix>
+              <type>markup</type>
+              <access>TRUE</access>
+              <collapsed>FALSE</collapsed>
+              <collapsible>FALSE</collapsible>
+              <disabled>FALSE</disabled>
+              <executes_submit_callback>FALSE</executes_submit_callback>
+              <multiple>FALSE</multiple>
+              <required>FALSE</required>
+              <resizable>FALSE</resizable>
+              <process>
+                <function key="0">manidora_dentist_form_process_optional</function>
+              </process>
+              <tree>TRUE</tree>
+            </properties>
+            <children>
+              <element name="fixed">
+                <properties>
+                  <type>select</type>
+                  <collapsed>FALSE</collapsed>
+                  <collapsible>FALSE</collapsible>
+                  <disabled>FALSE</disabled>
+                  <executes_submit_callback>FALSE</executes_submit_callback>
+                  <multiple>FALSE</multiple>
+                  <options>
+                    <option key="Metal – cast">Metal – cast</option>
+                    <option key="Ceramic – cast">Ceramic – cast</option>
+                    <option key="Metal-ceramic – cast">Metal-ceramic – cast</option>
+                    <option key="Provisional – cast">Provisional – cast</option>
+                    <option key="Resin-bonded - cast">Resin-bonded - cast</option>
+                    <option key="Metal – cad/cam">Metal – cad/cam</option>
+                    <option key="Ceramic – cad/cam">Ceramic – cad/cam</option>
+                    <option key="Metal-ceramic – cad/cam">Metal-ceramic – cad/cam</option>
+                    <option key="Provisional – cad/cam">Provisional – cad/cam</option>
+                    <option key="Resin-bonded - cad/cam">Resin-bonded - cad/cam</option>
+                  </options>
+                  <required>FALSE</required>
+                  <resizable>FALSE</resizable>
+                  <title>Fixed</title>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>xml</type>
+                      <prefix>NULL</prefix>
+                      <value>&lt;subject displayLabel="fixed"&gt;&lt;topic&gt;%value%&lt;/topic&gt;&lt;/subject&gt;</value>
+                    </create>
+                    <read>
+                      <path>mods:subject[@displayLabel="fixed"]/mods:topic</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+              </element>
+              <element name="removable">
+                <properties>
+                  <type>select</type>
+                  <access>FALSE</access>
+                  <collapsible>FALSE</collapsible>
+                  <disabled>FALSE</disabled>
+                  <executes_submit_callback>FALSE</executes_submit_callback>
+                  <multiple>FALSE</multiple>
+                  <options>
+                    <option key="Tooth selection – anterior">Tooth selection – anterior</option>
+                    <option key="Tooth selection – posterior - monoplane">Tooth selection – posterior - monoplane</option>
+                    <option key="Tooth selection – posterior – bilateral balanced">Tooth selection – posterior – bilateral balanced</option>
+                    <option key="Tooth selection – posterior – lingualized - balanced">Tooth selection – posterior – lingualized - balanced</option>
+                    <option key="Tooth selection – posterior – lingualized - unbalanced">Tooth selection – posterior – lingualized - unbalanced</option>
+                  </options>
+                  <required>FALSE</required>
+                  <resizable>FALSE</resizable>
+                  <title>Removable</title>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>xml</type>
+                      <prefix>NULL</prefix>
+                      <value>&lt;subject displayLabel="removable"&gt;&lt;topic&gt;%value%&lt;/topic&gt;&lt;/subject&gt;</value>
+                    </create>
+                    <read>
+                      <path>mods:subject[@displayLabel="removable"]/mods:topic</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+              </element>
+              <element name="maxillofacial">
+                <properties>
+                  <type>fieldset</type>
+                  <collapsed>FALSE</collapsed>
+                  <collapsible>FALSE</collapsible>
+                  <disabled>FALSE</disabled>
+                  <executes_submit_callback>FALSE</executes_submit_callback>
+                  <multiple>FALSE</multiple>
+                  <required>FALSE</required>
+                  <resizable>FALSE</resizable>
+                  <title>Maxillofacial</title>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>xml</type>
+                      <prefix>NULL</prefix>
+                      <value>&lt;subject displayLabel="maxillofacial"&gt;&lt;/subject&gt;</value>
+                    </create>
+                    <read>
+                      <path>mods:subject[@displayLabel="maxillofacial"]</path>
+                      <context>parent</context>
+                    </read>
+                    <update>NULL</update>
+                    <delete>NULL</delete>
+                  </actions>
+                </properties>
+                <children>
+                  <element name="0">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>auricular prosthesis</title>
+                      <return_value>auricular prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[normalize-space(.)="auricular prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="1">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>chemotherapy</title>
+                      <return_value>chemotherapy</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="chemotherapy"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="2">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>cleft lip</title>
+                      <return_value>cleft lip</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="cleft lip"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="3">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>cleft palate</title>
+                      <return_value>cleft palate</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="cleft palate"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="4">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>cranial prosthesis</title>
+                      <return_value>cranial prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="cranial prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="5">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>craniofacial</title>
+                      <return_value>craniofacial</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="craniofacial"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="6">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>definitive</title>
+                      <return_value>definitive</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="definitive"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="7">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>dental oncology</title>
+                      <return_value>dental oncology</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="dental oncology"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="8">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>ears</title>
+                      <return_value>ears</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="ears"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="9">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>eyes</title>
+                      <return_value>eyes</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="eyes"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="10">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>facial moulage</title>
+                      <return_value>facial moulage</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="facial moulage"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="11">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>facial prosthesis</title>
+                      <return_value>facial prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="facial prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="12">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>fluoride tray</title>
+                      <return_value>fluoride tray</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="fluoride tray"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="13">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>glossectomy prosthesis</title>
+                      <return_value>glossectomy prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="glossectomy prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="14">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>implant-retained resection prosthesis</title>
+                      <return_value>implant-retained resection prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="implant-retained resection prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="15">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>interim</title>
+                      <return_value>interim</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="interim"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="16">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>mandibular</title>
+                      <return_value>mandibular</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="mandibular"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="17">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>mandibular resection prosthesis</title>
+                      <return_value>mandibular resection prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="mandibular resection prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="18">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>maxillary</title>
+                      <return_value>maxillary</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="maxillary"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="19">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>nasal prosthesis</title>
+                      <return_value>nasal prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="nasal prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="20">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>nasal stent</title>
+                      <return_value>nasal stent</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="nasal stent"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="21">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>nasolavleolar molding appliance</title>
+                      <return_value>nasolavleolar molding appliance</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="nasolavleolar molding appliance"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="22">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>nose</title>
+                      <return_value>nose</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="nose"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="23">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>obturator</title>
+                      <return_value>obturator</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="obturator"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="24">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>ocular prosthesis</title>
+                      <return_value>ocular prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="ocular prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="25">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>orbital prosthesis</title>
+                      <return_value>orbital prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="orbital prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="26">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>osteoradionecrosis</title>
+                      <return_value>osteoradionecrosis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="osteoradionecrosis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="27">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>palatal augmentation prosthesis</title>
+                      <return_value>palatal augmentation prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="palatal augmentation prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="28">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>pathology</title>
+                      <return_value>pathology</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="pathology"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="29">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>radiation carrier</title>
+                      <return_value>radiation carrier</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="radiation carrier"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="30">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>radiation shield</title>
+                      <return_value>radiation shield</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="radiation shield"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="31">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>radiation therapy</title>
+                      <return_value>radiation therapy</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="radiation therapy"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="32">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>speech aid prosthesis</title>
+                      <return_value>speech aid prosthesis</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="speech aid prosthesis"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="33">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>speech and  velopharyngeal function</title>
+                      <return_value>speech and  velopharyngeal function</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="speech and  velopharyngeal function"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="34">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>surgical</title>
+                      <return_value>surgical</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="surgical"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="35">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>syndromes</title>
+                      <return_value>syndromes</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="syndromes"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="36">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>tongue-mandible defects</title>
+                      <return_value>tongue-mandible defects</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="tongue-mandible defects"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="37">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>trauma prostheses</title>
+                      <return_value>trauma prostheses</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="trauma prostheses"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                </children>
+              </element>
+              <element name="implants">
+                <properties>
+                  <type>fieldset</type>
+                  <collapsed>FALSE</collapsed>
+                  <collapsible>FALSE</collapsible>
+                  <disabled>FALSE</disabled>
+                  <executes_submit_callback>FALSE</executes_submit_callback>
+                  <multiple>FALSE</multiple>
+                  <required>FALSE</required>
+                  <resizable>FALSE</resizable>
+                  <title>Implants</title>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>xml</type>
+                      <prefix>NULL</prefix>
+                      <value>&lt;subject displayLabel="implants"&gt;&lt;/subject&gt;</value>
+                    </create>
+                    <read>
+                      <path>mods:subject[@displayLabel="implants"]</path>
+                      <context>parent</context>
+                    </read>
+                    <update>NULL</update>
+                    <delete>NULL</delete>
+                  </actions>
+                </properties>
+                <children>
+                  <element name="0">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>all-on-4</title>
+                      <return_value>all-on-4</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="all-on-4"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="1">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>bone grafting</title>
+                      <return_value>bone grafting</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="bone grafting"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="2">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>cast posts and cores</title>
+                      <return_value>cast posts and cores</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="cast posts and cores"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="3">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>cement retained</title>
+                      <return_value>cement retained</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="cement retained"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="4">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>closed tray</title>
+                      <return_value>closed tray</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="closed tray"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="5">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>custom abutments</title>
+                      <return_value>custom abutments</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="custom abutments"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="6">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>digitally guided surgery</title>
+                      <return_value>digitally guided surgery</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="digitally guided surgery"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="7">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>healing abutments</title>
+                      <return_value>healing abutments</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="healing abutments"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="8">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>immediate loading</title>
+                      <return_value>immediate loading</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="immediate loading"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="9">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>implant abutments</title>
+                      <return_value>implant abutments</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="implant abutments"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="10">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>implant materials</title>
+                      <return_value>implant materials</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="implant materials"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="11">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>implant overdentures</title>
+                      <return_value>implant overdentures</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="implant overdentures"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="12">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>implant surfaces</title>
+                      <return_value>implant surfaces</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="implant surfaces"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="13">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>impression copings</title>
+                      <return_value>impression copings</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="impression copings"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="14">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>non metallic posts</title>
+                      <return_value>non metallic posts</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="non metallic posts"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="15">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>open tray</title>
+                      <return_value>open tray</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="open tray"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="16">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>posts (dowels) and cores</title>
+                      <return_value>posts (dowels) and cores</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="posts (dowels) and cores"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="17">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>key</title>
+                      <return_value>prefabricated metal posts</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="prefabricated metal posts"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="18">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>resin bonded prostheses</title>
+                      <return_value>resin bonded prostheses</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="resin bonded prostheses"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="19">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>screw retained</title>
+                      <return_value>screw retained</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="screw retained"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="20">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>teeth in a day</title>
+                      <return_value>teeth in a day</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="teeth in a day"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="21">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>types of implants</title>
+                      <return_value>types of implants</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="types of implants"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                  <element name="22">
+                    <properties>
+                      <type>checkbox</type>
+                      <title>ucla abutment</title>
+                      <return_value>ucla abutment</return_value>
+                      <value_callback>manidora_checkbox_value_callback</value_callback>
+                      <actions>
+                        <create>
+                          <path>self::node()</path>
+                          <context>parent</context>
+                          <schema/>
+                          <type>element</type>
+                          <prefix>NULL</prefix>
+                          <value>topic</value>
+                        </create>
+                        <read>
+                          <path>mods:topic[text()="ucla abutment"]</path>
+                          <context>parent</context>
+                        </read>
+                        <update>
+                          <path>self::node()</path>
+                          <context>self</context>
+                        </update>
+                        <delete>NULL</delete>
+                      </actions>
+                    </properties>
+                  </element>
+                </children>
+              </element>
+            </children>
+          </element>
+          <element name="general">
+            <properties>
+              <type>tags</type>
+              <access>TRUE</access>
+              <collapsed>FALSE</collapsed>
+              <collapsible>FALSE</collapsible>
+              <disabled>FALSE</disabled>
+              <executes_submit_callback>FALSE</executes_submit_callback>
+              <multiple>FALSE</multiple>
+              <required>FALSE</required>
+              <resizable>FALSE</resizable>
+              <title>General Tags</title>
+              <tree>TRUE</tree>
+              <actions>
+                <create>
+                  <path>self::node()</path>
+                  <context>parent</context>
+                  <schema/>
+                  <type>xml</type>
+                  <prefix>NULL</prefix>
+                  <value>&lt;subject displayLabel="general"&gt;&lt;/subject&gt;</value>
+                </create>
+                <read>
+                  <path>mods:subject[@displayLabel="general"]</path>
+                  <context>parent</context>
+                </read>
+                <update>NULL</update>
+                <delete>NULL</delete>
+              </actions>
+            </properties>
+            <children>
+              <element name="0">
+                <properties>
+                  <type>tag</type>
+                  <access>TRUE</access>
+                  <autocomplete_path>islandora/manitoba/autocomplete_general_dental_tags</autocomplete_path>
+                  <collapsed>FALSE</collapsed>
+                  <collapsible>FALSE</collapsible>
+                  <disabled>FALSE</disabled>
+                  <executes_submit_callback>FALSE</executes_submit_callback>
+                  <multiple>FALSE</multiple>
+                  <required>FALSE</required>
+                  <resizable>FALSE</resizable>
+                  <tree>TRUE</tree>
+                  <actions>
+                    <create>
+                      <path>self::node()</path>
+                      <context>parent</context>
+                      <schema/>
+                      <type>element</type>
+                      <prefix>NULL</prefix>
+                      <value>topic</value>
+                    </create>
+                    <read>
+                      <path>mods:topic</path>
+                      <context>parent</context>
+                    </read>
+                    <update>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </update>
+                    <delete>
+                      <path>self::node()</path>
+                      <context>self</context>
+                    </delete>
+                  </actions>
+                </properties>
+              </element>
+            </children>
+          </element>
+        </children>
+      </element>
+    </children>
+  </form>
+</definition>
