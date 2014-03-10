@@ -1719,7 +1719,12 @@ function manidora_checkbox_value_callback($element, $input = FALSE, $form_state 
     // Default value comes from the XML.
     return isset($element['#default_value']) && $element['#default_value'] == $element['#return_value'];
   }
-  return $input === 0 ? '' : $input;
+  else if ($input === NULL || empty($input)) {
+    return '';
+  }
+  else {
+    return $input;
+  }
 }
 
 /**
