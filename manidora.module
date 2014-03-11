@@ -1769,10 +1769,13 @@ function manidora_dentist_form_process_optional(array $element, array &$form_sta
  * Add link to description for general tags, when the user can edit the terms.
  */
 function manidora_dentist_form_process_general_tags(array &$element) {
-  if (user_access('Edit terms in General Dental Tags')) {
+  $vocabulary = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
+  if ($vocabulary) {
+    if (user_access('edit terms in ' . $vocabulary->vid)) {
     $element['general']['#description'] = t('Add / Edit available tags <a href="@url">here</a>.', array(
                                  '@url' => url('admin/structure/taxonomy/manidora_general_dental_tags'),
                                ));
+    }
   }
   return $element;
 }
@@ -1810,6 +1813,16 @@ function manidora_xml_form_builder_get_self_transforms() {
   );
 }
 
-function manidora_islandora_object_access($op, $object, $user) {
-  
+function manidora_islandora_solr_primary_display() {
+  // Because we want the list display, but not the word "default" in the name
+  return array(
+    'uofm_list' => array(
+      'name' => t('List'),
+      'module' => 'islandora_solr',
+      'file' => 'includes/results.inc',
+      'class' => "IslandoraSolrResults",
+      'function' => "displayResults",
+      'description' => t("A simple output."),
+    ),
+  );
 }
