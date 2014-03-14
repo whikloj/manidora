@@ -19,6 +19,9 @@
    $blocks['manidora_whats_new'] = array(
     'info' => t('Manidora what\'s new'),
    );
+   $blocks['manidora_preview_image'] = array(
+    'info' => t('Manidora preview thumbnail'),
+   );
    return $blocks;
   }
   
@@ -39,6 +42,10 @@
       case 'manidora_whats_new':
         $block['subject'] = 'What\'s New';
         $block['content'] = __manidora_whats_new_content();
+        break;
+      case 'manidora_preview_image':
+        $block['subject'] = "Preview";
+        $block['content'] = __manidora_preview_image();
         break;
     }
     return $block;
@@ -423,4 +430,43 @@ function __manidora_check_restricted_permissions($doc,$roles){
   } 
   return 0;
 }   
-  
+
+/**
+ * Display the thumnbnail when editing the metadata form
+ */
+function __manidora_preview_image() {
+  global $user;
+  module_load_include('inc', 'islandora_restricted', 'includes/utilities');
+  $path = current_path();
+  $path_parts = explode('/', $path);
+  $view = FALSE;
+  $output = "";
+  foreach ($path_parts as $p) {
+    if (strpos($p, ':') > 0) {
+      $pid = $p;
+      $obj = islandora_object_load($pid);
+      if (!is_null($obj) && FALSE !== $obj) {
+        if ($obj->getDatastream('TN') !== FALSE) {
+          if (islandora_restricted_retrieve_restrictions($obj, $user)) {
+            $view = TRUE;
+            break;
+          }
+        }
+      }
+      $obj = NULL;
+    }
+  }
+  if ($view) {
+    drupal_add_library('system', 'ui.draggable');
+    drupal_add_js('file', 'js/preview.js');
+    $title = t('Preview');
+    $url = url('islandora/object/' . $pid . '/datastream/TN/view');
+    $output =<<<EOF
+<div class="manidora-preview-image" id="image-$pid">
+  <h1 class="block-title">$title</h1>
+  <img src="$url" />
+</div>
+EOF;
+  }
+  return $output;
+}
