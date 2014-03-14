@@ -1737,8 +1737,8 @@ function manidora_islandora_xml_form_builder_form_associations() {
  * Autocomplete field for the manidora Dental form General Tags.
  */
 function manidora_autocomplete_general_dental_tags($query = '') {
-  $vocabulary = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
-  $terms = taxonomy_term_load_multiple(array(), array('vid' => $vocabulary->vid));
+  $voc = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
+  $terms = taxonomy_term_load_multiple(array(), array('vid' => $voc->vid));
   $output = array();
   foreach ($terms as $term) {
     if (substr_compare($term->name, $query, 0, strlen($query), TRUE) == 0) {

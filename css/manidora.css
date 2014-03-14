@@ -91,3 +91,14 @@
     color: #444444;
     font-size: 80%;
 }
+
+.manidora-preview-image {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    background-color: white;
+    display: inline-block;
+    overflow: hidden;
+    padding: 3px;
+    z-index: 9;
+}
