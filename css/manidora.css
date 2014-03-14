@@ -101,4 +101,5 @@
     overflow: hidden;
     padding: 3px;
     z-index: 9;
+    border: 1px solid black;
 }
