@@ -92,10 +92,10 @@
     font-size: 80%;
 }
 
-.manidora-preview-image {
+#block-manidora-manidora-preview-image {
     position: fixed;
     top: 50px;
-    right: 20px;
+    left: 200px;
     background-color: white;
     display: inline-block;
     overflow: hidden;

@@ -458,7 +458,7 @@ function __manidora_preview_image() {
   }
   if ($view) {
     drupal_add_library('system', 'ui.draggable');
-    drupal_add_js('file', 'js/preview.js');
+    drupal_add_js(drupal_get_path('module', 'manidora') . '/js/preview.js');
     $title = t('Preview');
     $url = url('islandora/object/' . $pid . '/datastream/TN/view');
     $output =<<<EOF
