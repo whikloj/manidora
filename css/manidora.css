@@ -95,7 +95,7 @@
 #block-manidora-manidora-preview-image {
     position: fixed;
     top: 50px;
-    left: 200px;
+    right: 20px;
     background-color: white;
     display: inline-block;
     overflow: hidden;
