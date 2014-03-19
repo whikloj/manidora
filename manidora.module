@@ -1829,3 +1829,11 @@ function manidora_islandora_solr_primary_display() {
     ),
   );
 }
+
+function manidora_islandora_undeletable_datastreams($models) {
+  // We are not allowing the deletion of MODS datastreams from Collections
+  //   as that makes them inaccessible
+  if (in_array('islandora:collectionCModel', $models)) {
+    return array('MODS');
+  }
+}
