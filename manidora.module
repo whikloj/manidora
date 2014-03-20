@@ -548,6 +548,7 @@ function manidora_download_table($islandora_object) {
 
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_add_js( drupal_get_path('module', 'manidora') . '/js/ga.js', 'file');
+  drupal_add_js("var manidora_trackdownload_page = '/" . current_path() . "';", 'inline');
   
   drupal_set_breadcrumb(islandora_get_breadcrumbs($islandora_object));
 
