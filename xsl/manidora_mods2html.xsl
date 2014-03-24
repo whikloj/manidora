@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" version="1.0">
+  <xsl:include href="string-utilities.xsl" />
+ 
   <xsl:param name="islandoraUrl"/>
   <xsl:param name="collections"/>
-  <xsl:variable name="smallcase">abcdefghijklmnopqrstuvwxyz</xsl:variable>
-  <xsl:variable name="uppercase">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
-
+ 
   <xsl:param name="searchUrl">/islandora/search/</xsl:param>
 
   <!-- XXX: Should probably be tied to some config in the front-end. -->
@@ -372,6 +372,26 @@
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
+  
+  <xsl:template match="mods:subject[@displayLabel='title']|mods:subject[@displayLabel = 'subject']|mods:subject[@displayLabel = 'general']|mods:subject[@displayLabel = 'removable']" priority="5">
+    <xsl:call-template name="dental_output">
+      <xsl:with-param name="label"><xsl:call-template name="toProperCase"><xsl:with-param name="text" select="@displayLabel" /></xsl:call-template></xsl:with-param>
+      <xsl:with-param name="node" select="."/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template name="dental_output">
+    <xsl:param name="label" />
+    <xsl:param name="node" />
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label"><xsl:value-of select="$label"/></xsl:with-param>
+      <xsl:with-param name="content">
+        <xsl:for-each select="$node/mods:topic">
+          <xsl:value-of select="text()" /><xsl:if test="not(position() = last())"><br /></xsl:if>
+        </xsl:for-each>
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
 
   <xsl:template match="mods:temporal">
     <xsl:call-template name="basic_output">
@@ -435,7 +455,8 @@
           </xsl:when>
           <xsl:otherwise>
             <strong>
-              <xsl:value-of select="concat(translate(substring(normalize-space(@type),1,1), $smallcase, $uppercase),substring(normalize-space(@type),2))"/>: </strong>
+              <xsl:call-template name="toProperCase"><xsl:with-param name="text" select="@type" /></xsl:call-template>
+              : </strong>
               <xsl:value-of select="text()"/>
           </xsl:otherwise>
         </xsl:choose>
@@ -675,7 +696,7 @@
       <xsl:when test="normalize-space(text()) = 'wam'">(Writer of accompanying material)</xsl:when>
       <xsl:when test="string-length(normalize-space(text())) &gt; 0">
         <!-- not a code, so we assume full text -->
-        <xsl:value-of select="normalize-space(concat('(',translate(substring(text(),1,1),$smallcase,$uppercase),translate(substring(text(),2),$uppercase,$smallcase),')'))" />
+        <xsl:call-template name="toProperCase"><xsl:with-param name="text" select="text()" /></xsl:call-template>
       </xsl:when>
     </xsl:choose>
   </xsl:template>

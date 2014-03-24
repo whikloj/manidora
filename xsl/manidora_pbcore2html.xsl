@@ -2,8 +2,8 @@
 <xsl:stylesheet xmlns:pb="http://www.pbcore.org/PBCore/PBCoreNamespace.html" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:php="http://php.net/xsl" version="1.0">
   <xsl:param name="islandoraUrl"/>
   <xsl:param name="collections"/>
-  <xsl:variable name="smallcase">abcdefghijklmnopqrstuvwxyz</xsl:variable>
-  <xsl:variable name="uppercase">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
+  
+  <xsl:include href="string-utilities.xsl" />
 
   <xsl:param name="searchUrl">/islandora/search/</xsl:param>
 
@@ -619,7 +619,7 @@
       <xsl:when test="normalize-space(text()) = 'wam'">(Writer of accompanying material)</xsl:when>
       <xsl:when test="string-length(normalize-space(text())) &gt; 0">
         <!-- not a code, so we assume full text -->
-        <xsl:value-of select="normalize-space(concat('(',translate(substring(text(),1,1),$smallcase,$uppercase),translate(substring(text(),2),$uppercase,$smallcase),')'))" />
+        <xsl:call-template name="toProperCase"><xsl:with-param name="text" select="text()" /></xsl:call-template>
       </xsl:when>
     </xsl:choose>
   </xsl:template>
