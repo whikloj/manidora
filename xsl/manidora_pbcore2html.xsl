@@ -23,37 +23,42 @@
   
   <xsl:template match="pb:pbcoreDescriptionDocument">
     <table class="manidora-metadata">
-        <tr>
-            <td class="label">Title</td>
-            <td><xsl:value-of select="pb:pbcoreTitle"/></td>
-        </tr>
-        <xsl:if test="string-length($collections) &gt; 0">
-          <tr>
-            <td class="label">Collections</td>
-            <td><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></td>
-          </tr>
-        </xsl:if>
-        <xsl:apply-templates select="pb:pbcoreDescription" />
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Title</xsl:with-param>
+        <xsl:with-param name="content"><xsl:value-of select="pb:pbcoreTitle"/></xsl:with-param>
+      </xsl:call-template>
+      <xsl:if test="string-length($collections) &gt; 0">
+        <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Collections</xsl:with-param>
+          <xsl:with-param name="content"><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></xsl:with-param>
+        </xsl:call-template>
+      </xsl:if>
+      <xsl:apply-templates select="pb:pbcoreDescription" />
         
-        <xsl:apply-templates select="pb:pbcoreCoverage[coverageType='Temporal']" />
-        <xsl:apply-templates select="pb:pbcoreSubject" />
-        <xsl:apply-templates select="pb:pbcoreCoverage[coverageType='Spatial']" />
-        <xsl:call-template name="groupNames" />
-        <xsl:apply-templates select="pb:pbcoreInstantiation" />
-        
-        <xsl:apply-templates select="mods:note[not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID')]" />
-        <xsl:apply-templates select="mods:location/mods:physicalLocation" />
-        <xsl:apply-templates select="mods:location/mods:shelfLocator" />
-        <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
-        <xsl:apply-templates select="mods:identifier[@type='local']" />
-        <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
-        <xsl:apply-templates select="mods:identifier[@type='hdl']" />
-        <xsl:apply-templates select="mods:originInfo"/>
-        <xsl:apply-templates select="mods:accessCondition" /><!-- Copyright -->
+      <xsl:apply-templates select="pb:pbcoreCoverage[coverageType='Temporal']" />
+      <xsl:if test="count(pb:pbcoreSubject) &gt; 0">
+        <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Subjects</xsl:with-param>
+          <xsl:with-param name="content"><xsl:apply-templates select="pb:pbcoreSubject" /></xsl:with-param>
+        </xsl:call-template>
+      </xsl:if>
+      <xsl:apply-templates select="pb:pbcoreCoverage[coverageType='Spatial']" />
+      <xsl:call-template name="groupNames" />
+      <xsl:apply-templates select="pb:pbcoreInstantiation" />
+      
+      <xsl:apply-templates select="mods:note[not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID')]" />
+      <xsl:apply-templates select="mods:location/mods:physicalLocation" />
+      <xsl:apply-templates select="mods:location/mods:shelfLocator" />
+      <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
+      <xsl:apply-templates select="mods:identifier[@type='local']" />
+      <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
+      <xsl:apply-templates select="mods:identifier[@type='hdl']" />
+      <xsl:apply-templates select="mods:originInfo"/>
+      <xsl:apply-templates select="mods:accessCondition" /><!-- Copyright -->
 
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail" />
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start" />
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date" />
+      <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail" />
+      <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start" />
+      <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date" />
     </table>
   </xsl:template>
   
@@ -300,18 +305,9 @@
   </xsl:template>
 
   <xsl:template match="pb:pbcoreSubject">
-    <xsl:if test="mods:topic or mods:name[@type='personal'] or mods:titleInfo">
-      <xsl:call-template name="basic_output">
-          <xsl:with-param name="label">Subjects</xsl:with-param>
-          <xsl:with-param name="content">
-            <xsl:for-each select="pb:pbcoreSubject">
-              <xsl:comment><xsl:value-of select="name()"/></xsl:comment>
-              <xsl:value-of select="text()"/>
-              <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
-            </xsl:for-each>
-          </xsl:with-param>
-        </xsl:call-template>
-    </xsl:if>
+    <xsl:comment><xsl:value-of select="name()"/></xsl:comment>
+    <xsl:value-of select="text()"/>
+    <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
   </xsl:template>
   
 

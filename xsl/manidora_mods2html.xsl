@@ -22,39 +22,39 @@
   
   <xsl:template match="mods:mods">
     <table class="manidora-metadata">
-        <tr>
-            <td class="label">Title</td>
-            <td><xsl:value-of select="mods:titleInfo/mods:title"/></td>
-        </tr>
-        <xsl:if test="string-length($collections) &gt; 0">
-          <tr>
-            <td class="label">Collections</td>
-            <td><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></td>
-          </tr>
-        </xsl:if>
-        <!--<xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>-->
-        <xsl:apply-templates select="mods:abstract" />
-        
-        <xsl:apply-templates select="mods:typeOfResource" />
-        <xsl:apply-templates select="mods:subject/mods:temporal" />
-        <xsl:apply-templates select="mods:subject" />
-        <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic" />
-        <!--<xsl:apply-templates select="mods:name" />--><!-- 2013-09-04 (whikloj) : Trying to group Author/Creators/etc. -->
-        <xsl:call-template name="groupNames" />
-        <xsl:apply-templates select="mods:language" />
-        <xsl:apply-templates select="mods:note[not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID')]" />
-        <xsl:apply-templates select="mods:location/mods:physicalLocation" />
-        <xsl:apply-templates select="mods:location/mods:shelfLocator" />
-        <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
-        <xsl:apply-templates select="mods:identifier[@type='local']" />
-        <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
-        <xsl:apply-templates select="mods:identifier[@type='hdl']" />
-        <xsl:apply-templates select="mods:originInfo"/>
-        <xsl:apply-templates select="mods:accessCondition" /><!-- Copyright -->
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Title</xsl:with-param>
+        <xsl:with-param name="content"><xsl:value-of select="mods:titleInfo/mods:title"/></xsl:with-param>
+      </xsl:call-template>
+      <xsl:if test="string-length($collections) &gt; 0">
+        <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Collections</xsl:with-param>
+          <xsl:with-param name="content"><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></xsl:with-param>
+        </xsl:call-template>
+      </xsl:if>
+      <!--<xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>-->
+      <xsl:apply-templates select="mods:abstract" />
+      
+      <xsl:apply-templates select="mods:typeOfResource" />
+      <xsl:apply-templates select="mods:subject/mods:temporal" />
+      <xsl:apply-templates select="mods:subject" />
+      <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic" />
+      <!--<xsl:apply-templates select="mods:name" />--><!-- 2013-09-04 (whikloj) : Trying to group Author/Creators/etc. -->
+      <xsl:call-template name="groupNames" />
+      <xsl:apply-templates select="mods:language" />
+      <xsl:apply-templates select="mods:note[not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID')]" />
+      <xsl:apply-templates select="mods:location/mods:physicalLocation" />
+      <xsl:apply-templates select="mods:location/mods:shelfLocator" />
+      <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
+      <xsl:apply-templates select="mods:identifier[@type='local']" />
+      <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
+      <xsl:apply-templates select="mods:identifier[@type='hdl']" />
+      <xsl:apply-templates select="mods:originInfo"/>
+      <xsl:apply-templates select="mods:accessCondition" /><!-- Copyright -->
 
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail" />
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start" />
-        <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date" />
+      <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail" />
+      <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start" />
+      <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date" />
     </table>
   </xsl:template>
   
