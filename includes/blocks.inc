@@ -373,7 +373,6 @@ function __manidora_whats_new_content(){
     if ($results){
       $solr_results = json_decode($results->getRawResponse(), TRUE);
       $view = '';
-      $tstamp = new DateTime();
       
       foreach ($solr_results['response']['docs'] as $doc){
         if ($count >= 4) {
@@ -384,7 +383,7 @@ function __manidora_whats_new_content(){
           // hidden so we skip it
           continue;
         }
-        $tstamp->createFromFormat('Y-m-dTH:i:s.uZ',$doc['timestamp']);
+        $tstamp = DateTime::createFromFormat('Y-m-d\TH:i:s.uZ',$doc['timestamp']);
         $title = $doc['dc.title'][0];
         $stitle = (strlen($title) > 30 ? substr($title,0,strpos($title,' ',27)).'...' : $title);
         $view .= '<div class="manidora-whats-new-row"><div class="manidora-whats-new-thumb">';
@@ -399,7 +398,9 @@ function __manidora_whats_new_content(){
           $view .= '<img src="/sites/all/modules/islandora/images/folder.png" alt="' . t($title) . '" title="' . t($title) . '" class="featured-thumb" /></a></div>';
         }
         $view .= '<div class="manidora-whats-new-info"><a title="' . t($title) . '" href="' . url('islandora/object/' . $doc['PID']) . '">' . t($stitle) . '</a>';
-        $view .= '<br><span class="manidora-whats-new-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
+        if ($tstamp !== FALSE) {
+          $view .= '<br><span class="manidora-whats-new-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
+        }
         $view .= '</div>';
         $count += 1;
       }
