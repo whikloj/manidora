@@ -1,5 +1,6 @@
 /**
- * This is needed to track downloaded file types
+ * @file
+ * Javascript function for tracking Google Analytic clicks.
  */
 var manidora_trackDownloadLink = function(ID) {
   if (typeof(ga) != undefined) {

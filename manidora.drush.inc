@@ -2,7 +2,11 @@
 
 /**
  * @file
- * Book batch ingest script for University of Manitoba.
+ * Custom drush commands for the University of Manitoba.
+ *
+ * Includes the book batch ingest script, generate high quality
+ * jpegs, fix HOCR datastreams, and regenerate compound item
+ * sequence numbers.
  */
 
 /**
@@ -62,7 +66,7 @@ function manidora_drush_command() {
       'islandora_compound_object',
       'islandora',
       'manidora',
-    )
+    ),
   );
   $items['manidora_regenerate_sequence_nums'] = array(
     'aliases' => array('uom_compound_fix'),
@@ -307,20 +311,23 @@ function drush_manidora_aggregate_compound_ocr() {
   drush_backend_batch_process();
 }
 
-function manidora_regenerate_sequence_batch_setup(){
+/**
+ * Start the process to regenerate compound item sequence numbers.
+ */
+function manidora_regenerate_sequence_batch_setup() {
   $pid = drush_get_option('pid', FALSE);
-
 
   drupal_static_reset('islandora_get_tuque_connection');
   $connection = islandora_get_tuque_connection();
-  if ($pid !== FALSE){
+  if ($pid !== FALSE) {
     $results[]['object']['value'] = $pid;
-  } else {
+  }
+  else {
     $query = 'select $object $label from <#ri> where (
-      $object <fedora-model:label> $label and
-      $object <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:compoundCModel> and
-      $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>)
-      order by $label';
+    $object <fedora-model:label> $label and
+    $object <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:compoundCModel> and
+    $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>)
+    order by $label';
     $results = $connection->repository->ri->itqlQuery($query, 'unlimited');
   }
   $operations = array();
@@ -332,13 +339,13 @@ function manidora_regenerate_sequence_batch_setup(){
   }
 
   $batch = array(
-      'operations' => $operations,
-      'finished' => 'manidora_regenerate_sequence_finished',
-      'title' => t('Recreating Sequence Numbers for Compound Images'),
-      'init_message' => t('Batch is starting.'),
-      'progress_message' => t('Processed @current out of @total.'),
-      'error_message' => t('Batch has encountered an error.'),
-      'file' => drupal_get_path('module', 'manidora') . '/manidora.drush.inc',
+    'operations' => $operations,
+    'finished' => 'manidora_regenerate_sequence_finished',
+    'title' => t('Recreating Sequence Numbers for Compound Images'),
+    'init_message' => t('Batch is starting.'),
+    'progress_message' => t('Processed @current out of @total.'),
+    'error_message' => t('Batch has encountered an error.'),
+    'file' => drupal_get_path('module', 'manidora') . '/manidora.drush.inc',
   );
   batch_set($batch);
   $batch =& batch_get();
@@ -346,18 +353,22 @@ function manidora_regenerate_sequence_batch_setup(){
   drush_backend_batch_process();
 }
 
-function manidora_regenerate_sequence_set_rels_ext($compound_object, &$context){
+/**
+ * Process the compound object and set the sequence number if neccessary.
+ */
+function manidora_regenerate_sequence_set_rels_ext($compound_object, &$context) {
   $context['message'] = 'Setting sequence numbers from MODS record for object: ' . $compound_object;
   $parts = islandora_compound_object_get_parts($compound_object);
-  if (is_array($parts) && count($parts) > 0){
+  if (is_array($parts) && count($parts) > 0) {
     foreach ($parts as $part) {
       $good = TRUE;
       $escaped_pid = str_replace(':', '_', $compound_object);
       $child_object = islandora_object_load($part);
-      $sequence = $child_object->relationships->get(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid");
-      if (is_array($sequence) && count($sequence) == 1){
-        drush_log("Child ($part) of $compound_object already has a sequence number, skipping","ok");
-      } else {
+      $sequence = $child_object->relationships->get(ISLANDORA_RELS_EXT_URI, "isSequenceNumberOf$escaped_pid");
+      if (is_array($sequence) && count($sequence) == 1) {
+        drush_log("Child ($part) of $compound_object already has a sequence number, skipping", "ok");
+      }
+      else {
         $mods_text = $child_object->repository->api->a->getDatastreamDissemination($child_object->id, 'MODS');
         if ($mods_text) {
           $mods_xml = new SimpleXMLElement($mods_text);
@@ -365,35 +376,41 @@ function manidora_regenerate_sequence_set_rels_ext($compound_object, &$context){
           // Title info.
           $mods_id_res = $mods_xml->xpath('/mods:mods/mods:identifier[@type="local"]');
           $mods_id = (string) reset($mods_id_res);
-          if (!empty($mods_id)){
-            $local_id = intval(substr($mods_id,strrpos($mods_id,'_')+1));
-            if ($local_id == 0){
-              drush_log("Object ($part) has sequence invalid sequence 0 parsed from ($mods_id), not setting",'error');
-            } else {
-              drush_log("Setting sequence number for ($part) of ($compound_object) to ($local_id)","ok");
+          if (!empty($mods_id)) {
+            $local_id = intval(substr($mods_id, strrpos($mods_id, '_') + 1));
+            if ($local_id == 0) {
+              drush_log("Object ($part) has sequence invalid sequence 0 parsed from ($mods_id), not setting", 'error');
+            }
+            else {
+              drush_log("Setting sequence number for ($part) of ($compound_object) to ($local_id)", "ok");
               $child_object->relationships->add(ISLANDORA_RELS_EXT_URI, "isSequenceNumberOf$escaped_pid", $local_id, TRUE);
             }
-          } else {
-            // Missed one, need to report to check manually
+          }
+          else {
+            // Missed one, need to report to check manually.
             $good = FALSE;
           }
-        } else {
-          // Missed one, need to report to check manually
+        }
+        else {
+          // Missed one, need to report to check manually.
           $good = FALSE;
         }
       }
-      if (!$good){
-        drush_log("Part ($part) of ($compound_object) has no local identifier","warning");
+      if (!$good) {
+        drush_log("Part ($part) of ($compound_object) has no local identifier", "warning");
       }
     }
-  } else {
-    drush_log("Object ($compound_object) is not a compound or has 0 children",'warning');
+  }
+  else {
+    drush_log("Object ($compound_object) is not a compound or has 0 children", 'warning');
   }
 
 }
 
+/**
+ * Completed sequence number regeneration.
+ */
 function manidora_regenerate_sequence_finished($success, $results, $operations) {
   // Print finished message to user.
-  drush_log('Finished updating compound object sequence numbers.','ok');
+  drush_log('Finished updating compound object sequence numbers.', 'ok');
 }
-

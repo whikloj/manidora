@@ -51,7 +51,7 @@ function manidora_add_dental_taxonomy() {
   }
   $vocabulary = taxonomy_vocabulary_machine_name_load('manidora_general_dental_tags');
   // Each tag install.
-  $tags = array (
+  $tags = array(
     'acrylic',
     'acrylic retention',
     'anatomy',
