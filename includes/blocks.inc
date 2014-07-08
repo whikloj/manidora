@@ -12,9 +12,11 @@
 function manidora_block_info() {
   $blocks['manidora_homepage_tabs'] = array(
     'info' => t('Manidora homepage tabs'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
   );
   $blocks['manidora_homepage_thumbnails'] = array(
     'info' => t('Manidora homepage thumbnails'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
   );
   $blocks['manidora_whats_new'] = array(
     'info' => t("Manidora what's new"),
@@ -338,7 +340,7 @@ function __manidora_homepage_thumbnail_content() {
     // Search for all the possible PIDs.
     $solr_query = '+PID:("' . implode('" "', $t_array) . '")';
     // Get the PID and dc.title.
-    $solr_params = array('fl' => 'PID,dc.title');
+    $solr_params = array('fl' => 'PID,title_sort_ms');
     $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
     // $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
     $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
@@ -349,7 +351,7 @@ function __manidora_homepage_thumbnail_content() {
       $solr_results = json_decode($results->getRawResponse(), TRUE);
       $data = array();
       foreach ($solr_results["response"]["docs"] as $key => $doc) {
-        $data[$doc['PID']] = $doc['dc.title'][0];
+        $data[$doc['PID']] = (array_key_exists('title_sort_ms', $doc) ? $doc['title_sort_ms'][0] : "");
       }
     }
     if (count($t_array) >= $num_pics) {
