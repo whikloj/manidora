@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" version="1.0">
+<xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" xmlns:lc_code="info:lc/xmlns/codelist-v1" version="1.0">
   <xsl:include href="string-utilities.xsl" />
  
   <xsl:param name="islandoraUrl"/>
@@ -88,18 +88,19 @@
   
   <xsl:template mode="search_link2" match="text()">
     <xsl:param name="field"/>
-    <xsl:variable name="textValue" select="normalize-space(.)"/>
+    <xsl:param name="searchValue" select="normalize-space(.)"/>
+    <xsl:param name="displayValue" select="."/>
     <a>
         <xsl:attribute name="target">_parent</xsl:attribute>
         <xsl:attribute name="href">
-            <xsl:value-of select="$islandoraUrl"/>
+          <xsl:value-of select="$islandoraUrl"/>
           <xsl:value-of select="$searchUrl"/>
           <xsl:value-of select="$field"/>
           <xsl:text>%3A%22</xsl:text>
-          <xsl:value-of select="$textValue"/>
+          <xsl:value-of select="$searchValue"/>
           <xsl:text>%22</xsl:text>
         </xsl:attribute>
-        <xsl:value-of select="."/>
+        <xsl:value-of select="$displayValue"/>
     </a>
   </xsl:template>
   
@@ -405,9 +406,20 @@
       <xsl:with-param name="label">Languages</xsl:with-param>
       <xsl:with-param name="content">
         <xsl:for-each select="mods:languageTerm">
-          <xsl:apply-templates mode="search_link2" select="text()">
-            <xsl:with-param name="field" select="$language_field"/>
-          </xsl:apply-templates>
+          <xsl:choose>
+            <xsl:when test="@type='code' and @authority='iso639-2b'">
+              <xsl:variable name="currCode" select="."/>
+              <xsl:apply-templates mode="search_link2" select="text()">
+                <xsl:with-param name="field" select="$language_field"/>
+                <xsl:with-param name="displayValue" select="document('../xml/languages.xml')//lc_code:language[lc_code:code = $currCode]/lc_code:name[@authorized='yes']"/>
+              </xsl:apply-templates>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:apply-templates mode="search_link2" select="text()">
+                <xsl:with-param name="field" select="$language_field"/>
+              </xsl:apply-templates>
+            </xsl:otherwise>
+          </xsl:choose>
           <xsl:if test="position() &gt; last()">, </xsl:if>
         </xsl:for-each>
       </xsl:with-param>
