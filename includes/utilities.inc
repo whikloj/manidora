@@ -28,7 +28,7 @@
  */
 function manidora_xml_patcher($patch, $original_xml) {
 
-  $mods = DOCDocument::loadXML($original_xml);
+  $mods = DOMDocument::loadXML($original_xml);
   if (!$mods) {
     watchdog('Manidora', 'manidora_mods_patcher failed to parse XML');
     return FALSE;
@@ -42,46 +42,46 @@ function manidora_xml_patcher($patch, $original_xml) {
     }
   }
 
-  foreach ($patch['changes'] as $type => $change) {
-    switch ($type) {
-      case 'replace':
-        list($remove, $add) = each($change);
-        $hits = $xpath->query($remove);
-        foreach ($hits as $hit) {
-          $parent = $hit->parentNode;
-          $replace = dom_import_simplexml(simplexml_load_string($add));
-          $replace = $mods->importNode($replace);
-          $parent->replaceChild($hit, $replace);
-        }
-        break;
+  foreach ($patch['changes'] as $p) {
+    
+    foreach ($p as $type => $change) {
+      switch ($type) {
+        case 'replace':
+          list($remove, $add) = $change;
+          $hits = $xpath->query($remove);
+          foreach ($hits as $hit) {
+            $parent = $hit->parentNode;
+            $replace = dom_import_simplexml(simplexml_load_string($add));
+            $replace = $mods->importNode($replace, TRUE);
+            $parent->replaceChild($hit, $replace);
+          }
+          break;
 
-      case 'add':
-        list($parent, $add) = each($change);
-        $hits = $xpath->query($remove);
-        foreach ($hits as $hit) {
-          $new_node = dom_import_simplexml(simplexml_load_string($add));
-          $new_node = $mods->importNode($new_node);
-          $hit->appendChild($new_node);
-        }
-        break;
+        case 'add':
+          list($parent, $add) = $change;
+          $hits = $xpath->query($parent);
+          foreach ($hits as $hit) {
+            $new_node = dom_import_simplexml(simplexml_load_string($add));
+            $new_node = $mods->importNode($new_node, TRUE);
+            $hit->appendChild($new_node);
+          }
+          break;
 
-      case 'remove':
-        $hits = $xpath->query($remove);
-        $dom_to_remove = array();
-        foreach ($hits as $hit) {
-          $dom_to_remove[] = $hit;
-        }
-        foreach ($dom_to_remove as $hit) {
-          $hit->parentNode->removeChild($hit);
-        }
-        break;
+        case 'remove':
+          $hits = $xpath->query($change);
+          $dom_to_remove = array();
+          foreach ($hits as $hit) {
+            $dom_to_remove[] = $hit;
+          }
+          foreach ($dom_to_remove as $hit) {
+            $hit->parentNode->removeChild($hit);
+          }
+          break;
         
+      }
     }
   }
 
-  $new_mods = $mod->saveXML();
-  if ($object['MODS']->content != $new_mods) {
-    $object['MODS']->setContentFromString($new_mods);
-  }
+  return $mods->saveXML();
 
 }
