@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:pb="http://www.pbcore.org/PBCore/PBCoreNamespace.html" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:php="http://php.net/xsl" version="1.0">
+<xsl:stylesheet xmlns:pb="http://www.pbcore.org/PBCore/PBCoreNamespace.html" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" xmlns:lc_code="info:lc/xmlns/codelist-v1" version="1.0">
   <xsl:param name="islandoraUrl"/>
   <xsl:param name="collections"/>
   
@@ -152,7 +152,7 @@
         </xsl:if>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:apply-templates mode="basic"/>
+          <xsl:apply-templates select="." mode="basic"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:for-each>
@@ -180,6 +180,10 @@
   
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="text_out">
     <!-- Output nameParts as text -->
+    <xsl:apply-templates select="pb:creator|pb:contributor" mode="text_out"/>
+  </xsl:template>
+  
+  <xsl:template match="node()" mode="text_out" priority="-1">
     <xsl:value-of select="text()" />
   </xsl:template>
   
@@ -537,7 +541,7 @@
       <xsl:when test="normalize-space(text()) = 'wam'">(Writer of accompanying material)</xsl:when>
       <xsl:when test="string-length(normalize-space(text())) &gt; 0">
         <!-- not a code, so we assume full text -->
-        <xsl:call-template name="toProperCase"><xsl:with-param name="text" select="text()" /></xsl:call-template>
+        <xsl:text>(</xsl:text><xsl:call-template name="toProperCase"><xsl:with-param name="text" select="text()" /></xsl:call-template><xsl:text>)</xsl:text>
       </xsl:when>
     </xsl:choose>
   </xsl:template>
