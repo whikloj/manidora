@@ -243,14 +243,27 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Languages</xsl:with-param>
       <xsl:with-param name="content">
-        <xsl:value-of select="text()"/>
+        <xsl:call-template name="translateLang">
+          <xsl:with-param name="langCode" select="text()"/>
+        </xsl:call-template>
       </xsl:with-param>
     </xsl:call-template>
+  </xsl:template>
+  
+  <xsl:template name="translateLang">
+    <xsl:param name="langString" />
+    <xsl:variable name="alpha">abcdefghijklmnopqrstuvwxyz</xsl:variable>
+    <xsl:if test="contains($langString,';')">
+      <xsl:call-template name="translateLang">
+        <xsl:with-param name="langString" select="substring-after($langString,';')" />
+      </xsl:call-template>
+    </xsl:if>
+    <xsl:value-of select="document('../xml/languages.xml')//lc_code:language[lc_code:code = translate($langString,concat($alpha,';'),$alpha)]/lc_code:name[@authorized='yes']"/>
   </xsl:template>
 
   <xsl:template match="pb:instantiationPhysical">
     <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Format</xsl:with-param>
+      <xsl:with-param name="label">Physical Format</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
