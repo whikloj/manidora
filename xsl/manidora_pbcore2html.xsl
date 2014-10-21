@@ -42,23 +42,10 @@
           <xsl:with-param name="content"><xsl:apply-templates select="pb:pbcoreSubject" /></xsl:with-param>
         </xsl:call-template>
       </xsl:if>
-      <xsl:apply-templates select="pb:pbcoreCoverage[coverageType='Spatial']" />
+      <xsl:apply-templates select="pb:pbcoreCoverage[pb:coverageType='Spatial']" />
       <xsl:call-template name="groupNames" />
       <xsl:apply-templates select="pb:pbcoreInstantiation" />
-      
-      <xsl:apply-templates select="mods:note[not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID')]" />
-      <xsl:apply-templates select="mods:location/mods:physicalLocation" />
-      <xsl:apply-templates select="mods:location/mods:shelfLocator" />
-      <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
-      <xsl:apply-templates select="mods:identifier[@type='local']" />
-      <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
-      <xsl:apply-templates select="mods:identifier[@type='hdl']" />
-      <xsl:apply-templates select="mods:originInfo"/>
-      <xsl:apply-templates select="mods:accessCondition" /><!-- Copyright -->
 
-      <xsl:apply-templates select="mods:relatedItem/mods:part/mods:detail" />
-      <xsl:apply-templates select="mods:relatedItem/mods:part/mods:extent/mods:start" />
-      <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date" />
     </table>
   </xsl:template>
   
@@ -165,7 +152,7 @@
         </xsl:if>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:apply-templates select="." mode="basic"/>
+          <xsl:apply-templates mode="basic"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:for-each>
@@ -178,14 +165,7 @@
         <xsl:with-param name="content">
           <xsl:apply-templates select="." mode="text_out" />
           <xsl:text> </xsl:text>
-          <xsl:choose>
-            <xsl:when test="name() = 'pbcoreCreator'">
-              <xsl:apply-templates select="descendant-or-self::pb:creatorRole"/>
-            </xsl:when>
-            <xsl:when test="name() = 'pbcoreContributor'">
-              <xsl:apply-templates select="descendant-or-self::pb:contributorRole"/>
-            </xsl:when>
-          </xsl:choose>
+          <xsl:apply-templates select="descendant-or-self::pb:creatorRole|descendant-or-self::pb:contributorRole"/>
         </xsl:with-param>
       </xsl:call-template>
     </xsl:if>
@@ -194,14 +174,8 @@
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="grouping">
     <xsl:apply-templates select="." mode="text_out" />
     <xsl:text> </xsl:text>
-    <xsl:choose>
-      <xsl:when test="name() = 'pbcoreCreator'">
-        <xsl:apply-templates select="descendant-or-self::pb:creatorRole"/>
-      </xsl:when>
-      <xsl:when test="name() = 'pbcoreContributor'">
-        <xsl:apply-templates select="descendant-or-self::pb:contributorRole"/>
-      </xsl:when>
-    </xsl:choose><br />
+    <xsl:apply-templates select="descendant-or-self::pb:creatorRole|descendant-or-self::pb:contributorRole"/>
+    <br />
   </xsl:template>
   
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="text_out">
@@ -211,20 +185,7 @@
   
   
   <!-- BASIC template output -->
-  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type='volume']">
-      <xsl:call-template name="basic_output">
-          <xsl:with-param name="label">Volume</xsl:with-param>
-          <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
-      </xsl:call-template>
-  </xsl:template>
-  
-  <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type='issue']">
-    <xsl:call-template name="basic_output">
-        <xsl:with-param name="label">Issue</xsl:with-param>
-        <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
-    </xsl:call-template>
-  </xsl:template>
-      
+
   <xsl:template match="pb:pbcoreDescription">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label"><xsl:value-of select="@descriptionType" /></xsl:with-param>
@@ -232,50 +193,7 @@
     </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:relatedItem/mods:part/mods:extent/mods:start">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Page Start</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
-    </xsl:call-template>
-  </xsl:template>
 
-  <xsl:template match="mods:relatedItem/mods:location/mods:url">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Source</xsl:with-param>
-      <xsl:with-param name="content">
-        <a><xsl:attribute name="href"><xsl:value-of select="text()"/></xsl:attribute>
-        <xsl:choose>
-          <xsl:when test="string-length(parent::node()/parent::node()/mods:titleInfo/mods:title) &gt; 0">
-            <xsl:value-of select="../../mods:titleInfo/mods:title" />
-          </xsl:when>
-          <xsl:otherwise>
-            <xsl:value-of select="text()"/>
-          </xsl:otherwise>
-        </xsl:choose>
-        </a>
-      </xsl:with-param>
-    </xsl:call-template>
-  </xsl:template>
-  
-  <xsl:template match="mods:relatedItem/mods:part/mods:date">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Date</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
-    </xsl:call-template>
-  </xsl:template>
-  
-  <xsl:template match="mods:originInfo">
-    <xsl:apply-templates select="mods:publisher" />
-    <xsl:apply-templates select="mods:issuedDate|mods:dateCreated" />
-    <xsl:if test="mods:place[string-length(text()|*) &gt; 0]">
-      <xsl:call-template name="basic_output">
-        <xsl:with-param name="label">Publication location</xsl:with-param>
-        <xsl:with-param name="content">
-          <xsl:apply-templates select="mods:place/mods:placeTerm[string-length(text()) &gt; 0]"><xsl:sort select="@authority" order="descending"/></xsl:apply-templates>
-        </xsl:with-param>
-      </xsl:call-template>
-    </xsl:if>
-  </xsl:template>
 
   <xsl:template match="pb:pbcorePublisher">
     <xsl:call-template name="basic_output">
@@ -291,12 +209,6 @@
     </xsl:call-template>
   </xsl:template>
   
-  <xsl:template match="mods:placeTerm">
-    <xsl:value-of select="text()"/>
-    <xsl:if test="last() &gt; 1 and position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
-    <xsl:text> </xsl:text>
-  </xsl:template>
-
   <xsl:template match="pb:instantiationIdentifier[@type='local']">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Local Identifier</xsl:with-param>
@@ -338,22 +250,24 @@
 
   <xsl:template match="pb:instantiationPhysical">
     <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Physical Location</xsl:with-param>
+      <xsl:with-param name="label">Format</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:shelfLocator">
+  <xsl:template match="pb:instantiationLocation">
     <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Shelf Location</xsl:with-param>
+      <xsl:with-param name="label">Location</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="mods:internetMediaType">
+  <xsl:template match="pb:instantiationRights">
     <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Original File MIME Type</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="label">Copyright (instantiation)</xsl:with-param>
+      <xsl:with-param name="content">
+        <xsl:apply-templates select="pb:rightsSummary|pb:rightsLink" />
+      </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
@@ -361,35 +275,30 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Copyright</xsl:with-param>
       <xsl:with-param name="content">
-        <xsl:choose>
-          <xsl:when test="string-length(normalize-space(rightsSummary)) &gt; 0">
-            <xsl:value-of select="text()"/>
-          </xsl:when>
-          <xsl:when test="string-length(rightsLink) &gt; 0">
-            <div class="manidora-commons-license">
-              <a rel="license" target="_new">
-                <xsl:attribute name="href"><xsl:value-of select="concat('http://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
-                <img alt="Creative Commons License" style="border-width:0;">
-                  <xsl:attribute name="src"><xsl:value-of select="concat('http://i.creativecommons.org/l/',normalize-space(text()),'88x31.png')"/></xsl:attribute>
-                </img>
-              </a>
-              This work is licensed under a <a rel="license" target="_new">
-                <xsl:attribute name="href"><xsl:value-of select="concat('http://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
-                Creative Commons License</a>
-            </div>
-          </xsl:when>
-        </xsl:choose>
+        <xsl:apply-templates select="pb:rightsSummary|pb:rightsLink" />
       </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
-  <!--<xsl:template match="mods:note[@type != &quot;cid&quot; or @type != &quot;objectID&quot; or @type != &quot;imageID&quot;]">-->
-  <xsl:template match="mods:note">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Note</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
-    </xsl:call-template>
+  <xsl:template match='pb:rightsSummary'>
+     <xsl:value-of select="text()"/>
   </xsl:template>
+  
+  <xsl:template match='pb:rightsLink'>
+    <div class="manidora-commons-license">
+      <a rel="license" target="_new">
+        <xsl:attribute name="href"><xsl:value-of select="concat('http://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
+        <img alt="Creative Commons License" style="border-width:0;">
+          <xsl:attribute name="src"><xsl:value-of select="concat('http://i.creativecommons.org/l/',normalize-space(text()),'88x31.png')"/></xsl:attribute>
+        </img>
+      </a>
+      This work is licensed under a <a rel="license" target="_new">
+        <xsl:attribute name="href"><xsl:value-of select="concat('http://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
+        Creative Commons License</a>
+    </div>
+  </xsl:template>
+  
+  <!--<xsl:template match="mods:note[@type != &quot;cid&quot; or @type != &quot;objectID&quot; or @type != &quot;imageID&quot;]">-->
 
   <xsl:template match="pb:creatorRole|pb:contributorRole">
     <xsl:choose>
