@@ -139,17 +139,25 @@
 
 
   <xsl:template name="groupNames">
-    <xsl:for-each select="//pb:pbcoreCreator">
+    <xsl:for-each select="//pb:pbcoreCreator|//pb:pbcoreContributor">
       <xsl:choose>
-        <xsl:when test="count(key('creatorKeys',descendant-or-self::pb:creatorRole[1])) &gt; 1">
-          <xsl:if test="not(./preceding-sibling::node()//pb:creatorRole = descendant-or-self::pb:creatorRole[1])">
+        <xsl:when test="count(key('creatorKeys',descendant-or-self::pb:creatorRole[1])) + count(key('contributorKeys', descendant-or-self::pb:contributorRole[1])) &gt; 1">
+          <xsl:if test="name() = 'pbcoreCreator' and not(./preceding-sibling::node()//pb:creatorRole = descendant-or-self::pb:creatorRole[1])">
             <xsl:call-template name="basic_output">
               <xsl:with-param name="label">Names</xsl:with-param>
               <xsl:with-param name="content">
-                <xsl:apply-templates select="key('nameKeys',descendant-or-self::pb:creatorRole[1])" mode="grouping"/>
+                <xsl:apply-templates select="key('creatorKeys',descendant-or-self::pb:creatorRole[1])" mode="grouping"/>
               </xsl:with-param>
             </xsl:call-template>
-        </xsl:if>
+          </xsl:if>
+          <xsl:if test="name() = 'pbcoreContributor' and not(./preceding-sibling::node()//pb:contributorRole = descendant-or-self::pb:contributorRole[1])">
+            <xsl:call-template name="basic_output">
+              <xsl:with-param name="label">Names</xsl:with-param>
+              <xsl:with-param name="content">
+                <xsl:apply-templates select="key('contributorKeys',descendant-or-self::pb:creatorRole[1])" mode="grouping"/>
+              </xsl:with-param>
+            </xsl:call-template>
+          </xsl:if>
         </xsl:when>
         <xsl:otherwise>
           <xsl:apply-templates select="." mode="basic"/>
@@ -181,6 +189,7 @@
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="text_out">
     <!-- Output nameParts as text -->
     <xsl:apply-templates select="pb:creator|pb:contributor" mode="text_out"/>
+    <xsl:if test="position() &gt; last()"><xsl:text>, </xsl:text></xsl:if>
   </xsl:template>
   
   <xsl:template match="node()" mode="text_out" priority="-1">
