@@ -240,12 +240,19 @@
   <xsl:template name="translateLang">
     <xsl:param name="langString" />
     <xsl:variable name="alpha">abcdefghijklmnopqrstuvwxyz</xsl:variable>
-    <xsl:if test="contains($langString,';')">
+    <xsl:choose>
+    <xsl:when test="contains($langString,';')">
+      <xsl:call-template name="translateLang">
+        <xsl:with-param name="langString" select="substring-before($langString,';')" />
+      </xsl:call-template><xsl:text>; </xsl:text>
       <xsl:call-template name="translateLang">
         <xsl:with-param name="langString" select="substring-after($langString,';')" />
       </xsl:call-template>
-    </xsl:if>
-    <xsl:value-of select="document('../xml/languages.xml')//lc_code:language[lc_code:code = translate($langString,concat($alpha,';'),$alpha)]/lc_code:name[@authorized='yes']"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="document('../xml/languages.xml')//lc_code:language[lc_code:code = translate($langString,concat($alpha,';'),$alpha)]/lc_code:name"/>
+    </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template match="pb:instantiationPhysical">
