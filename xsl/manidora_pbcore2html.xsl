@@ -35,17 +35,17 @@
       </xsl:if>
       <xsl:apply-templates select="pb:pbcoreDescription" />
         
-      <xsl:apply-templates select="pb:pbcoreCoverage[coverageType='Temporal']" />
+      <xsl:apply-templates select="pb:pbcoreCoverage[pb:coverageType='Temporal']" />
       <xsl:if test="count(pb:pbcoreSubject) &gt; 0">
         <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Subjects</xsl:with-param>
           <xsl:with-param name="content"><xsl:apply-templates select="pb:pbcoreSubject" /></xsl:with-param>
         </xsl:call-template>
       </xsl:if>
-      <xsl:apply-templates select="pb:pbcoreCoverage[pb:coverageType='Spatial']" />
-      <xsl:call-template name="groupNames" />
+      <xsl:call-template name="places" />
+      <xsl:call-template name="groupNames"/>
       <xsl:apply-templates select="pb:pbcoreInstantiation" />
-
+      <xsl:apply-templates select="pb:pbcoreRightsSummary" />
     </table>
   </xsl:template>
   
@@ -138,52 +138,20 @@
   </xsl:template>
 
 
-  <xsl:template name="groupNames">
-    <xsl:for-each select="//pb:pbcoreCreator|//pb:pbcoreContributor">
-      <xsl:choose>
-        <xsl:when test="count(key('creatorKeys',descendant-or-self::pb:creatorRole[1])) + count(key('contributorKeys', descendant-or-self::pb:contributorRole[1])) &gt; 1">
-          <xsl:if test="name() = 'pbcoreCreator' and not(./preceding-sibling::node()//pb:creatorRole = descendant-or-self::pb:creatorRole[1])">
-            <xsl:call-template name="basic_output">
-              <xsl:with-param name="label">Names</xsl:with-param>
-              <xsl:with-param name="content">
-                <xsl:apply-templates select="key('creatorKeys',descendant-or-self::pb:creatorRole[1])" mode="grouping"/>
-              </xsl:with-param>
-            </xsl:call-template>
-          </xsl:if>
-          <xsl:if test="name() = 'pbcoreContributor' and not(./preceding-sibling::node()//pb:contributorRole = descendant-or-self::pb:contributorRole[1])">
-            <xsl:call-template name="basic_output">
-              <xsl:with-param name="label">Names</xsl:with-param>
-              <xsl:with-param name="content">
-                <xsl:apply-templates select="key('contributorKeys',descendant-or-self::pb:creatorRole[1])" mode="grouping"/>
-              </xsl:with-param>
-            </xsl:call-template>
-          </xsl:if>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:apply-templates select="." mode="basic"/>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:for-each>
+    <xsl:template name="groupNames">
+     <xsl:call-template name="basic_output">
+       <xsl:with-param name="label">Name(s)</xsl:with-param>
+       <xsl:with-param name="content">
+         <xsl:apply-templates select="pb:pbcoreCreator[string-length(text() | *) &gt; 0]|pb:pbcoreContributor[string-length(text()|*) &gt; 0]" mode="grouping"/>
+       </xsl:with-param>
+     </xsl:call-template>
   </xsl:template>
           
-  <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="basic">
-    <xsl:if test="string-length(text()) &gt; 0">
-      <xsl:call-template name="basic_output">
-        <xsl:with-param name="label">Name</xsl:with-param>
-        <xsl:with-param name="content">
-          <xsl:apply-templates select="." mode="text_out" />
-          <xsl:text> </xsl:text>
-          <xsl:apply-templates select="descendant-or-self::pb:creatorRole|descendant-or-self::pb:contributorRole"/>
-        </xsl:with-param>
-      </xsl:call-template>
-    </xsl:if>
-  </xsl:template>
-  
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="grouping">
     <xsl:apply-templates select="." mode="text_out" />
     <xsl:text> </xsl:text>
     <xsl:apply-templates select="descendant-or-self::pb:creatorRole|descendant-or-self::pb:contributorRole"/>
-    <br />
+    <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
   </xsl:template>
   
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="text_out">
@@ -216,10 +184,12 @@
   </xsl:template>
   
   <xsl:template match="pb:instantiationDate">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Publication date</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
-    </xsl:call-template>
+    <xsl:if test="not(ancestor::pb:pbcoreDescriptionDocument/pb:pbcoreCoverage/pb:coverageType = 'Spatial')">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Date</xsl:with-param>
+        <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
   
   <xsl:template match="pb:instantiationIdentifier[@type='local']">
@@ -235,20 +205,24 @@
     <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
   </xsl:template>
   
-
-  <xsl:template match="pb:pbcoreCoverage[@coverageType='Spatial']">
+  <xsl:template name="places">
     <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Place</xsl:with-param>
+      <xsl:with-param name="label">Place(s)</xsl:with-param>
       <xsl:with-param name="content">
-        <xsl:value-of select="text()"/>
+        <xsl:apply-templates select="pb:pbcoreCoverage[pb:coverageType = 'Spatial']" />
       </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="pb:pbcoreCoverage[@coverageType='Temporal']">
+  <xsl:template match="pb:pbcoreCoverage[pb:coverageType='Spatial']">
+    <xsl:value-of select="pb:coverage" />
+    <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
+  </xsl:template>
+
+  <xsl:template match="pb:pbcoreCoverage[pb:coverageType='Temporal']">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Date</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="pb:coverage"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
@@ -257,7 +231,7 @@
       <xsl:with-param name="label">Languages</xsl:with-param>
       <xsl:with-param name="content">
         <xsl:call-template name="translateLang">
-          <xsl:with-param name="langCode" select="text()"/>
+          <xsl:with-param name="langString" select="text()"/>
         </xsl:call-template>
       </xsl:with-param>
     </xsl:call-template>
@@ -289,12 +263,14 @@
   </xsl:template>
 
   <xsl:template match="pb:instantiationRights">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Copyright (instantiation)</xsl:with-param>
-      <xsl:with-param name="content">
-        <xsl:apply-templates select="pb:rightsSummary|pb:rightsLink" />
-      </xsl:with-param>
-    </xsl:call-template>
+    <xsl:if test="not(ancestor::pb:pbcoreDescriptionDocument/pb:pbcoreRightsSummary)">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Copyright (instantiation)</xsl:with-param>
+        <xsl:with-param name="content">
+          <xsl:apply-templates select="pb:rightsSummary|pb:rightsLink" />
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="pb:pbcoreRightsSummary">
@@ -323,7 +299,85 @@
         Creative Commons License</a>
     </div>
   </xsl:template>
-  
+
+  <xsl:template match="pb:instantiationFileSize">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">File size</xsl:with-param>
+      <xsl:with-param name="content">
+        <xsl:choose>
+          <xsl:when test="string-length(@unitsOfMeasure) &gt; 0">
+            <xsl:value-of select="concat(text(), ' ', @unitsOfMeasure)" />
+          </xsl:when>
+          <xsl:otherwise> <!-- assume bytes -->
+            <xsl:call-template name="humanBytes"><xsl:with-param name="bytes" select="text()" /></xsl:call-template>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:template> 
+
+  <xsl:template match="pb:instantiationDuration">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Duration</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="pb:instantiationDataRate">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Data rate</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="pb:instantiationDigital">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Digital format</xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="pb:instantiationRelation">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Source</xsl:with-param>
+      <xsl:with-param name="content">
+        <xsl:choose>
+          <xsl:when test="string-length(pb:instantiationRelationIdentifier) &gt; 0">
+            <a><xsl:attribute name="href" select="pb:instantiationRelationIdentifier"/><xsl:value-of select="pb:instantiationRelationType"/></a>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="pb:instantiationRelationType"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template name="humanBytes">
+    <xsl:param name="bytes" />
+    <xsl:variable name="cleanBytes" select="translate($bytes,'0123456789,','0123456789')"/>
+    <xsl:variable name="terabyte" select="number(1099511627776)" />
+    <xsl:variable name="gigabyte" select="number(1073741824)" />
+    <xsl:variable name="megabyte" select="number(1048576)" />
+    <xsl:variable name="kilobyte" select="number(1024)" />
+    <xsl:choose>
+      <xsl:when test="$cleanBytes &gt;= $terabyte">
+        <xsl:value-of select="format-number($cleanBytes div $terabyte, '0.##')" /><xsl:text> TB</xsl:text>
+      </xsl:when>
+      <xsl:when test="$cleanBytes &gt;= $gigabyte">
+        <xsl:value-of select="format-number($cleanBytes div $gigabyte, '0.##')" /><xsl:text> GB</xsl:text>
+      </xsl:when>
+      <xsl:when test="$cleanBytes &gt;= $megabyte"> 
+        <xsl:value-of select="format-number($cleanBytes div $megabyte, '0.##')" /><xsl:text> MB</xsl:text>
+      </xsl:when>
+      <xsl:when test="$cleanBytes &gt;= $kilobyte"> 
+        <xsl:value-of select="format-number($cleanBytes div $kilobyte, '0.##')" /><xsl:text> KB</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="format-number($cleanBytes, '0.##')" /><xsl:text> byte(s)</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
   <!--<xsl:template match="mods:note[@type != &quot;cid&quot; or @type != &quot;objectID&quot; or @type != &quot;imageID&quot;]">-->
 
   <xsl:template match="pb:creatorRole|pb:contributorRole">
