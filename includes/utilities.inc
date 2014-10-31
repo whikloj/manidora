@@ -28,7 +28,8 @@
  */
 function manidora_xml_patcher($patch, $original_xml) {
 
-  $mods = DOMDocument::loadXML($original_xml);
+  $mods = new DOMDocument();
+  $mods->loadXML($original_xml);
   if (!$mods) {
     watchdog('Manidora', 'manidora_mods_patcher failed to parse XML');
     return FALSE;
