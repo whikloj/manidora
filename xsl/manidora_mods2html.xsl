@@ -708,7 +708,7 @@
       <xsl:when test="normalize-space(text()) = 'wam'">(Writer of accompanying material)</xsl:when>
       <xsl:when test="string-length(normalize-space(text())) &gt; 0">
         <!-- not a code, so we assume full text -->
-        <xsl:call-template name="toProperCase"><xsl:with-param name="text" select="text()" /></xsl:call-template>
+        <xsl:text>(</xsl:text><xsl:call-template name="toProperCase"><xsl:with-param name="text" select="text()" /></xsl:call-template><xsl:text>)</xsl:text>
       </xsl:when>
     </xsl:choose>
   </xsl:template>
