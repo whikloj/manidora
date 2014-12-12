@@ -4,6 +4,7 @@
  
   <xsl:param name="islandoraUrl"/>
   <xsl:param name="collections"/>
+  <xsl:param name="language" select="'eng'"/>
  
   <xsl:param name="searchUrl">/islandora/search/</xsl:param>
 
@@ -32,11 +33,28 @@
           <xsl:with-param name="content"><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></xsl:with-param>
         </xsl:call-template>
       </xsl:if>
-      <!--<xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>-->
-      <xsl:apply-templates select="mods:abstract" />
+      <xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>
+      <!--<xsl:choose>
+        <xsl:when test="mods:abstract@lang = $language and count(mods:abstract) &gt; 1">
+          <xsl:apply-templates select="mods:abstract[@lang = $language]" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="mods:abstract" />
+        </xsl:otherwise>
+      </xsl:choose>-->
       
       <xsl:apply-templates select="mods:typeOfResource" />
-      <xsl:apply-templates select="mods:subject/mods:temporal" />
+      <xsl:choose>
+        <xsl:when test="count(mods:subject/mods:temporal[string-length(text()|*) &gt; 0]) &gt; 1">
+          <xsl:call-template name="groupAll">
+            <xsl:with-param name="label">Date</xsl:with-param>
+            <xsl:with-param name="nodes" select="mods:subject/mods:temporal"/>
+          </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="mods:subject/mods:temporal" />
+        </xsl:otherwise>
+      </xsl:choose>
       <xsl:apply-templates select="mods:subject" />
       <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic" />
       <!--<xsl:apply-templates select="mods:name" />--><!-- 2013-09-04 (whikloj) : Trying to group Author/Creators/etc. -->
@@ -360,13 +378,13 @@
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Place</xsl:with-param>
         <xsl:with-param name="content">
-          <xsl:if test="mods:country">
+          <xsl:if test="mods:country and string-length(mods:country) &gt; 0">
             <xsl:value-of select="normalize-space(mods:country)"/>
-            <xsl:if test="mods:province or mods:city">, </xsl:if>
+            <xsl:if test="(mods:province and string-length(mods:province) &gt; 0) or (mods:city and string-length(mods:city) &gt; 0)">, </xsl:if>
           </xsl:if>
-          <xsl:if test="mods:province">
+          <xsl:if test="mods:province and string-length(mods:province) &gt; 0">
             <xsl:value-of select="normalize-space(mods:province)"/>
-            <xsl:if test="mods:city">, </xsl:if>
+            <xsl:if test="mods:city and string-length(mods:city) &gt; 0">, </xsl:if>
           </xsl:if>
           <xsl:value-of select="normalize-space(mods:city)"></xsl:value-of>
         </xsl:with-param>
@@ -481,6 +499,21 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Note</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template name="groupAll">
+    <xsl:param name="label" />
+    <xsl:param name="nodes" />
+
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label" select="$label"/>
+      <xsl:with-param name="content">
+        <xsl:for-each select="$nodes">
+          <xsl:value-of select="."/>
+          <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
+        </xsl:for-each>
+      </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
