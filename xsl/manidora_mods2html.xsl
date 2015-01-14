@@ -33,15 +33,9 @@
           <xsl:with-param name="content"><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></xsl:with-param>
         </xsl:call-template>
       </xsl:if>
+      <xsl:apply-templates select="mods:abstract" />
       <xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>
-      <!--<xsl:choose>
-        <xsl:when test="mods:abstract@lang = $language and count(mods:abstract) &gt; 1">
-          <xsl:apply-templates select="mods:abstract[@lang = $language]" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:apply-templates select="mods:abstract" />
-        </xsl:otherwise>
-      </xsl:choose>-->
+      
       
       <xsl:apply-templates select="mods:typeOfResource" />
       <xsl:choose>
@@ -204,7 +198,7 @@
   
   <xsl:template match="mods:relatedItem[@type = 'host' and mods:titleInfo/mods:title]">
       <xsl:call-template name="basic_output">
-        <xsl:with-param name="label">Collection</xsl:with-param>
+        <xsl:with-param name="label">Related Items</xsl:with-param>
         <xsl:with-param name="content"><a>
               <xsl:attribute name="href">
                   <xsl:choose>
