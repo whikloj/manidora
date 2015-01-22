@@ -1830,3 +1830,17 @@ function manidora_islandora_solr_primary_display() {
     ),
   );
 }
+
+/**
+ * Implements function hook_cmodel_pid_dsid_islandora_datastream_ingested().
+ *
+ * We want our JPG derivatives to have the label of the filename,
+ * so this changes it from the default 'Medium Sized JPEG'.
+ */
+function manidora_sp_large_image_cmodel_JPG_islandora_datastream_ingested(AbstractObject $object, AbstractDatastream $datastream) {
+  if (isset($object['OBJ']) && isset($object['JPG'])) {
+    $label = $object['OBJ']->label;
+    $bare_label = substr($label, 0, strrpos($label, '.') - 1);
+    $object['JPG']->label = $bare_label '.jpg';
+  }
+}
