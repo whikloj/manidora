@@ -1242,7 +1242,6 @@ function manidora_islandora_view_object_alter(AbstractObject $object) {
 function manidora_process_islandora_object_print(array &$variables) {
   $object = $variables['object'];
   if (in_array('islandora:newspaperPageCModel', $object->models)) {
-    drupal_add_css(drupal_get_path('module', 'manidora') . '/css/manidora.print.css');
     manidora_set_title($object);
     $clip = isset($variables['clip']) ? $variables['clip'] : NULL;
     $variables['content']['buttons']['1'] = array(
@@ -1257,10 +1256,7 @@ function manidora_process_islandora_object_print(array &$variables) {
       '#weight' => -5,
     );
   }
-  elseif (in_array('islandora:sp_large_image_cmodel', $object->models)) {
-    drupal_add_css(drupal_get_path('module', 'manidora') . '/css/manidora.print.css');
-    $variables['content']['metadata'] = manidora_retrieve_metadata_form($object);
-  }
+  $variables['content']['metadata'] = manidora_retrieve_metadata_form($object);
 }
 
 /**
@@ -1886,7 +1882,26 @@ function manidora_islandora_sp_large_image_cmodel_JPG_islandora_datastream_inges
  * Implements hook_islandora_view_print_object().
  */
 function manidora_islandora_view_print_object($object) {
-  $content = array();
-  
-  $content[] = manidora_retrieve_metadata_form($object);
+  return array('manidora' => manidora_retrieve_metadata_form($object));
+}
+
+function manidora_islandora_metadata_display_info() {
+  return array(
+    'manidora_metadata' => array(
+      'label' => t('UofM Metadata display'),
+      'description' => t('Specific MODS display used by the print_object path'),
+      'metadata callback' => 'manidora_metadata_markup_callback',
+      'description callback' => 'manidora_description_markup_callback',
+    ),
+  );
+}
+
+function manidora_metadata_markup_callback(AbstractObject $object, $print) {
+  if ($print) {
+    return drupal_render(manidora_retrieve_metadata_form($object));
+  }
+}
+
+function manidora_description_markup_callback(AbstractObject $object) {
+  return manidora_set_title($object);
 }
