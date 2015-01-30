@@ -118,3 +118,68 @@ function __makeXMLChange(&$mods, $xpath, $type, $change) {
     
   }
 }
+
+/**
+ * Constructs the text used in the header of the PDF or page.
+ *
+ * @param string $pid
+ *   A PID representing a Fedora object.
+ *
+ * @return string
+ *   Formatted string for output display.
+ */
+function manidora_retrieve_header_text($pid) {
+  $object = islandora_object_load($pid);
+  if (isset($object['MODS']) && strlen($mods = $object['MODS']->content) > 0) {
+    // $mods = $object['MODS']->content;
+    $xml = new SimpleXMLElement($mods);
+
+    $title = '';
+    $date = '';
+    $page = '';
+
+    if (in_array('islandora:newspaperPageCModel', $object->models) && isset($xml->relatedItem)) {
+      if (isset($xml->relatedItem->titleInfo)) {
+        if (isset($xml->relatedItem->titleInfo->title)) {
+          $title = (string) $xml->relatedItem->titleInfo->title;
+        }
+      }
+    }
+
+    if (empty($title) && isset($xml->titleInfo)) {
+      if (isset($xml->titleInfo->title)) {
+        $title = (string) $xml->titleInfo->title;
+        $title = preg_replace('/:(.*)/', '', $title);
+      }
+    }
+    if (empty($title)) {
+      $title = t('Unknown');
+    }
+
+    if (isset($xml->relatedItem)) {
+      if (isset($xml->relatedItem->part)) {
+        if (isset($xml->relatedItem->part->date)) {
+          $date = $xml->relatedItem->part->date;
+        }
+        if (isset($xml->relatedItem->part->extent)) {
+          if (isset($xml->relatedItem->part->extent->start)) {
+            $page = $xml->relatedItem->part->extent->start;
+          }
+        }
+      }
+    }
+
+    if (empty($date)) {
+      $date = t('Unknown');
+    }
+
+    if (empty($page)) {
+      $page = t('Unknown');
+    }
+    $text = $title . ', ' . $date . ' (Page ' . $page . ')';
+    return $text;
+  }
+  else {
+    return FALSE;
+  }
+}

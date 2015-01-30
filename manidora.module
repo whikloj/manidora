@@ -7,6 +7,8 @@
 
 // Includes functions for blocks.
 require_once dirname(__FILE__) . '/includes/blocks.inc';
+// Include metadata functions.
+require_once dirname(__FILE__) . '/includes/metadata.inc';
 
 /**
  * API call to insert a link to a printer friendly version of something.
@@ -269,6 +271,7 @@ function manidora_print_object_access($op, $object, $user = NULL) {
   $dont_print = array(
     'islandora:collectionCModel',
     'islandora:newspaperCModel',
+    'islandora:newspaperIssueCModel',
   );
   if (count(array_intersect($object->models, $dont_print)) > 0) {
     return FALSE;
@@ -364,6 +367,7 @@ function manidora_preprocess_islandora_newspaper_page_controls(&$variables) {
  *   The object from which to derive the title.
  */
 function manidora_get_title(AbstractObject $object) {
+  require dirname(__FILE__) . '/includes/utilities.inc';
   $models = $object->models;
   $retrieve_title = in_array('islandora:newspaperPageCModel', $models);
   return $retrieve_title ? manidora_retrieve_header_text($object->id) : $object->label;
@@ -902,9 +906,11 @@ function manidora_islandora_metadata_display_info() {
 }
 
 function manidora_metadata_markup_callback(AbstractObject $object, $print) {
+  $output = "";
   if ($print) {
-    return drupal_render(manidora_retrieve_metadata_form($object));
+    $output = drupal_render(manidora_retrieve_metadata_form($object));
   }
+  return $output;
 }
 
 function manidora_description_markup_callback(AbstractObject $object) {
