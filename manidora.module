@@ -5,10 +5,9 @@
  * Custom University of Manitoba hacks for Islandora.
  */
 
-// Includes functions for blocks.
-require_once dirname(__FILE__) . '/includes/blocks.inc';
-// Include metadata functions.
-require_once dirname(__FILE__) . '/includes/metadata.inc';
+$module_path = drupal_get_path('module', 'manidora');
+@require_once "$module_path/includes/utilities.inc";
+@require_once "$module_path/includes/blocks.inc";
 
 /**
  * API call to insert a link to a printer friendly version of something.
@@ -26,6 +25,7 @@ function manidora_print_insert_link($path) {
  * Strips out unneccessary content and adds MODS metadata below the object.
  */
 function manidora_preprocess_print(&$variables) {
+  module_load_include('inc', 'manidora', 'includes/metadata');
   // Get the DOM.
   $content_dom = new DOMDocument();
   $content_dom->loadHTML($variables["print"]["content"]);
@@ -367,7 +367,6 @@ function manidora_preprocess_islandora_newspaper_page_controls(&$variables) {
  *   The object from which to derive the title.
  */
 function manidora_get_title(AbstractObject $object) {
-  require dirname(__FILE__) . '/includes/utilities.inc';
   $models = $object->models;
   $retrieve_title = in_array('islandora:newspaperPageCModel', $models);
   return $retrieve_title ? manidora_retrieve_header_text($object->id) : $object->label;
@@ -391,6 +390,7 @@ function manidora_islandora_view_object_alter(AbstractObject $object) {
  * Implements hook_process_theme().
  */
 function manidora_process_islandora_object_print(array &$variables) {
+  module_load_include('inc', 'manidora', 'includes/metadata');
   $object = $variables['object'];
   if (in_array('islandora:newspaperPageCModel', $object->models)) {
     manidora_set_title($object);
@@ -491,7 +491,6 @@ function manidora_islandora_sp_large_image_cmodel_islandora_solr_object_result_a
  * Implements hook_preprocess_page().
  */
 function manidora_preprocess_page(&$variables) {
-  module_load_include('inc', 'islandora', 'includes/utilities');
   $arg1 = arg(1);
   $arg2 = arg(2);
 
@@ -891,6 +890,7 @@ function manidora_islandora_sp_large_image_cmodel_JPG_islandora_datastream_inges
  * Implements hook_islandora_view_print_object().
  */
 function manidora_islandora_view_print_object($object) {
+  module_load_include('inc', 'manidora', 'includes/metadata');
   return array('manidora' => manidora_retrieve_metadata_form($object));
 }
 
@@ -908,6 +908,7 @@ function manidora_islandora_metadata_display_info() {
 function manidora_metadata_markup_callback(AbstractObject $object, $print) {
   $output = "";
   if ($print) {
+    module_load_include('inc', 'manidora', 'includes/metadata');
     $output = drupal_render(manidora_retrieve_metadata_form($object));
   }
   return $output;
