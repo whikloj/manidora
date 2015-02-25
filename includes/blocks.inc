@@ -183,7 +183,7 @@ EOF;
     $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
 
     $solr->setCreateDocuments(0);
-    $results = $solr->search($solr_query, 0, 100, $solr_params);
+    $results = $solr->search($solr_query, 0, 1000, $solr_params);
 
     $tmpobjects = array();
     if ($results) {
