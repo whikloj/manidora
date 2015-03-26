@@ -147,8 +147,10 @@ function __manidora_homepage_tabs_content() {
     // "Faculty of Architecture" => "",
     // "Faculty of Dentistry" => "uofm:dentalDAMS",
     "Faculty of Medicine Archives" => "uofm:medArchives",
+    "Libraries: Architecture/Fine Arts Library" => "uofm:gardens",
     "Libraries: Archives & Special Collections" => "uofm:archives",
     "Libraries: Newspapers" => "uofm:libraries",
+    "UM Marketing Communications Office" => "uofm:marketing",
   );
 
   $output = <<<EOF
