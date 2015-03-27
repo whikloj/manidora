@@ -446,6 +446,9 @@ function __manidora_whats_new_content() {
   return $output;
 }
 
+/**
+ * Theme the manidora-whats-new list items.
+ */
 function manidora_preprocess_manidora_whats_new_item(&$variables) {
   global $user;
   module_load_include('inc', 'islandora_restricted', 'includes/utilities');
@@ -469,11 +472,12 @@ function manidora_preprocess_manidora_whats_new_item(&$variables) {
     }
     $stitle = (strlen($title) > 30 ? substr($title, 0, strpos(wordwrap($title, 25, '~'), '~')) . '...' : $title);
     $variables['title'] = $title;
-    $variables['image'] = t('<img src="@url" alt="@title" class="featured-thumb"/>', array(
+    $variables['image'] = t('<a href="@link"><img src="@url" alt="@title" class="featured-thumb"/></a>', array(
       '@url' => url($image_path),
       '@title' => $stitle,
+      '@link' => url('islandora/object/' . $item['PID']),
     ));
-    $variables['link'] = l($stitle, 'islandora/' . $item['PID']);
+    $variables['link'] = l($stitle, 'islandora/object/' . $item['PID']);
   }
   unset($variables['item']);
 }
