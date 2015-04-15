@@ -437,9 +437,17 @@ function __manidora_whats_new_content() {
     drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error');
   }
   $output = "<div class=\"manidora-whats-new-content\">";
+  $map = function($o) {
+    return array(
+      'pid' => $o['PID'],
+      'title' => $o['dc.title'][0],
+      'date' => $o['fgs_createdDate_s'],
+    );
+  };
   if ($solr_results) {
-    foreach ($solr_results['response']['docs'] as $doc) {
-      $output .= theme('manidora_whats_new_item', array('item' => $doc));
+    $results = array_map($map, $solr_results['reponse']['docs']);
+    foreach ($results as $result) {
+      $output .= theme('manidora_whats_new_item', array('item' => $result));
     }
   }
   $output .= "</div>";
@@ -455,17 +463,18 @@ function manidora_preprocess_manidora_whats_new_item(&$variables) {
 
   $new_item = array();
   $item = $variables['item'];
-  $object = islandora_object_load($item['PID']);
+  $object = islandora_object_load($item['pid']);
   if ($object) {
-    $tstamp = DateTime::createFromFormat('Y-m-d\TH:i:s.uZ', $item['timestamp']);
+    $variables['pid'] = $item['pid'];
+    $tstamp = DateTime::createFromFormat('Y-m-d\TH:i:s.uZ', $item['date']);
     $variables['timestamp'] = $tstamp;
-    $title = $item['dc.title'][0];
+    $title = $item['title'];
     if (!islandora_restricted_user_has_access($object, $user)) {
       $title .= " - Restricted";
       $image_path = drupal_get_path('module', 'islandora_restricted') . '/images/access_denied.png';
     }
     elseif (isset($object['TN'])) {
-      $image_path = 'islandora/object/' . $item['PID'] . '/datastream/TN/view';
+      $image_path = 'islandora/object/' . $item['pid'] . '/datastream/TN/view';
     }
     else {
       $image_path = drupal_get_path('module', 'islandora', '/images/folder.png');
@@ -475,9 +484,9 @@ function manidora_preprocess_manidora_whats_new_item(&$variables) {
     $variables['image'] = t('<a href="@link"><img src="@url" alt="@title" class="featured-thumb"/></a>', array(
       '@url' => url($image_path),
       '@title' => $stitle,
-      '@link' => url('islandora/object/' . $item['PID']),
+      '@link' => url('islandora/object/' . $item['pid']),
     ));
-    $variables['link'] = l($stitle, 'islandora/object/' . $item['PID']);
+    $variables['link'] = l($stitle, 'islandora/object/' . $item['pid']);
   }
   unset($variables['item']);
 }
