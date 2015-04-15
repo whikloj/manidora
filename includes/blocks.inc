@@ -410,8 +410,8 @@ function __manidora_whats_new_content() {
 
   $query = 'dc.title:[ * TO * ]';
   $params = array(
-    'fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms',
-    'sort' => 'timestamp desc',
+    'fl' => 'PID,dc.title,fgs_createdDate_s,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms',
+    'sort' => 'fgs_createdDate_s desc',
     'fq' => array(
       '-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]',
       '-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")',
