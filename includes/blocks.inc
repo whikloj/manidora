@@ -445,7 +445,7 @@ function __manidora_whats_new_content() {
     );
   };
   if ($solr_results) {
-    $results = array_map($map, $solr_results['reponse']['docs']);
+    $results = array_map($map, $solr_results['response']['docs']);
     foreach ($results as $result) {
       $output .= theme('manidora_whats_new_item', array('item' => $result));
     }
