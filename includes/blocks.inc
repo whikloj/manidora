@@ -66,6 +66,7 @@ function manidora_block_view($delta = '') {
  */
 function __manidora_homepage_tabs_content() {
   module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
+  module_load_include('inc', 'islandora_solr_search', 'includes/query_processor');
 
   $subjects = array(
     "Aboriginal Peoples",
@@ -146,8 +147,10 @@ function __manidora_homepage_tabs_content() {
     // "Faculty of Architecture" => "",
     // "Faculty of Dentistry" => "uofm:dentalDAMS",
     "Faculty of Medicine Archives" => "uofm:medArchives",
+    "Libraries: Architecture/Fine Arts Library" => "uofm:gardens",
     "Libraries: Archives & Special Collections" => "uofm:archives",
     "Libraries: Newspapers" => "uofm:libraries",
+    "UM Marketing Communications Office" => "uofm:marketing",
   );
 
   $output = <<<EOF
@@ -176,14 +179,35 @@ EOF;
     <div class="home-panel" id="home-panel-collections">
 EOF;
 
+  $solr_build = new IslandoraSolrQueryProcessor();
   $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:uofm* AND RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:collectionCModel" "info:fedora/islandora:newspaperCModel"))';
-  $solr_params = array("fl" => "PID,dc.title", 'fq' => '-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives" "uofm:archives")');
+  $solr_params = array(
+    "fl" => "PID,dc.title",
+    'fq' => '-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives" "uofm:archives")',
+    'rows' => 100000,
+    'limit' => 100000,
+    'facet' => 'false',
+    'hl' => 'false',
+  );
+  $solr_build->buildQuery($solr_query, $solr_params);
+  // unset fq 
+  unset($solr_params['fq']);
+  $solr_build->solrParams = array_merge($solr_build->solrParams, $solr_params);
   try {
     $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
     $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
 
     $solr->setCreateDocuments(0);
-    $results = $solr->search($solr_query, 0, 1000, $solr_params);
+    
+    // Query is executed.
+    try {
+      $solr_query = ($solr_build->internalSolrQuery) ? $solr_build->internalSolrQuery : $solr_build->solrQuery;
+      $method = 'GET';
+      $results = $solr->search($solr_query, $solr_build->solrStart, $solr_build->solrParams['rows'], $solr_build->solrParams, $method);
+    }
+    catch (Exception $e) {
+      drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error');
+    }
 
     $tmpobjects = array();
     if ($results) {
@@ -376,70 +400,86 @@ function __manidora_homepage_thumbnail_content() {
  * Generate 4 most recently added items from Solr timestamp.
  */
 function __manidora_whats_new_content() {
-  global $user;
   module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
+  module_load_include('inc', 'islandora_solr_search', 'includes/query_processor');
+  module_load_include('inc', 'islandora_restricted', 'includes/utilities');
+  $solr_build = new IslandoraSolrQueryProcessor();
+
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
   $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
-  $view_roles = array();
-  if (user_is_logged_in()) {
-    $view_roles[] = url('user/' . $user->uid);
-    foreach ($user->roles as $r => $rl) {
-      $view_roles[] = url('admin/people/permissions/role/edit/' . $r);
-    }
-  }
-  $count = 0;
-  while ($count < 4) {
-    $query = 'dc.title:[ * TO * ]';
-    $params = array(
-      'fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms',
-      'sort' => 'timestamp desc',
-      'fq' => array(
-        '-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]',
-        '-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")',
-      ),
-    );
-    $solr->setCreateDocuments(0);
-    $results = $solr->search($query, 0, 10, $params);
-    if ($results) {
-      $solr_results = json_decode($results->getRawResponse(), TRUE);
-      $view = '';
 
-      foreach ($solr_results['response']['docs'] as $doc) {
-        if ($count >= 4) {
-          break;
-        }
-        $perm = __manidora_check_restricted_permissions($doc, $view_roles);
-        if ($perm == 2) {
-          // Hidden so we skip it.
-          continue;
-        }
-        $tstamp = DateTime::createFromFormat('Y-m-d\TH:i:s.uZ', $doc['timestamp']);
-        $title = $doc['dc.title'][0];
-        $stitle = (strlen($title) > 30 ? substr($title, 0, strpos(wordwrap($title, 25, '~'), '~')) . '...' : $title);
-        $view .= '<div class="manidora-whats-new-row"><div class="manidora-whats-new-thumb">';
-        $view .= '<a href="' . url('islandora/object/' . $doc['PID']) . '">';
-        if (in_array('TN', $doc['fedora_datastreams_ms'])) {
-          if ($perm == 1) {
-            $view .= '<img src="' . url(drupal_get_path('module', 'islandora_restricted') . '/images/access_denied.png') . '" alt="' . $title . ' - Restricted" class="featured-thumb" /></a></div>';
-          }
-          else {
-            $view .= '<img src="' . url('islandora/object/' . $doc['PID'] . '/datastream/TN/view') . '" alt="' . $title . '" title="' . $title . '" class="featured-thumb" /></a></div>';
-          }
-        }
-        else {
-          $view .= '<img src="/sites/all/modules/islandora/images/folder.png" alt="' . $title . '" title="' . $title . '" class="featured-thumb" /></a></div>';
-        }
-        $view .= '<div class="manidora-whats-new-info"><a title="' . $title . '" href="' . url('islandora/object/' . $doc['PID']) . '">' . t("%t", array('%t' => $stitle)) . '</a>';
-        if ($tstamp !== FALSE) {
-          $view .= '<br /><span class="manidora-whats-new-timestamp date">' . $tstamp->format('M j, Y') . '</span></div>';
-        }
-        $view .= '</div>';
-        $count += 1;
-      }
-    }
-    $output = '<div class="manidora-whats-new-content">' . $view . '</div>';
-    return $output;
+  $query = 'dc.title:[ * TO * ]';
+  $params = array(
+    'fl' => 'PID,dc.title,timestamp,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms',
+    'sort' => 'timestamp desc',
+    'fq' => array(
+      '-RELS_EXT_isConstituentOf_uri_ms:[ "" TO * ]',
+      '-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")',
+    ),
+    'facet' => 'false',
+    'hl' => 'false',
+    'rows' => 4,
+    'limit' => 4,
+  );
+  $solr->setCreateDocuments(0);
+  $solr_build->buildQuery($query, $params);
+
+  // remove this or we override the merged filters
+  unset($params['fq']);
+  $solr_build->solrParams = array_merge($solr_build->solrParams, $params);
+  try {
+    $solr_query = ($solr_build->internalSolrQuery) ? $solr_build->internalSolrQuery : $solr_build->solrQuery;
+    $method = 'GET';
+    $results = $solr->search($solr_query, $solr_build->solrStart, $solr_build->solrParams['rows'], $solr_build->solrParams, $method);
+    $solr_results = json_decode($results->getRawResponse(), TRUE);
   }
+  catch (Exception $e) {
+    drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error');
+  }
+  $output = "<div class=\"manidora-whats-new-content\">";
+  if ($solr_results) {
+    foreach ($solr_results['response']['docs'] as $doc) {
+      $output .= theme('manidora_whats_new_item', array('item' => $doc));
+    }
+  }
+  $output .= "</div>";
+  return $output;
+}
+
+/**
+ * Theme the manidora-whats-new list items.
+ */
+function manidora_preprocess_manidora_whats_new_item(&$variables) {
+  global $user;
+  module_load_include('inc', 'islandora_restricted', 'includes/utilities');
+
+  $new_item = array();
+  $item = $variables['item'];
+  $object = islandora_object_load($item['PID']);
+  if ($object) {
+    $tstamp = DateTime::createFromFormat('Y-m-d\TH:i:s.uZ', $item['timestamp']);
+    $variables['timestamp'] = $tstamp;
+    $title = $item['dc.title'][0];
+    if (!islandora_restricted_user_has_access($object, $user)) {
+      $title .= " - Restricted";
+      $image_path = drupal_get_path('module', 'islandora_restricted') . '/images/access_denied.png';
+    }
+    elseif (isset($object['TN'])) {
+      $image_path = 'islandora/object/' . $item['PID'] . '/datastream/TN/view';
+    }
+    else {
+      $image_path = drupal_get_path('module', 'islandora', '/images/folder.png');
+    }
+    $stitle = (strlen($title) > 30 ? substr($title, 0, strpos(wordwrap($title, 25, '~'), '~')) . '...' : $title);
+    $variables['title'] = $title;
+    $variables['image'] = t('<a href="@link"><img src="@url" alt="@title" class="featured-thumb"/></a>', array(
+      '@url' => url($image_path),
+      '@title' => $stitle,
+      '@link' => url('islandora/object/' . $item['PID']),
+    ));
+    $variables['link'] = l($stitle, 'islandora/object/' . $item['PID']);
+  }
+  unset($variables['item']);
 }
 
 /**
