@@ -12,7 +12,7 @@
 function manidora_block_info() {
   $blocks['manidora_homepage_tabs'] = array(
     'info' => t('Manidora homepage tabs'),
-    'cache' => DRUPAL_CACHE_GLOBAL,
+    'cache' => DRUPAL_NO_GLOBAL,
   );
   $blocks['manidora_homepage_thumbnails'] = array(
     'info' => t('Manidora homepage thumbnails'),
@@ -20,9 +20,11 @@ function manidora_block_info() {
   );
   $blocks['manidora_whats_new'] = array(
     'info' => t("Manidora what's new"),
+    'cache' => DRUPAL_NO_GLOBAL,
   );
   $blocks['manidora_preview_image'] = array(
     'info' => t('Manidora preview thumbnail'),
+    'cache' => DRUPAL_NO_GLOBAL,
   );
   return $blocks;
 }
