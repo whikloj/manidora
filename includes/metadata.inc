@@ -22,19 +22,14 @@ function manidora_retrieve_metadata_form(AbstractObject $object) {
     $output = manidora_pbcore_transform($object);
   }
   // Grab MODS otherwise.
-  else {
+  elseif (isset($object['MODS'])) {
     $output = manidora_mods_transform($object);
   }
-  if (!empty($output)) {
-    $form = array(
-      '#type' => 'item',
-      '#markup' => $output,
-      '#weight' => 10,
-    );
-  }
-  else {
-    drupal_set_message(t('A transformation error has occured!'), 'error');
-  }
+  $form = array(
+    '#type' => 'item',
+    '#markup' => $output,
+    '#weight' => 10,
+  );
   return $form;
 }
 

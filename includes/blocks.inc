@@ -12,7 +12,7 @@
 function manidora_block_info() {
   $blocks['manidora_homepage_tabs'] = array(
     'info' => t('Manidora homepage tabs'),
-    'cache' => DRUPAL_NO_CACHE,
+    'cache' => DRUPAL_CACHE_PER_USER,
   );
   $blocks['manidora_homepage_thumbnails'] = array(
     'info' => t('Manidora homepage thumbnails'),
@@ -20,11 +20,11 @@ function manidora_block_info() {
   );
   $blocks['manidora_whats_new'] = array(
     'info' => t("Manidora what's new"),
-    'cache' => DRUPAL_NO_CACHE,
+    'cache' => DRUPAL_CACHE_PER_USER,
   );
   $blocks['manidora_preview_image'] = array(
     'info' => t('Manidora preview thumbnail'),
-    'cache' => DRUPAL_NO_CACHE,
+    'cache' => DRUPAL_CACHE_PER_USER,
   );
   return $blocks;
 }
@@ -193,6 +193,8 @@ EOF;
   );
   $solr_build->buildQuery($solr_query, $solr_params);
   $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $solr_params);
+  // We don't need faceting or highlighting here.
+  $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
   try {
     $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
     $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');

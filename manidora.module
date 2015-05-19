@@ -504,6 +504,9 @@ function manidora_islandora_sp_large_image_cmodel_islandora_solr_object_result_a
  * Implements hook_preprocess_page().
  */
 function manidora_preprocess_page(&$variables) {
+/*
+  // whikloj - 2015-05-19 : Not sure why this is here. Removing.
+  module_load_include('inc', 'islandora', 'includes/utilities');
   $arg1 = arg(1);
   $arg2 = arg(2);
 
@@ -521,7 +524,7 @@ function manidora_preprocess_page(&$variables) {
         $variables['title'] = '';
       }
     }
-  }
+  }*/
 }
 
 /**
