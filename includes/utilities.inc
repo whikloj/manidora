@@ -44,11 +44,11 @@ function manidora_xml_patcher($patch, $original_xml) {
   }
   foreach ($patch['changes'] as $k => $p) {
     if (!is_int($k)) {
-      __iterateGrouped($mods, $xpath, $k, $p);
+      __manidora_xml_patcher_iterateGrouped($mods, $xpath, $k, $p);
     }
     else {
       foreach ($p as $type => $change) {
-        __makeXMLChange($mods, $xpath, $type, $change);
+        __manidora_xml_patcher_makeXMLChange($mods, $xpath, $type, $change);
       }
     }
   }
@@ -64,9 +64,9 @@ function manidora_xml_patcher($patch, $original_xml) {
  * @param $changes mixed
  *   array of the change details
  */
-function __iterateGrouped(&$mods, $xpath, $type, $changes) {
+function __manidora_xml_patcher_iterateGrouped(&$mods, $xpath, $type, $changes) {
   foreach ($changes as $change) {
-    __makeXMLChange($mods, $xpath, $type, $change);
+    __manidora_xml_patcher_makeXMLChange($mods, $xpath, $type, $change);
   }
 }
 
@@ -82,7 +82,7 @@ function __iterateGrouped(&$mods, $xpath, $type, $changes) {
  * @param $changes mixed
  *   array of the change details
  */
-function __makeXMLChange(&$mods, $xpath, $type, $change) {
+function __manidora_xml_patcher_makeXMLChange(&$mods, $xpath, $type, $change) {
   switch ($type) {
     case 'replace':
       list($remove, $add) = $change;
