@@ -478,9 +478,11 @@
             </div>
           </xsl:when>
           <xsl:otherwise>
-            <strong>
-              <xsl:call-template name="toProperCase"><xsl:with-param name="text" select="@type" /></xsl:call-template>
+            <xsl:if test="@type and string-length(@type) &gt; 0">
+              <strong>
+                <xsl:call-template name="toProperCase"><xsl:with-param name="text" select="@type" /></xsl:call-template>
               : </strong>
+            </xsl:if>
               <xsl:value-of select="text()"/>
           </xsl:otherwise>
         </xsl:choose>
