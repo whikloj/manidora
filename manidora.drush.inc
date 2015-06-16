@@ -111,6 +111,7 @@ function drush_manidora_book_batch() {
       'type' => 'directory',
       'target' => drush_get_option('target', '/usr/local/fedora/staging'),
       'parent' => 'uofm:rarebooks',
+      'namespace' => 'uofm',
       'directory_dedup' => TRUE,
       'wait_for_metadata' => TRUE,
       'email_admin' => TRUE,

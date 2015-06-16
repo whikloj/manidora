@@ -10,7 +10,7 @@
  *
  * Rebuild OCR in all compound parents of the current object.
  */
-function manidora_aggregate_ocr_in_parents(AbstractObject $object, $force = FALSE) {
+function manidora_aggregate_ocr_in_parents(AbstractObject $object, $force = FALSE, $hook) {
   // Get all compound parents.
   $rels_predicate = variable_get('islandora_compound_object_relationship', 'isConstituentOf');
   $parent_relationships = $object->relationships->get('info:fedora/fedora-system:def/relations-external#', $rels_predicate);
