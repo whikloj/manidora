@@ -7,14 +7,16 @@
  */
 
 /**
- * Replaces or adds XML elements from an XML string.
+ * Removes, replaces or adds XML elements from an XML string.
+ * 
+ * Replace will add if the element is not found.
  * 
  * @param $patch mixed
  *   Array of changes of the format.
  *   $change = array(
  *     'ns' => array('prefix' => 'uri'), 
  *     'changes' => array(
- *        'replace' => array('old xpath', 'new xml'),
+ *        'replace' => array('old xpath', 'parent xpath', 'new xml'),
  *        'remove' => array('old xpath'),
  *        'add' => array('parent xpath', 'new xml'),
  *     ),
@@ -36,19 +38,21 @@ function manidora_xml_patcher($patch, $original_xml) {
   }
 
   $xpath = new DOMXpath($mods);
+  $namespaces = array();
 
   if (isset($patch['ns']) && is_array($patch['ns'])) {
     foreach ($patch['ns'] as $ns => $uri) {
       $xpath->registerNamespace($ns, $uri);
+      $namespaces[$ns] = $uri;
     }
   }
   foreach ($patch['changes'] as $k => $p) {
     if (!is_int($k)) {
-      __manidora_xml_patcher_iterateGrouped($mods, $xpath, $k, $p);
+      __manidora_xml_patcher_iterateGrouped($mods, $xpath, $k, $p, $namespaces);
     }
     else {
       foreach ($p as $type => $change) {
-        __manidora_xml_patcher_makeXMLChange($mods, $xpath, $type, $change);
+        __manidora_xml_patcher_makeXMLChange($mods, $xpath, $type, $change, $namespaces);
       }
     }
   }
@@ -59,14 +63,20 @@ function manidora_xml_patcher($patch, $original_xml) {
 /**
  * Sometimes the add keys are merged and moved up a level.
  *
+ * @param $mods DOMDocument
+ *   the XML to alter
+ * @param $xpath DOMXPath
+ *   the namespace enhanced DOMXpath
  * @param $type string
  *   type of XML change [add, remove, replace]
  * @param $changes mixed
  *   array of the change details
+ * @param $namespaces array
+ *   array of namespaces (prefix => URI)
  */
-function __manidora_xml_patcher_iterateGrouped(&$mods, $xpath, $type, $changes) {
+function __manidora_xml_patcher_iterateGrouped(&$mods, $xpath, $type, $changes, $namespaces) {
   foreach ($changes as $change) {
-    __manidora_xml_patcher_makeXMLChange($mods, $xpath, $type, $change);
+    __manidora_xml_patcher_makeXMLChange($mods, $xpath, $type, $change, $namespaces);
   }
 }
 
@@ -81,22 +91,32 @@ function __manidora_xml_patcher_iterateGrouped(&$mods, $xpath, $type, $changes) 
  *   type of XML change [add, remove, replace]
  * @param $changes mixed
  *   array of the change details
+ * @param $namespaces array
+ *   array of namespaces (prefix => URI)
  */
-function __manidora_xml_patcher_makeXMLChange(&$mods, $xpath, $type, $change) {
+function __manidora_xml_patcher_makeXMLChange(&$mods, $xpath, $type, $change, $namespaces) {
   switch ($type) {
     case 'replace':
-      list($remove, $add) = $change;
+      list($remove, $parent, $add) = $change;
       $hits = $xpath->query($remove);
-      foreach ($hits as $hit) {
-        $parent = $hit->parentNode;
-        $replace = dom_import_simplexml(simplexml_load_string($add));
-        $replace = $mods->importNode($replace, TRUE);
-        $parent->replaceChild($hit, $replace);
+      if (is_array($hits) && count($hits) > 0) {
+        $add = __manidora_xml_patcher_insert_namespace($add, $namespaces);
+        foreach ($hits as $hit) {
+          $parent = $hit->parentNode;
+          $replace = dom_import_simplexml(simplexml_load_string($add));
+          $replace = $mods->importNode($replace, TRUE);
+          $parent->replaceChild($replace, $hit);
+        }
+      }
+      else {
+        // No element found to replace, instead add to the parent.
+        __manidora_xml_patcher_makeXMLChange($mods, $xpath, 'add', array($parent, $add), $namespaces);
       }
       break;
 
     case 'add':
       list($parent, $add) = $change;
+      $add = __manidora_xml_patcher_insert_namespace($add, $namespaces);
       $hits = $xpath->query($parent);
       foreach ($hits as $hit) {
         $new_node = dom_import_simplexml(simplexml_load_string($add));
@@ -117,6 +137,45 @@ function __manidora_xml_patcher_makeXMLChange(&$mods, $xpath, $type, $change) {
       break;
     
   }
+}
+
+/**
+ * Insert namespace URI in element.
+ *
+ * Insert all namespaces not already defined in the XML
+ * from the original XML document to ensure this XML 
+ * snippet will load.
+ *
+ * @param $element string
+ *   XML snippet
+ * @param $namespaces array
+ *   array of prefix => namespace URI
+ * @return string
+ *   modified XML snippet
+ */
+function __manidora_xml_patcher_insert_namespace($element, $namespaces) {
+  $pos = strpos($element, '>');
+  if (strpos(substr($element, 0, $pos), '/') !== FALSE) {
+    // We may have an empty element, parse to see if the
+    // backslash is inside an attribute.
+    for ($x = $pos; $x > 0; $x -= 1) {
+      if (substr($element, $x, 1) == "/") {
+        $pos = $x;
+        break;
+      }
+      elseif (substr($element, $x, 1) == "\"" ||
+        substr($element, $x, 1) == "'") {
+          break;
+      }
+    }
+  }
+  $add_string = "";
+  foreach ($namespaces as $prefix => $uri) {
+    if (strpos($element, "xmlns:$prefix") === FALSE) {
+      $add_string .= " xmlns:$prefix=\"$uri\"";
+    }
+  }
+  return substr($element, 0, $pos) . $add_string . substr($element, $pos);
 }
 
 /**
