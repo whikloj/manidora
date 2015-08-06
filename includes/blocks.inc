@@ -152,6 +152,7 @@ function __manidora_homepage_tabs_content() {
     "Libraries: Architecture/Fine Arts Library" => "uofm:gardens",
     "Libraries: Archives & Special Collections" => "uofm:archives",
     "Libraries: Newspapers" => "uofm:libraries",
+    "Restorative Dentistry Collection" => "uofm:restorativedentistry",
     "UM Marketing Communications Office" => "uofm:marketing",
   );
 
