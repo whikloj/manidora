@@ -211,6 +211,7 @@ function manidora_menu_alter(&$items) {
  */
 function manidora_menu_local_tasks_alter(&$data, $router_item, $root_path) {
   if ($root_path == 'islandora/object/%') {
+    // This makes the print tab use the newspaper clipper if possible.
     for ($foo = 0; $foo < count($data['tabs']); $foo += 1) {
       for ($bar = 0; $bar < $data['tabs'][$foo]['count']; $bar += 1) {
         if (isset($data['tabs'][$foo]['output'][$bar]['#link']['path']) &&
@@ -218,6 +219,17 @@ function manidora_menu_local_tasks_alter(&$data, $router_item, $root_path) {
           $data['tabs'][$foo]['output'][$bar]['#options']['attributes'] = array('id' => 'clip');
           break;
         }
+      }
+    }
+    if (module_exists('islandora_compound_object')) {
+      // This makes a compound only display the parent label.
+      $object = menu_get_object('islandora_object', 2);
+      $children = islandora_compound_object_get_parts($object->id);
+      $pid = (!empty($children)) ? $children[0] : $object->id;
+      $compound_object = islandora_object_load($pid);
+      $compound_info = islandora_compound_object_retrieve_compound_info($compound_object);
+      if ($compound_info) {
+        drupal_set_title(filter_xss($compound_info['parent_label']));
       }
     }
   }
@@ -498,33 +510,6 @@ function manidora_islandora_sp_large_image_cmodel_islandora_solr_object_result_a
     'query' => $query_processor->solrQuery,
     'params' => $query_processor->solrParams,
   );
-}
-
-/**
- * Implements hook_preprocess_page().
- */
-function manidora_preprocess_page(&$variables) {
-/*
-  // whikloj - 2015-05-19 : Not sure why this is here. Removing.
-  module_load_include('inc', 'islandora', 'includes/utilities');
-  $arg1 = arg(1);
-  $arg2 = arg(2);
-
-  if ($arg1 == 'object' && islandora_is_valid_pid($arg2)) {
-
-    // Get compound children.
-    $children = islandora_compound_object_get_parts($arg2);
-    $pid = (!empty($children)) ? $children[0] : $arg2;
-
-    if ($object = islandora_object_load($pid)) {
-      $rels_predicate = variable_get('islandora_compound_object_relationship', 'isPartOf');
-      $part_of = $object->relationships->get('info:fedora/fedora-system:def/relations-external#', $rels_predicate);
-      // This object is part of a compound object.
-      if (!empty($part_of)) {
-        $variables['title'] = '';
-      }
-    }
-  }*/
 }
 
 /**
