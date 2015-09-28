@@ -26,11 +26,13 @@
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Title</xsl:with-param>
         <xsl:with-param name="content"><xsl:value-of select="mods:titleInfo/mods:title"/></xsl:with-param>
+        <xsl:with-param name="property">title</xsl:with-param>
       </xsl:call-template>
       <xsl:if test="string-length($collections) &gt; 0">
         <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Collections</xsl:with-param>
           <xsl:with-param name="content"><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></xsl:with-param>
+          <xsl:with-param name="property">related</xsl:with-param>
         </xsl:call-template>
       </xsl:if>
       <xsl:apply-templates select="mods:abstract" />
@@ -43,6 +45,7 @@
           <xsl:call-template name="groupAll">
             <xsl:with-param name="label">Date</xsl:with-param>
             <xsl:with-param name="nodes" select="mods:subject/mods:temporal"/>
+            <xsl:with-param name="property">date</xsl:with-param>
           </xsl:call-template>
         </xsl:when>
         <xsl:otherwise>
@@ -74,10 +77,15 @@
   <xsl:template name="basic_output">
     <xsl:param name="label"/>
     <xsl:param name="content" />
+    <xsl:param name="property"></xsl:param>
     <xsl:if test="string-length($label) &gt; 0 and string-length($content) &gt; 0">
       <tr>
           <td class="label"><xsl:value-of select="$label"/>:</td>
-          <td><xsl:copy-of select="$content"/></td>
+          <td>
+            <xsl:if test="not(string-length($property) = 0)">
+              <xsl:attribute name="property"><xsl:value-of select="$property"/></xsl:attribute>
+            </xsl:if>
+            <xsl:copy-of select="$content"/></td>
       </tr>
     </xsl:if>
   </xsl:template>
@@ -133,6 +141,7 @@
           <xsl:with-param name="content"><xsl:apply-templates mode="search_link2" match="text()">
               <xsl:with-param name="field" select="$type_of_resource_field"/>
           </xsl:apply-templates></xsl:with-param>
+          <xsl:with-param name="property">type</xsl:with-param>
       </xsl:call-template>
   </xsl:template>
 
@@ -212,7 +221,8 @@
               </xsl:attribute>
               <xsl:attribute name="target">_parent</xsl:attribute>
               <xsl:value-of select="mods:titleInfo/mods:title"/></a>
-         </xsl:with-param>
+      </xsl:with-param>
+      <xsl:with-param name="property">related</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
@@ -235,6 +245,7 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Description</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="property">description</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
@@ -267,6 +278,7 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Date</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="property">date</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
@@ -287,6 +299,7 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Publisher</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="property">publisher</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
@@ -294,6 +307,7 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Publication date</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="property">date</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
@@ -307,6 +321,7 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Local Identifier</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="property">identifier</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
@@ -317,6 +332,7 @@
               <xsl:attribute name="target">_parent</xsl:attribute>
               <xsl:attribute name="href">http://hdl.handle.net/<xsl:value-of select="normalize-space(text())"/></xsl:attribute>
 	          http://hdl.handle.net/<xsl:value-of select="normalize-space(text())"/></a></xsl:with-param>
+          <xsl:with-param name="property">identifier</xsl:with-param>
 	</xsl:call-template>
   </xsl:template>
   
@@ -362,6 +378,7 @@
               <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
             </xsl:for-each>-->
           </xsl:with-param>
+          <xsl:with-param name="property">coverage</xsl:with-param>
         </xsl:call-template>
     </xsl:if>
   </xsl:template>
@@ -382,6 +399,7 @@
           </xsl:if>
           <xsl:value-of select="normalize-space(mods:city)"></xsl:value-of>
         </xsl:with-param>
+        <xsl:with-param name="property">coverage</xsl:with-param>
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
@@ -410,6 +428,7 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Date</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="property">date</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
@@ -435,6 +454,7 @@
           <xsl:if test="position() &gt; last()">, </xsl:if>
         </xsl:for-each>
       </xsl:with-param>
+      <xsl:with-param name="property">language</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
@@ -487,6 +507,7 @@
           </xsl:otherwise>
         </xsl:choose>
       </xsl:with-param>
+      <xsl:with-param name="property">rights</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
   
@@ -495,6 +516,7 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Note</xsl:with-param>
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="property">description</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
