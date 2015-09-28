@@ -22,7 +22,7 @@
   <xsl:key name="CCAccessKey" match="mods:accessCondition" use="concat(@type,'+',text())" />
   
   <xsl:template match="mods:mods">
-    <table class="manidora-metadata" vocab="http://purl.org/dc/terms/" prefix="dc: http://purl.org/dc/elements/1.1/">
+    <table class="manidora-metadata" vocab="http://purl.org/dc/terms/" prefix="dc: http://purl.org/dc/elements/1.1/" typeof="Article">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Title</xsl:with-param>
         <xsl:with-param name="content"><xsl:value-of select="mods:titleInfo/mods:title"/></xsl:with-param>
