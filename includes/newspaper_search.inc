@@ -29,12 +29,12 @@ function manidora_newspaper_search_form($form, &$form_state) {
 
   $solr_build->buildQuery($solr_query, $solr_params);
   
-  $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $params);
+  $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $solr_params);
   $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
   
   $solr_build = manidora_allow_newspaper_issues_in_solr($solr_build);
   try {
-    $solr_build->executeQuery();
+    $solr_build->executeQuery(FALSE);
     $results = $solr_build->islandoraSolrResult["response"]["objects"];
   } 
   catch (Exception $e) {
@@ -45,8 +45,8 @@ function manidora_newspaper_search_form($form, &$form_state) {
   $tmpobjects = array();
   if ($results) {
     foreach ($results as $key => $doc) {
-      if (strlen($doc['title_sort_ms'][0]) > 0) {
-        $tmpobjects[$doc['PID']] = $doc['title_sort_ms'][0];
+      if (strlen($doc['solr_doc']['title_sort_ms'][0]) > 0) {
+        $tmpobjects[$doc['PID']] = $doc['solr_doc']['title_sort_ms'][0];
         $sql = 'RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel" AND ancestors_ms:"' . $doc['PID'] . '"';
         $sp = array(
           'facet' => 'true',
@@ -60,7 +60,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
         $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $sp);
         $solr_build = manidora_allow_newspaper_issues_in_solr($solr_build);
         try {
-          $solr_build->executeQuery();
+          $solr_build->executeQuery(FALSE);
           $years = $solr_build->islandoraSolrResult['facet_counts']['facet_ranges']['mods_originInfo_dateIssued_dt']['counts'];
 
         } 
