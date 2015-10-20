@@ -41,7 +41,8 @@ function manidora_newspaper_search_form($form, &$form_state) {
     $results = array();
     drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error', FALSE);
   }
-  $all_years = array();
+
+  $all_years = array('min' => 10000, 'max' => 0);
   $tmpobjects = array();
   if ($results) {
     foreach ($results as $key => $doc) {
@@ -49,44 +50,33 @@ function manidora_newspaper_search_form($form, &$form_state) {
         $tmpobjects[$doc['PID']] = $doc['solr_doc']['title_sort_ms'][0];
         $sql = 'RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel" AND ancestors_ms:"' . $doc['PID'] . '"';
         $sp = array(
-          'facet' => 'true',
-          'facet.range' => 'mods_originInfo_dateIssued_dt',
-          'f.mods_originInfo_dateIssued_dt.facet.range.start' => '1800-01-01T00:00:00Z',
-          'f.mods_originInfo_dateIssued_dt.facet.range.end' => 'NOW',
-          'f.mods_originInfo_dateIssued_dt.facet.range.gap' => '+1YEAR',
+          'facet' => 'false',
+          'hl' => 'false',
           'rows' => 0,
+          'stats' => 'true',
+          'stats.field' => 'mods_originInfo_dateIssued_dt',
         );
         $solr_build->buildQuery($sql, $sp);
         $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $sp);
         $solr_build = manidora_allow_newspaper_issues_in_solr($solr_build);
         try {
           $solr_build->executeQuery(FALSE);
-          $years = $solr_build->islandoraSolrResult['facet_counts']['facet_ranges']['mods_originInfo_dateIssued_dt']['counts'];
-
+          $years = $solr_build->islandoraSolrResult['stats']['stats_fields']['mods_originInfo_dateIssued_dt'];
         } 
         catch (Exception $e) {
           $years = array();
           drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error', FALSE);
         }
 
-        $year_array = array();
-        foreach ($years as $date => $count) {
-          if ($count > 0) {
-            $year_array[] = substr($date, 0, 4);
-          }
+        $tmpobjects[$doc['PID']] .= ' (' . substr($years['min'], 0, 4) . '-' . substr($years['max'], 0, 4) . ')';
+        if (substr($years['min'], 0, 4) < $all_years['min']) {
+          $all_years['min'] = substr($years['min'], 0, 4);
         }
-        if (count($year_array) > 0) {
-          sort($year_array);
-          $all_years = array_merge($all_years, $year_array);
-          $tmpobjects[$doc['PID']] .= ' (' . $year_array[0] . '-' . $year_array[count($year_array) - 1] . ')';
+        if (substr($years['max'], 0, 4) > $all_years['max']) {
+          $all_years['max'] = substr($years['max'], 0, 4);
         }
       }
     }
-  }
-
-  if (isset($all_years) && count($all_years) > 0) {
-    sort($all_years);
-    $all_years = array_unique($all_years);
   }
 
   $form = array(
@@ -165,11 +155,11 @@ function manidora_newspaper_search_form($form, &$form_state) {
   if (isset($all_years) && count($all_years) > 0) {
     $form['right_column']['date_range_low'] = array(
       '#type' => 'hidden',
-      '#value' => $all_years[0],
+      '#value' => $all_years['min'],
     );
     $form['right_column']['date_range_high'] = array(
       '#type' => 'hidden',
-      '#value' => $all_years[count($all_years) - 1],
+      '#value' => $all_years['max'],
     );
   }
 
