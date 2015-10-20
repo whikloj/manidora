@@ -524,13 +524,21 @@
     </xsl:call-template>
   </xsl:template>
   
-  <!--<xsl:template match="mods:note[@type != &quot;cid&quot; or @type != &quot;objectID&quot; or @type != &quot;imageID&quot;]">-->
   <xsl:template match="mods:note">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Note</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
-      <xsl:with-param name="property">dc:description</xsl:with-param>
-    </xsl:call-template>
+    <xsl:choose>
+      <xsl:when test="@type = 'biographical/historical'">
+        <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Tagged By</xsl:with-param>
+          <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Note</xsl:with-param>
+          <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template name="groupAll">

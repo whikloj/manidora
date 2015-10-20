@@ -151,6 +151,7 @@ function __manidora_homepage_tabs_content() {
     "Faculty of Medicine Archives" => "uofm:medArchives",
     "Libraries: Architecture/Fine Arts Library" => "uofm:gardens",
     "Libraries: Archives & Special Collections" => "uofm:archives",
+    "Libraries: Icelandic Collection" => "uofm:icelandic",
     "Libraries: Newspapers" => "uofm:libraries",
     "Restorative Dentistry Collection" => "uofm:restorativedentistry",
     "UM Marketing Communications Office" => "uofm:marketing",
@@ -439,6 +440,14 @@ function __manidora_whats_new_content() {
   $solr_build->buildQuery($query, $params);
 
   $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $params);
+  $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
+  
+  for ($foo = 0; $foo < count($solr_build->solrParams['fq']); $foo += 1) {
+    if ($solr_build->solrParams['fq'][$foo] == '-RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel"') {
+      // We need to stop stripping out newspaperIssues from here too.
+      unset($solr_build->solrParams['fq'][$foo]);
+    }
+  }
   try {
     $solr_query = ($solr_build->internalSolrQuery) ? $solr_build->internalSolrQuery : $solr_build->solrQuery;
     $method = 'GET';
