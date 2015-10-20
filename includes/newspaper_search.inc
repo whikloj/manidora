@@ -20,47 +20,66 @@
  *   The constructed form
  */
 function manidora_newspaper_search_form($form, &$form_state) {
-  module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
+  module_load_include('inc', 'islandora_solr_search', 'includes/query_processor');
+  $solr_build = new IslandoraSolrQueryProcessor();
+  
   $solr_params = array('fl' => 'PID,title_sort_ms');
   $solr_query = '+RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperCModel"';
 
-  $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
-  // $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
-  $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
-
-  $solr->setCreateDocuments(0);
-  $results = $solr->search($solr_query, 0, 100, $solr_params);
-
+  $solr_build->buildQuery($solr_query, $solr_params);
+  
+  $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $params);
+  $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
+  
+  for ($foo = 0; $foo < count($solr_build->solrParams['fq']); $foo += 1) {
+    if ($solr_build->solrParams['fq'][$foo] == '-RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel"') {
+      // We need to stop stripping out newspaperIssues from here too.
+      unset($solr_build->solrParams['fq'][$foo]);
+    }
+  }
+  try {
+    $solr_build->executeQuery();
+    $results = $solr_build->islandoraSolrResults["response"]["objects"];
+  } 
+  catch (Exception $e) {
+    $results = array();
+    drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error', FALSE);
+  }
+  $all_years = array();
   $tmpobjects = array();
-  if ($results) {
-    $solr_results = json_decode($results->getRawResponse(), TRUE);
-    $all_years = array();
-    foreach ($solr_results["response"]["docs"] as $key => $doc) {
-      if (strlen($doc['title_sort_ms'][0]) > 0) {
-        $tmpobjects[$doc['PID']] = $doc['title_sort_ms'][0];
-        $sq = 'RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel" AND ancestors_ms:"' . $doc['PID'] . '"';
-        $sp = array(
-          'facet' => 'true',
-          'facet.range' => 'mods_originInfo_dateIssued_dt',
-          'f.mods_originInfo_dateIssued_dt.facet.range.start' => '1800-01-01T00:00:00Z',
-          'f.mods_originInfo_dateIssued_dt.facet.range.end' => 'NOW',
-          'f.mods_originInfo_dateIssued_dt.facet.range.gap' => '+1YEAR',
-        );
-        $years = $solr->search($sq, 0, 0, $sp);
-        $year_array = array();
-        if ($years) {
-          $year_result = json_decode($years->getRawResponse(), TRUE);
-          foreach ($year_result['facet_counts']['facet_ranges']['mods_originInfo_dateIssued_dt']['counts'] as $date => $count) {
-            if ($count > 0) {
-              $year_array[] = substr($date, 0, 4);
-            }
-          }
-          if (count($year_array) > 0) {
-            sort($year_array);
-            $all_years = array_merge($all_years, $year_array);
-            $tmpobjects[$doc['PID']] .= ' (' . $year_array[0] . '-' . $year_array[count($year_array) - 1] . ')';
-          }
+  foreach ($results as $key => $doc) {
+    if (strlen($doc['title_sort_ms'][0]) > 0) {
+      $tmpobjects[$doc['PID']] = $doc['title_sort_ms'][0];
+      $sql = 'RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel" AND ancestors_ms:"' . $doc['PID'] . '"';
+      $sp = array(
+        'facet' => 'true',
+        'facet.range' => 'mods_originInfo_dateIssued_dt',
+        'f.mods_originInfo_dateIssued_dt.facet.range.start' => '1800-01-01T00:00:00Z',
+        'f.mods_originInfo_dateIssued_dt.facet.range.end' => 'NOW',
+        'f.mods_originInfo_dateIssued_dt.facet.range.gap' => '+1YEAR',
+        'rows' => 0,
+      );
+      $solr_build->buildQuery($sql, $sp);
+      $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $sp);
+      try {
+        $solr_build->executeQuery();
+        $years = $solr_build->islandoraSolrResults['facet_counts']['facet_ranges']['mods_originInfo_dateIssued_dt']['counts'];
+      } 
+      catch (Exception $e) {
+        $years = array();
+        drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error', FALSE);
+      }
+
+      $year_array = array();
+      foreach ($years as $date => $count) {
+        if ($count > 0) {
+          $year_array[] = substr($date, 0, 4);
         }
+      }
+      if (count($year_array) > 0) {
+        sort($year_array);
+        $all_years = array_merge($all_years, $year_array);
+        $tmpobjects[$doc['PID']] .= ' (' . $year_array[0] . '-' . $year_array[count($year_array) - 1] . ')';
       }
     }
   }
