@@ -21,6 +21,7 @@
  */
 function manidora_newspaper_search_form($form, &$form_state) {
   module_load_include('inc', 'islandora_solr_search', 'includes/query_processor');
+  module_load_include('inc', 'manidora', 'includes/utilities');
   $solr_build = new IslandoraSolrQueryProcessor();
   
   $solr_params = array('fl' => 'PID,title_sort_ms');
@@ -31,15 +32,10 @@ function manidora_newspaper_search_form($form, &$form_state) {
   $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $params);
   $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
   
-  for ($foo = 0; $foo < count($solr_build->solrParams['fq']); $foo += 1) {
-    if ($solr_build->solrParams['fq'][$foo] == '-RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel"') {
-      // We need to stop stripping out newspaperIssues from here too.
-      unset($solr_build->solrParams['fq'][$foo]);
-    }
-  }
+  $solr_build = manidora_allow_newspaper_issues_in_solr($solr_build);
   try {
     $solr_build->executeQuery();
-    $results = $solr_build->islandoraSolrResults["response"]["objects"];
+    $results = $solr_build->islandoraSolrResult["response"]["objects"];
   } 
   catch (Exception $e) {
     $results = array();
@@ -47,39 +43,43 @@ function manidora_newspaper_search_form($form, &$form_state) {
   }
   $all_years = array();
   $tmpobjects = array();
-  foreach ($results as $key => $doc) {
-    if (strlen($doc['title_sort_ms'][0]) > 0) {
-      $tmpobjects[$doc['PID']] = $doc['title_sort_ms'][0];
-      $sql = 'RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel" AND ancestors_ms:"' . $doc['PID'] . '"';
-      $sp = array(
-        'facet' => 'true',
-        'facet.range' => 'mods_originInfo_dateIssued_dt',
-        'f.mods_originInfo_dateIssued_dt.facet.range.start' => '1800-01-01T00:00:00Z',
-        'f.mods_originInfo_dateIssued_dt.facet.range.end' => 'NOW',
-        'f.mods_originInfo_dateIssued_dt.facet.range.gap' => '+1YEAR',
-        'rows' => 0,
-      );
-      $solr_build->buildQuery($sql, $sp);
-      $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $sp);
-      try {
-        $solr_build->executeQuery();
-        $years = $solr_build->islandoraSolrResults['facet_counts']['facet_ranges']['mods_originInfo_dateIssued_dt']['counts'];
-      } 
-      catch (Exception $e) {
-        $years = array();
-        drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error', FALSE);
-      }
+  if ($results) {
+    foreach ($results as $key => $doc) {
+      if (strlen($doc['title_sort_ms'][0]) > 0) {
+        $tmpobjects[$doc['PID']] = $doc['title_sort_ms'][0];
+        $sql = 'RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel" AND ancestors_ms:"' . $doc['PID'] . '"';
+        $sp = array(
+          'facet' => 'true',
+          'facet.range' => 'mods_originInfo_dateIssued_dt',
+          'f.mods_originInfo_dateIssued_dt.facet.range.start' => '1800-01-01T00:00:00Z',
+          'f.mods_originInfo_dateIssued_dt.facet.range.end' => 'NOW',
+          'f.mods_originInfo_dateIssued_dt.facet.range.gap' => '+1YEAR',
+          'rows' => 0,
+        );
+        $solr_build->buildQuery($sql, $sp);
+        $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $sp);
+        $solr_build = manidora_allow_newspaper_issues_in_solr($solr_build);
+        try {
+          $solr_build->executeQuery();
+          $years = $solr_build->islandoraSolrResult['facet_counts']['facet_ranges']['mods_originInfo_dateIssued_dt']['counts'];
 
-      $year_array = array();
-      foreach ($years as $date => $count) {
-        if ($count > 0) {
-          $year_array[] = substr($date, 0, 4);
+        } 
+        catch (Exception $e) {
+          $years = array();
+          drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error', FALSE);
         }
-      }
-      if (count($year_array) > 0) {
-        sort($year_array);
-        $all_years = array_merge($all_years, $year_array);
-        $tmpobjects[$doc['PID']] .= ' (' . $year_array[0] . '-' . $year_array[count($year_array) - 1] . ')';
+
+        $year_array = array();
+        foreach ($years as $date => $count) {
+          if ($count > 0) {
+            $year_array[] = substr($date, 0, 4);
+          }
+        }
+        if (count($year_array) > 0) {
+          sort($year_array);
+          $all_years = array_merge($all_years, $year_array);
+          $tmpobjects[$doc['PID']] .= ' (' . $year_array[0] . '-' . $year_array[count($year_array) - 1] . ')';
+        }
       }
     }
   }

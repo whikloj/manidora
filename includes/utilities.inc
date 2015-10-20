@@ -242,3 +242,21 @@ function manidora_retrieve_header_text($pid) {
     return FALSE;
   }
 }
+
+/**
+ * Remove the newspaper issue restriction from solr queries
+ *
+ * @var $solr_build IslandoraSolrQueryProcessor
+ *   A solr query processor.
+ *
+ * @return IslandoraSolrQueryProcessor
+ */
+function manidora_allow_newspaper_issues_in_solr($solr_build) {
+  for ($foo = 0; $foo < count($solr_build->solrParams['fq']); $foo += 1) {
+    if ($solr_build->solrParams['fq'][$foo] == '-RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel"') {
+      // We need to stop stripping out newspaperIssues from here too.
+      unset($solr_build->solrParams['fq'][$foo]);
+    }
+  }
+  return $solr_build;
+}
