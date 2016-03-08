@@ -208,6 +208,72 @@ EOF;
 
     }
 
+
+    public function testReApplyPatch() {
+        $xml1 = <<<EOF
+<?xml version="1.0"?>
+<root xmlns="http://umanitoba.ca/libraries/test/">
+<child id="1">child 1</child>
+<child id="2">child 2</child>
+</root>
+EOF;
+
+        $xml2 =<<<EOF
+<?xml version="1.0"?>
+<root xmlns="http://umanitoba.ca/libraries/test/">
+<child id="1">child 1</child>
+<child id="2">child 2</child>
+<child id="3">child 3</child>
+</root>
+EOF;
+
+        $xml3 =<<<EOF
+<?xml version="1.0"?>
+<root xmlns="http://umanitoba.ca/libraries/test/">
+<child id="2">child 2</child>
+<child id="3">child 3</child>
+<child id="4">child 4</child>
+<child id="5">child 5</child>
+</root>
+EOF;
+
+        $patch = array(
+            'ns' => array(
+                'uman' => 'http://umanitoba.ca/libraries/test/',
+            ),
+            'changes' => array(
+                array('type' => 'remove', 'old' => '//uman:child[@id="1"]'),
+            ),
+        );
+        
+        $patcher = new XMLPatcher($patch);
+
+        $output1 = $patcher->apply_patch($xml1);
+        $dom = new \DOMDocument();
+        $dom->loadXML($output1);
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNameSpace('uman', 'http://umanitoba.ca/libraries/test/');
+        $hits = $xpath->query('//uman:child');
+        $this->assertEquals(1, $hits->length);
+
+        $output2 = $patcher->apply_patch($xml2);
+        $dom = new \DOMDocument();
+        $dom->loadXML($output2);
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNameSpace('uman', 'http://umanitoba.ca/libraries/test/');
+        $hits = $xpath->query('//uman:child');
+        $this->assertEquals(2, $hits->length);
+        
+        $output3 = $patcher->apply_patch($xml3);
+        $dom = new \DOMDocument();
+        $dom->loadXML($output3);
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNameSpace('uman', 'http://umanitoba.ca/libraries/test/');
+        $hits = $xpath->query('//uman:child');
+        $this->assertEquals(4, $hits->length);
+
+        unset($patcher);
+    }
 }
 
 
