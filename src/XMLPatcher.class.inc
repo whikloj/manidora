@@ -286,7 +286,7 @@ class XMLPatcher {
       $doc = simplexml_load_string($xml);
       $xml_lines = explode("\n", $xml);
 
-      if (!$doc) {
+      if ($doc === FALSE) {
         $errors = libxml_get_errors();
         
         $exception = "";
