@@ -1,13 +1,13 @@
 <?php
 
-use umanitoba\manidora\XMLPatcher;
-use umanitoba\manidora\XMLPatcherException;
+use Drupal\manidora\XMLPatcher;
+use Drupal\manidora\XMLPatcherException;
 
 class XMLPatcherTest extends PHPUnit_Framework_TestCase
 {
 
     /**
-     * @expectedException umanitoba\manidora\XMLPatcherException
+     * @expectedException Drupal\manidora\XMLPatcherException
      * @expectedExceptionCode 904
      */
     public function testBadPatch() {
@@ -23,7 +23,7 @@ class XMLPatcherTest extends PHPUnit_Framework_TestCase
     }
     
     /**
-     * @expectedException umanitoba\manidora\XMLPatcherException
+     * @expectedException Drupal\manidora\XMLPatcherException
      * @expectedExceptionCode 905
      */
     public function testBadXml() {

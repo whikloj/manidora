@@ -19,7 +19,7 @@
  * );
  */
 
-namespace umanitoba\manidora;
+namespace Drupal\manidora;
 
 class XMLPatcher {
     private $patch;

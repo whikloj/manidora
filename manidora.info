@@ -10,3 +10,4 @@ dependencies[] = print
 dependencies[] = print_pdf
 dependencies[] = islandora_compound_object
 dependencies[] = taxonomy
+dependencies[] = xautoload (>= 7.x-5.0)
