@@ -155,6 +155,7 @@ function __manidora_homepage_tabs_content() {
     "Libraries: Newspapers" => "uofm:libraries",
     "Restorative Dentistry Collection" => "uofm:restorativedentistry",
     "UM Marketing Communications Office" => "uofm:marketing",
+    "UM Office of the Secretary" => "uofm:umsecretary",
   );
 
   $output = <<<EOF

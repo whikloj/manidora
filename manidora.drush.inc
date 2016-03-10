@@ -110,7 +110,7 @@ function drush_manidora_book_batch() {
     drush_invoke_process('@self', 'islandora_book_batch_preprocess', array(), array(
       'type' => 'directory',
       'target' => drush_get_option('target', '/usr/local/fedora/staging'),
-      'parent' => 'uofm:rarebooks',
+      'parent' => drush_get_option('parent', 'uofm:rarebooks'),
       'namespace' => 'uofm',
       'directory_dedup' => TRUE,
       'wait_for_metadata' => TRUE,
