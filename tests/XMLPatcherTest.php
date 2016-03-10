@@ -1,19 +1,13 @@
 <?php
 
-use \umanitoba\manidora\XMLPatcher;
-use \umanitoba\manidora\XMLPatcherException;
+use umanitoba\manidora\XMLPatcher;
+use umanitoba\manidora\XMLPatcherException;
 
 class XMLPatcherTest extends PHPUnit_Framework_TestCase
 {
 
-    protected static $mods_content;
-
-    public function setUp() {
-        self::$mods_content = file_get_contents(__DIR__ . '/test_mods.xml');
-    }
-
     /**
-     * @expectedException \umanitoba\manidora\XMLPatcherException
+     * @expectedException umanitoba\manidora\XMLPatcherException
      * @expectedExceptionCode 904
      */
     public function testBadPatch() {
@@ -29,7 +23,7 @@ class XMLPatcherTest extends PHPUnit_Framework_TestCase
     }
     
     /**
-     * @expectedException \umanitoba\manidora\XMLPatcherException
+     * @expectedException umanitoba\manidora\XMLPatcherException
      * @expectedExceptionCode 905
      */
     public function testBadXml() {
