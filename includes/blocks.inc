@@ -425,10 +425,10 @@ function __manidora_whats_new_content() {
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
   $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
 
-  $query = 'dc.title:[ * TO * ]';
+  $query = 'fgs_label_s:* AND fgs_createdDate_dt:*';
   $params = array(
-    'fl' => 'PID,dc.title,fgs_createdDate_s,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms',
-    'sort' => 'fgs_createdDate_s desc',
+    'fl' => 'PID,fgs_label_s,fgs_createdDate_dt,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms',
+    'sort' => 'fgs_createdDate_dt desc',
     'fq' => array(
       '-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")',
     ),
@@ -462,8 +462,8 @@ function __manidora_whats_new_content() {
   $map = function($o) {
     return array(
       'pid' => $o['PID'],
-      'title' => $o['dc.title'][0],
-      'date' => $o['fgs_createdDate_s'],
+      'title' => $o['fgs_label_s'],
+      'date' => $o['fgs_createdDate_dt'],
     );
   };
   if ($solr_results) {

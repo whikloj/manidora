@@ -266,7 +266,12 @@ function manidora_metadata_access(AbstractObject $object) {
  *   Access or not.
  */
 function manidora_technical_metadata_access($object) {
-  $allowed_models = array('islandora:sp_basic_image', 'islandora:sp_large_image_cmodel');
+  $allowed_models = array(
+    'islandora:sp_basic_image',
+    'islandora:sp_large_image_cmodel',
+    'islandora:sp_videoCModel',
+    'islandora:sp-audioCModel'
+  );
 
   if ($object[variable_get('islandora_fits_techmd_dsid', 'TECHMD')] && user_access('view technical metadata') && count(array_intersect($allowed_models, $object->models))) {
     return TRUE;
@@ -895,6 +900,9 @@ function manidora_islandora_view_print_object($object) {
   return array('manidora' => manidora_retrieve_metadata_form($object));
 }
 
+/**
+ * Implements hook_islandora_metadata_display_info().
+ */
 function manidora_islandora_metadata_display_info() {
   return array(
     'manidora_metadata' => array(
@@ -906,6 +914,17 @@ function manidora_islandora_metadata_display_info() {
   );
 }
 
+/**
+ * Returns rendered markup for the above metadata callback.
+ *
+ * @param AbstractObject $object
+ *    The Islandora object to provide metadata for.
+ * @param boolean $print
+ *    Whether to print the metadata or not.
+ * @return string
+ *
+ * @see hook_islandora_metadata_display_info()
+ */
 function manidora_metadata_markup_callback(AbstractObject $object, $print) {
   $output = "";
   if ($print) {
@@ -916,7 +935,14 @@ function manidora_metadata_markup_callback(AbstractObject $object, $print) {
   return $output;
 }
 
+/**
+ * Returns the description for the above description callback.
+ *
+ * @param AbstractObject $object
+ *    The Islandora object to provide metadata for.
+ *
+ * @see hook_islandora_metadata_display_info()
+ */
 function manidora_description_markup_callback(AbstractObject $object) {
   return manidora_set_title($object);
 }
-
