@@ -84,7 +84,7 @@ class XMLPatcher {
       $this->dom->loadXML($xml);
       
       if (!$this->dom) {
-        throw new XMLParserException("Unable to load XML to DOMDocument", 905);
+        throw new XMLPatcherException("Unable to load XML to DOMDocument", 905);
       }
 
       $this->xpath = new \DOMXpath($this->dom);

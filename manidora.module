@@ -919,3 +919,4 @@ function manidora_metadata_markup_callback(AbstractObject $object, $print) {
 function manidora_description_markup_callback(AbstractObject $object) {
   return manidora_set_title($object);
 }
+
