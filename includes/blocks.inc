@@ -149,7 +149,7 @@ function __manidora_homepage_tabs_content() {
     // "Faculty of Architecture" => "",
     // "Faculty of Dentistry" => "uofm:dentalDAMS",
     "Faculty of Medicine Archives" => "uofm:medArchives",
-    "Libraries: Architecture/Fine Arts Library" => "uofm:gardens",
+    "Libraries: Architecture/Fine Arts Library" => "uofm:archfa",
     "Libraries: Archives & Special Collections" => "uofm:archives",
     "Libraries: Icelandic Collection" => "uofm:icelandic",
     "Libraries: Newspapers" => "uofm:libraries",
