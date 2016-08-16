@@ -20,7 +20,7 @@
  *   The constructed form
  */
 function manidora_newspaper_search_form($form, &$form_state) {
-  module_load_include('inc', 'islandora_solr_search', 'includes/query_processor');
+  module_load_include('inc', 'islandora_solr', 'includes/query_processor');
   module_load_include('inc', 'manidora', 'includes/utilities');
   $solr_build = new IslandoraSolrQueryProcessor();
   

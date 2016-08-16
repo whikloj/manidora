@@ -68,7 +68,7 @@ function manidora_block_view($delta = '') {
  */
 function __manidora_homepage_tabs_content() {
   module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
-  module_load_include('inc', 'islandora_solr_search', 'includes/query_processor');
+  module_load_include('inc', 'islandora_solr', 'includes/query_processor');
 
   $subjects = array(
     "Aboriginal Peoples",
@@ -418,7 +418,7 @@ function __manidora_homepage_thumbnail_content() {
  */
 function __manidora_whats_new_content() {
   module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
-  module_load_include('inc', 'islandora_solr_search', 'includes/query_processor');
+  module_load_include('inc', 'islandora_solr', 'includes/query_processor');
   module_load_include('inc', 'islandora_restricted', 'includes/utilities');
   $solr_build = new IslandoraSolrQueryProcessor();
 
