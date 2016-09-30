@@ -425,7 +425,7 @@ function __manidora_whats_new_content() {
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
   $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
 
-  $query = 'fgs_label_s:* AND fgs_createdDate_dt:*';
+  $query = 'fgs_label_s:* AND fgs_createdDate_dt:* AND fedora_datastreams_ms:TN';
   $params = array(
     'fl' => 'PID,fgs_label_s,fgs_createdDate_dt,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms',
     'sort' => 'fgs_createdDate_dt desc',
