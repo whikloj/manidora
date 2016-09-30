@@ -893,14 +893,6 @@ function manidora_islandora_sp_large_image_cmodel_JPG_islandora_datastream_inges
 }
 
 /**
- * Implements hook_islandora_view_print_object().
- */
-function manidora_islandora_view_print_object($object) {
-  module_load_include('inc', 'manidora', 'includes/metadata');
-  return array('manidora' => manidora_retrieve_metadata_form($object));
-}
-
-/**
  * Implements hook_islandora_metadata_display_info().
  */
 function manidora_islandora_metadata_display_info() {
