@@ -859,6 +859,7 @@ function manidora_xml_form_builder_get_self_transforms() {
   $module_path = drupal_get_path('module', 'manidora');
   return array(
     'cleanup_dentist_form_mods.xsl' => "$module_path/xsl/cleanup_dentist_form_mods.xsl",
+    'remove_dental_from_mods.xsl' => "$module_path/xsl/remove_dental_from_mods.xsl",
   );
 }
 
