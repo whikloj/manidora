@@ -201,13 +201,15 @@ EOF;
 
   // Query is executed.
   try {
-    $results = $solr_build->executeQuery(FALSE);
+    $solr_build->executeQuery(FALSE);
+    $solr_results = $solr_build->islandoraSolrResult['response']['objects'];
   }
   catch (Exception $e) {
     drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error');
+    $solr_results = array();
   }
 
-  if ($results) {
+  if ($solr_results) {
     $get_nested = function($o, $name) {
       if (isset($o[$name])) {
         $tmp = $o[$name];
@@ -225,19 +227,16 @@ EOF;
       }
       return "";
     };
-    $solr_results = json_decode($results->getRawResponse(), TRUE);
+
     $clean = function($o) use ($get_nested) {
-      $title = $get_nested($o, 'dc.title');
-      if (empty($title)) {
-        $title = $get_nested($o, 'fgs_label_s');
-      }
       return array(
         'PID' => $get_nested($o, 'PID'),
-        'title' => $title,
+        'title' => $get_nested($o, 'object_label'),
       );
     };
 
-    $tmpobjects = array_map($clean, $solr_results['response']['docs']);
+    $tmpobjects = array_map($clean, $solr_results);
+
     // Solr can't sort by multivalued elements, so sort by title.
     usort($tmpobjects, create_function('$a,$b', 'return strcasecmp($a["title"],$b["title"]);'));
     $objects = array();
@@ -258,7 +257,8 @@ EOF;
     for ($letter_code = 97; $letter_code < (97+26); $letter_code += 1) {
       $letter = chr($letter_code);
       if (isset($objects[$letter])) {
-        $alpha_bar .= '<a href="#" onclick="jQuery(\'#coll_' . chr($x) . '\').scroll"> ' . chr($x) . ' </a>|';
+        $alpha_bar .= "<a href=\"#collection_$letter\"> $letter </a>|";
+        $collections = $objects[$letter];
         $odd = array();
         $even = array();
         $both = array(&$even, &$odd);
@@ -283,13 +283,13 @@ EOF;
         $tmp .= "</div> <!-- /.coll_letter_box -->\n";
       }
       else {
-        $alpha_bar .= ' ' . chr($x) . " |";
+        $alpha_bar .= ' ' . $letter . " |";
       }
     }
     $tmp .= "</div> <!-- /.manidora-collection-scroll-box-->\n";
     $alpha_bar = substr($alpha_bar, 0, -2) . "</span>";
 
-    $output .= $alpha_bar + $tmp;
+    $output .= $alpha_bar . $tmp;
   }
 
   $output .= <<<EOF
