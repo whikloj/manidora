@@ -160,12 +160,12 @@ function __manidora_homepage_tabs_content() {
 
   $output = <<<EOF
   <ul class="home-tabs-container">
-  <li class="home-tab active"><a title="List Collections by Subject" id="home-tabs-subjects" class="home-tab-link" href="javascript:void(0)">Subjects</a></li>
-  <li class="home-tab"><a title="List Collections Alphabetically" id="home-tabs-collections" class="home-tab-link" href="javascript:void(0)">Collections</a></li>
+  <li class="home-tab active"><a title="List Collections Alphabetically" id="home-tabs-collections" class="home-tab-link" href="javascript:void(0)">Collections</a></li>
+  <li class="home-tab"><a title="List Collections by Subject" id="home-tabs-subjects" class="home-tab-link" href="javascript:void(0)">Subjects</a></li>
   <li class="home-tab"><a title="Browse by Format type" id="home-tabs-formats" class="home-tab-link" href="javascript:void(0)">Formats</a></li>
   <li class="home-tab"><a title="List Collections by UM Faculty or Department" id="home-tabs-depts" class="home-tab-link" href="javascript:void(0)">Departments</a></li>
   </ul>
-  <div class="home-panel active" id="home-panel-subjects">
+  <div class="home-panel" id="home-panel-subjects">
     <div class="column_50 first">
 EOF;
   $half = intval(count($subjects) / 2) + (count($subjects) % 2);
@@ -181,7 +181,7 @@ EOF;
   $output .= <<<EOF
       </div><!-- /#.column_50 -->
     </div><!-- /#home-panel-subjects -->
-    <div class="home-panel" id="home-panel-collections">
+    <div class="home-panel active" id="home-panel-collections">
 EOF;
 
   $solr_build = new IslandoraSolrQueryProcessor();
@@ -198,57 +198,67 @@ EOF;
   $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $solr_params);
   // We don't need faceting or highlighting here.
   $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
+
+  // Query is executed.
   try {
-    $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
-    $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
+    $results = $solr_build->executeQuery(FALSE);
+  }
+  catch (Exception $e) {
+    drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error');
+  }
 
-    $solr->setCreateDocuments(0);
-    
-    // Query is executed.
-    try {
-      $solr_query = ($solr_build->internalSolrQuery) ? $solr_build->internalSolrQuery : $solr_build->solrQuery;
-      $method = 'GET';
-      $results = $solr->search($solr_query, $solr_build->solrStart, $solr_build->solrParams['rows'], $solr_build->solrParams, $method);
-    }
-    catch (Exception $e) {
-      drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error');
-    }
+  if ($results) {
+    $get_nested = function($o, $name) {
+      if (isset($o[$name])) {
+        $tmp = $o[$name];
+      }
+      else if (isset($o['solr_doc'][$name])) {
+        $tmp = $o['solr_doc'][$name];
+      }
+      if (isset($tmp)) {
+        if (is_array($tmp)) {
+          return reset($tmp);
+        }
+        else {
+          return $tmp;
+        }
+      }
+      return "";
+    };
+    $solr_results = json_decode($results->getRawResponse(), TRUE);
+    $clean = function($o) use ($get_nested) {
+      $title = $get_nested($o, 'dc.title');
+      if (empty($title)) {
+        $title = $get_nested($o, 'fgs_label_s');
+      }
+      return array(
+        'PID' => $get_nested($o, 'PID'),
+        'title' => $title,
+      );
+    };
 
-    $tmpobjects = array();
-    if ($results) {
-      $solr_results = json_decode($results->getRawResponse(), TRUE);
-      $clean = function($o) {
-        $title = "";
-        if (isset($o['dc.title'])) {
-          $title = $o['dc.title'][0];
-        }
-        elseif (isset($o['fgs_label_s'])) {
-          $title = $o['fgs_label_s'];
-        }
-        return array(
-          'PID' => $o['PID'],
-          'title' => $title,
-        );
-      };
-        
-      $tmpobjects = array_map($clean, $solr_results['response']['docs']);
-      // Solr can't sort by multivalued elements, so sort by title.
-      usort($tmpobjects, create_function('$a,$b', 'return strcasecmp($a["title"],$b["title"]);'));
-      $objects = array();
-      $cl = "";
-      /* Move the items so each letter that exists is an array of
-      those collections. */
-      array_walk($tmpobjects, function($v, $k) use (&$objects, &$cl) {
-        if (substr(strtolower(preg_replace('/^the\s?/i', "", $v['title'])), 0, 1) != $cl) {
-          $cl = substr(strtolower(preg_replace('/^the\s?/i', "", $v['title'])), 0, 1);
-        }
-        if (array_key_exists($cl, $objects) && !is_array($objects[$cl])) {
-          $objects[$cl] = array();
-        }
-        $objects[$cl][] = $v;
-      });
-      $tmp = "";
-      foreach ($objects as $letter => $collections) {
+    $tmpobjects = array_map($clean, $solr_results['response']['docs']);
+    // Solr can't sort by multivalued elements, so sort by title.
+    usort($tmpobjects, create_function('$a,$b', 'return strcasecmp($a["title"],$b["title"]);'));
+    $objects = array();
+    $cl = "";
+    /* Move the items so each letter that exists is an array of
+    those collections. */
+    array_walk($tmpobjects, function($v, $k) use (&$objects, &$cl) {
+      if (substr(strtolower(preg_replace('/^the\s?/i', "", $v['title'])), 0, 1) != $cl) {
+        $cl = substr(strtolower(preg_replace('/^the\s?/i', "", $v['title'])), 0, 1);
+      }
+      if (array_key_exists($cl, $objects) && !is_array($objects[$cl])) {
+        $objects[$cl] = array();
+      }
+      $objects[$cl][] = $v;
+    });
+    $alpha_bar = "<span class=\"coll_alpha_list\">";
+    $tmp = "<div class=\"manidora-collection-scroll\">";
+    for ($letter_code = 97; $letter_code < (97+26); $letter_code += 1) {
+      $letter = chr($letter_code);
+      if (isset($objects[$letter])) {
+        $alpha_bar .= '<a href="#" onclick="jQuery(\'#coll_' . chr($x) . '\').scroll"> ' . chr($x) . ' </a>|';
         $odd = array();
         $even = array();
         $both = array(&$even, &$odd);
@@ -258,7 +268,7 @@ EOF;
           $both[$k % 2][] = $v;
         });
         $both = array_merge($even, $odd);
-        $tmp .= "<div class=\"coll_letter_box\"><a name=\"coll_$letter\" class=\"collection_spacer\"></a>";
+        $tmp .= "<div class=\"coll_letter_box\"><a name=\"collection_$letter\" id=\"collection_$letter\" class=\"collection_spacer\"></a>";
         $tmp .= "<div class=\"column_50 first collections\">";
         $count = 0;
         foreach ($both as $c) {
@@ -272,23 +282,14 @@ EOF;
         $tmp .= "</div> <!-- /.column_50 -->\n";
         $tmp .= "</div> <!-- /.coll_letter_box -->\n";
       }
-
-      $output .= "<span class=\"coll_alpha_list\">";
-      for ($x = 97; $x < 122; $x += 1) {
-        if (array_key_exists(chr($x), $objects)) {
-          $output .= '<a href="#coll_' . chr($x) . '"> ' . chr($x) . ' </a>|';
-        }
-        else {
-          $output .= ' ' . chr($x) . " |";
-        }
+      else {
+        $alpha_bar .= ' ' . chr($x) . " |";
       }
-      $output = substr($output, 0, -3) . "</span>";
-      $output .= $tmp;
     }
-  }
-  catch (Exception $e) {
-    watchdog('Manidora', 'Homepage blocks error, Solr query threw (%e)', array('%e' => $e->getMessage()));
-    $output .= "Unable to retrieve collections";
+    $tmp .= "</div> <!-- /.manidora-collection-scroll-box-->\n";
+    $alpha_bar = substr($alpha_bar, 0, -2) . "</span>";
+
+    $output .= $alpha_bar + $tmp;
   }
 
   $output .= <<<EOF
@@ -341,6 +342,12 @@ EOF;
         jQuery('.home-tab, .home-panel').removeClass('active');
         jQuery('#home-panel-' + jQuery(this).attr('id').replace('home-tabs-','')).addClass('active');
         jQuery(this).parent('.home-tab').addClass('active');
+      });
+      jQuery('a[href^="#"]', '#home-panel-collections').click(function(e) {
+        e.preventDefault();
+        var href = jQuery(this).attr('href');
+        var target = jQuery(href, '#home-panel-collections');
+        target.scrollParent().scrollTop(target.scrollParent().scrollTop() + target.position().top);
       });
     });
     //-->
