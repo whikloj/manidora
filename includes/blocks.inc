@@ -231,7 +231,7 @@ EOF;
     $clean = function($o) use ($get_nested) {
       return array(
         'PID' => $get_nested($o, 'PID'),
-        'title' => $get_nested($o, 'object_label'),
+        'title' => $get_nested($o, 'dc.title'),
       );
     };
 
