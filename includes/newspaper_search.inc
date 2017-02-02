@@ -45,7 +45,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
   if ($results) {
     foreach ($results as $key => $doc) {
       if (strlen($doc['object_label']) > 0) {
-        $tmpobjects[$doc['PID']] = $doc['object_label']
+        $tmpobjects[$doc['PID']] = $doc['object_label'];
         $sql = 'RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel" AND ancestors_ms:"' . $doc['PID'] . '"';
         $sp = array(
           'facet' => 'false',
