@@ -21,18 +21,16 @@
  */
 function manidora_newspaper_search_form($form, &$form_state) {
   module_load_include('inc', 'islandora_solr', 'includes/query_processor');
-  module_load_include('inc', 'manidora', 'includes/utilities');
+  module_load_include('inc', 'islandora_solr', 'includes/utilities');
   $solr_build = new IslandoraSolrQueryProcessor();
-  
-  $solr_params = array('fl' => 'PID,title_sort_ms');
+
   $solr_query = '+RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperCModel"';
 
-  $solr_build->buildQuery($solr_query, $solr_params);
-  
-  $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $solr_params);
+  $solr_build->buildQuery($solr_query);
+
   $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
-  
-  $solr_build = manidora_allow_newspaper_issues_in_solr($solr_build);
+  $solr_build->solrParams = islandora_solr_remove_base_filters($solr_build->solrParams);
+
   try {
     $solr_build->executeQuery(FALSE);
     $results = $solr_build->islandoraSolrResult["response"]["objects"];
@@ -46,8 +44,8 @@ function manidora_newspaper_search_form($form, &$form_state) {
   $tmpobjects = array();
   if ($results) {
     foreach ($results as $key => $doc) {
-      if (strlen($doc['solr_doc']['title_sort_ms'][0]) > 0) {
-        $tmpobjects[$doc['PID']] = $doc['solr_doc']['title_sort_ms'][0];
+      if (strlen($doc['object_label']) > 0) {
+        $tmpobjects[$doc['PID']] = $doc['object_label']
         $sql = 'RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel" AND ancestors_ms:"' . $doc['PID'] . '"';
         $sp = array(
           'facet' => 'false',
@@ -58,7 +56,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
         );
         $solr_build->buildQuery($sql, $sp);
         $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $sp);
-        $solr_build = manidora_allow_newspaper_issues_in_solr($solr_build);
+        $solr_build->solrParams = islandora_solr_remove_base_filters($solr_build->solrParams);
         try {
           $solr_build->executeQuery(FALSE);
           $years = $solr_build->islandoraSolrResult['stats']['stats_fields']['mods_originInfo_dateIssued_dt'];
