@@ -200,8 +200,10 @@
   </xsl:template>
 
   <xsl:template match="pb:pbcoreSubject">
-    <xsl:comment><xsl:value-of select="name()"/></xsl:comment>
-    <xsl:value-of select="text()"/>
+    <xsl:call-template name="searchLink">
+      <xsl:with-param name="field">subject_topic_mt</xsl:with-param>
+      <xsl:with-param name="searchVal" select="text()" />
+    </xsl:call-template>
     <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
   </xsl:template>
   
@@ -287,6 +289,17 @@
         <xsl:apply-templates select="pb:rightsSummary|pb:rightsLink" />
       </xsl:with-param>
     </xsl:call-template>
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Permalink</xsl:with-param>
+      <xsl:with-param name="content">
+        <a>
+          <xsl:attribute name="target">_parent</xsl:attribute>
+          <xsl:variable name="pidtmp" select="php:functionString('request_uri')"/>
+          <xsl:variable name="pid" select="substring-before(substring-after($pidtmp,'uofm%3A'),'/manitoba_metadata')"/>
+          <xsl:attribute name="href"><xsl:value-of select="concat('http://hdl.handle.net/10719/',$pid)"/></xsl:attribute><xsl:text>
+        </a>
+      </xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
   
   <xsl:template match='pb:rightsSummary'>
@@ -350,7 +363,7 @@
       <xsl:with-param name="content">
         <xsl:choose>
           <xsl:when test="string-length(pb:instantiationRelationIdentifier) &gt; 0">
-            <a><xsl:attribute name="href" select="pb:instantiationRelationIdentifier"/><xsl:value-of select="pb:instantiationRelationType"/></a>
+            <a><xsl:attribute name="href"><xsl:value-of select="pb:instantiationRelationIdentifier"/></xsl:attribute><xsl:attribute name="target">_blank</xsl:attribute><xsl:value-of select="pb:instantiationRelationType"/></a>
           </xsl:when>
           <xsl:otherwise>
             <xsl:value-of select="pb:instantiationRelationType"/>

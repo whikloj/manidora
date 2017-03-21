@@ -426,7 +426,6 @@ function __manidora_homepage_thumbnail_content() {
 function __manidora_whats_new_content() {
   module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
   module_load_include('inc', 'islandora_solr', 'includes/query_processor');
-  module_load_include('inc', 'islandora_restricted', 'includes/utilities');
   $solr_build = new IslandoraSolrQueryProcessor();
 
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
@@ -488,9 +487,7 @@ function __manidora_whats_new_content() {
  */
 function manidora_preprocess_manidora_whats_new_item(&$variables) {
   global $user;
-  module_load_include('inc', 'islandora_restricted', 'includes/utilities');
 
-  $new_item = array();
   $item = $variables['item'];
   $object = islandora_object_load($item['pid']);
   if ($object) {
@@ -498,14 +495,17 @@ function manidora_preprocess_manidora_whats_new_item(&$variables) {
     $tstamp = DateTime::createFromFormat('Y-m-d\TH:i:s.uZ', $item['date']);
     $variables['timestamp'] = $tstamp;
     $title = $item['title'];
-    if (!islandora_restricted_user_has_access($object, $user)) {
-      $title .= " - Restricted";
-      $image_path = drupal_get_path('module', 'islandora_restricted') . '/images/access_denied.png';
+    if (module_exists('islandora_restricted')) {
+      module_load_include('inc', 'islandora_restricted', 'includes/utilities');
+      if (!islandora_restricted_user_has_access($object, $user)) {
+        $title .= " - Restricted";
+        $image_path = drupal_get_path('module', 'islandora_restricted') . '/images/access_denied.png';
+      }
     }
-    elseif (isset($object['TN'])) {
+    if (!isset($image_path) && isset($object['TN'])) {
       $image_path = 'islandora/object/' . $item['pid'] . '/datastream/TN/view';
     }
-    else {
+    else if (!isset($image_path)) {
       $image_path = drupal_get_path('module', 'islandora', '/images/folder.png');
     }
     $stitle = (strlen($title) > 30 ? substr($title, 0, strpos(wordwrap($title, 25, '~'), '~')) . '...' : $title);
@@ -550,7 +550,9 @@ function __manidora_check_restricted_permissions($doc, $roles) {
  */
 function __manidora_preview_image() {
   global $user;
-  module_load_include('inc', 'islandora_restricted', 'includes/utilities');
+  if (module_exists('islandora_restricted')) {
+    module_load_include('inc', 'islandora_restricted', 'includes/utilities');
+  }
   $path = current_path();
   $path_parts = explode('/', $path);
   $view = FALSE;
@@ -561,9 +563,14 @@ function __manidora_preview_image() {
       $obj = islandora_object_load($pid);
       if (!is_null($obj) && FALSE !== $obj) {
         if ($obj->getDatastream('TN') !== FALSE) {
-          if (islandora_restricted_retrieve_restrictions($obj, $user)) {
+          if (module_exists('islandora_restricted')) {
+            if (islandora_restricted_retrieve_restrictions($obj, $user)) {
+              $view = TRUE;
+              break;
+            }
+          }
+          else {
             $view = TRUE;
-            break;
           }
         }
       }
@@ -571,8 +578,9 @@ function __manidora_preview_image() {
     }
   }
   if ($view) {
+    $module_path = drupal_get_path('module', 'manidora');
     drupal_add_library('system', 'ui.draggable');
-    drupal_add_js(drupal_get_path('module', 'manidora') . '/js/preview.js');
+    drupal_add_js("{$module_path}/js/preview.js");
     $title = t('Preview');
     $url = url('islandora/object/' . $pid . '/datastream/TN/view');
     $output = <<<EOF

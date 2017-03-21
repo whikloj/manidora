@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" xmlns:lc_code="info:lc/xmlns/codelist-v1" version="1.0">
   <xsl:include href="string-utilities.xsl" />
- 
+
   <xsl:param name="islandoraUrl"/>
   <xsl:param name="collections"/>
   <xsl:param name="language" select="'eng'"/>
- 
+
   <xsl:param name="searchUrl">/islandora/search/</xsl:param>
 
   <!-- XXX: Should probably be tied to some config in the front-end. -->
@@ -16,11 +16,11 @@
   <xsl:param name="language_field">language_mt</xsl:param>
   <xsl:param name="member_field">RELS_EXT_isMemberOfCollection_uri_ms</xsl:param>
   <xsl:param name="related_field">related_item_title_mt</xsl:param>
-  
+
   <xsl:key name="nameKeys" match="mods:name" use="mods:role/mods:roleTerm" />
-  
+
   <xsl:key name="CCAccessKey" match="mods:accessCondition" use="concat(@type,'+',text())" />
-  
+
   <xsl:template match="mods:mods">
     <table class="manidora-metadata" vocab="http://purl.org/dc/terms/" prefix="dc: http://purl.org/dc/elements/1.1/" typeof="Article">
       <xsl:call-template name="basic_output">
@@ -37,8 +37,8 @@
       </xsl:if>
       <xsl:apply-templates select="mods:abstract" />
       <xsl:apply-templates select="mods:relatedItem"></xsl:apply-templates>
-      
-      
+
+
       <xsl:apply-templates select="mods:typeOfResource" />
       <xsl:choose>
         <xsl:when test="count(mods:subject/mods:temporal[string-length(text()|*) &gt; 0]) &gt; 1">
@@ -72,7 +72,7 @@
       <xsl:apply-templates select="mods:relatedItem/mods:part/mods:date" />
     </table>
   </xsl:template>
-  
+
   <!-- BASIC OUTPUT TEMPLATE -->
   <xsl:template name="basic_output">
     <xsl:param name="label"/>
@@ -90,7 +90,7 @@
     </xsl:if>
   </xsl:template>
   <!-- BASIC OUTPUT TEMPLATE -->
- 
+
 
   <xsl:template mode="search_link" match="text()">
     <xsl:param name="field"/>
@@ -105,7 +105,7 @@
       <xsl:text>%22</xsl:text>
     </xsl:attribute>
   </xsl:template>
-  
+
   <xsl:template mode="search_link2" match="text()">
     <xsl:param name="field"/>
     <xsl:param name="searchValue" select="normalize-space(.)"/>
@@ -127,7 +127,7 @@
         <xsl:value-of select="$displayValue"/>
     </a>
   </xsl:template>
-  
+
   <xsl:template name="searchLink">
     <xsl:param name="field"/>
     <xsl:param name="searchVal"/>
@@ -174,7 +174,7 @@
       </xsl:choose>
     </xsl:for-each>
   </xsl:template>
-          
+
   <xsl:template match="mods:name" mode="basic">
     <xsl:if test="string-length(text()) &gt; 0">
       <xsl:call-template name="basic_output">
@@ -188,13 +188,13 @@
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
-  
+
   <xsl:template match="mods:name" mode="grouping">
     <xsl:apply-templates select="." mode="text_out" />
     <xsl:text> </xsl:text>
     <xsl:apply-templates select="descendant-or-self::mods:roleTerm[1]"/><br />
   </xsl:template>
-  
+
   <xsl:template match="mods:name" mode="text_out">
     <!-- Output nameParts as text -->
     <xsl:choose>
@@ -214,7 +214,7 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  
+
   <xsl:template match="mods:relatedItem[@type = 'host' and mods:titleInfo/mods:title]">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Related Items</xsl:with-param>
@@ -235,7 +235,7 @@
       <xsl:with-param name="property">dc:related</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <!-- BASIC template output -->
   <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type='volume']">
       <xsl:call-template name="basic_output">
@@ -243,14 +243,14 @@
           <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
       </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match="mods:relatedItem/mods:part/mods:detail[@type='issue']">
     <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Issue</xsl:with-param>
         <xsl:with-param name="content"><xsl:value-of select="mods:number"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-      
+
   <xsl:template match="mods:abstract">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Description</xsl:with-param>
@@ -258,7 +258,7 @@
       <xsl:with-param name="property">dc:description</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match="mods:relatedItem/mods:part/mods:extent/mods:start">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Page Start</xsl:with-param>
@@ -283,7 +283,7 @@
       </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match="mods:relatedItem/mods:part/mods:date">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Date</xsl:with-param>
@@ -291,7 +291,7 @@
       <xsl:with-param name="property">dc:date</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match="mods:originInfo">
     <xsl:apply-templates select="mods:publisher" />
     <xsl:apply-templates select="mods:issuedDate|mods:dateCreated" />
@@ -312,7 +312,7 @@
       <xsl:with-param name="property">dc:publisher</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match="mods:issuedDate|mods:dateCreated">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Publication date</xsl:with-param>
@@ -320,7 +320,7 @@
       <xsl:with-param name="property">dc:date</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match="mods:placeTerm">
     <xsl:value-of select="text()"/>
     <xsl:if test="last() &gt; 1 and position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
@@ -345,7 +345,7 @@
           <xsl:with-param name="property">dc:identifier</xsl:with-param>
 	</xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match="mods:subject">
     <xsl:if test="mods:topic or mods:name[@type='personal'] or mods:titleInfo">
       <xsl:call-template name="basic_output">
@@ -391,11 +391,11 @@
               <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
             </xsl:for-each>-->
           </xsl:with-param>
-          
+
         </xsl:call-template>
     </xsl:if>
   </xsl:template>
-  
+
 
   <xsl:template match="mods:hierarchicalGeographic">
     <xsl:if test="string-length(mods:country) &gt; 0 or string-length(mods:province) &gt; 0 or string-length(mods:city) &gt; 0">
@@ -416,7 +416,7 @@
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
-  
+
   <xsl:template match="mods:subject[@displayLabel='title']|mods:subject[@displayLabel = 'subject']|mods:subject[@displayLabel = 'general']|mods:subject[@displayLabel = 'removable']" priority="5">
     <xsl:call-template name="dental_output">
       <xsl:with-param name="label"><xsl:call-template name="toProperCase"><xsl:with-param name="text" select="@displayLabel" /></xsl:call-template></xsl:with-param>
@@ -523,12 +523,18 @@
       <xsl:with-param name="property">dc:rights</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match="mods:note">
     <xsl:choose>
       <xsl:when test="@type = 'biographical/historical'">
         <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Tagged By</xsl:with-param>
+          <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="@type = 'citation'">
+        <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Citation</xsl:with-param>
           <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
         </xsl:call-template>
       </xsl:when>
