@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:mods="http://www.loc.gov/mods/v3">
-    <!--
-      Remove Dental and Creative Commons elements from the MODS form
-    //-->
+
     <xsl:output encoding="UTF-8" indent="yes" media-type="text/xml" method="xml" version="1.0"/>
     <xsl:strip-space elements="*"/>
     <xsl:template match="*[not(node())]"/>
@@ -16,7 +14,7 @@
     <xsl:template match="mods:subject[@displayLabel='maxillofacial']"/>
     <xsl:template match="mods:subject[@displayLabel='implants']"/>
     <!-- Remove Creative Commons -->
-    <xsl:template match="mods:accessCondition[@type='Creative Commons License'"]"/>
+    <xsl:template match="mods:accessCondition[@type='Creative Commons License']"/>
 
     <!-- Otherwise keep the non-empty elements -->
     <xsl:template match="node()|@*">
