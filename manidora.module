@@ -583,8 +583,8 @@ function manidora_xml_form_builder_forms() {
  * as it is unreliable
  */
 function manidora_form_islandora_collection_search_form_alter(&$form, &$form_state) {
-  if (isset($form['simple']) && 
-    isset($form['simple']['collection_pid']) && 
+  if (isset($form['simple']) &&
+    isset($form['simple']['collection_pid']) &&
     isset($form['simple']['collection_pid']['value'])) {
     $collection_pid = $form['simple']['collection_pid']['#value'];
     if ($collection_pid && preg_match('/^\w+:[a-zA-Z0-9]+$/', $collection_pid)) {
@@ -861,6 +861,9 @@ function manidora_xml_form_builder_get_self_transforms() {
   return array(
     'cleanup_dentist_form_mods.xsl' => "$module_path/xsl/cleanup_dentist_form_mods.xsl",
     'remove_dental_from_mods.xsl' => "$module_path/xsl/remove_dental_from_mods.xsl",
+    'manidora_pbcore_cleanup.xsl' => "$module_path/xsl/manidora_pbcore_cleanup.xsl",
+    'manidora_pbcore_cleanup_remove_cc.xsl' => "$module_path/xsl/manidora_pbcore_cleanup_remove_cc.xsl",
+    'remove_dental_and_cc_from_mods.xsl' => "$module_path/xsl/remove_dental_and_cc_from_mods.xsl",
   );
 }
 
