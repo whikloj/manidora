@@ -545,7 +545,7 @@ function manidora_pbcore_metadata($object) {
 /**
  * Implements hook_islandora_xml_form_builder_forms().
  */
-function manidora_islandora_xml_form_builder_forms() {
+function manidora_xml_form_builder_forms() {
   $module_path = drupal_get_path('module', 'manidora');
   return array(
     'PBCORE Display' => array(
@@ -723,7 +723,7 @@ function manidora_islandora_compound_object_children_removed_from_parent($object
 /**
  * Implements hook_islandora_xml_form_builder_form_associations().
  */
-function manidora_islandora_xml_form_builder_form_associations() {
+function manidora_xml_form_builder_form_associations() {
   return array(
     'uofm_basic_image_mods_form' => array(
       'content_model' => 'islandora:sp_basic_image',
