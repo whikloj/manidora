@@ -7,7 +7,7 @@
  *  $title => dc.title,
  *  $image => linked thumbnail,
  *  $link => linked title,
- *  $timestamp => DateTime added to Solr
+ *  $timestamp => date/time added to Solr
  */
 ?>
 <div class="manidora-whats-new-row">
@@ -16,6 +16,6 @@
   </div>
   <div class="manidora-whats-new-info">
     <?php print $link; ?><br />
-    <span class="manidora-whats-new-timestamp date"><?php print $timestamp->format('M j, Y'); ?></span>
+    <span class="manidora-whats-new-timestamp date"><?php print $timestamp; ?></span>
   </div>
 </div>

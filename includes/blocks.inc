@@ -362,7 +362,9 @@ EOF;
  * Display 16 thumbnails on the homepage from those selected.
  */
 function __manidora_homepage_thumbnail_content() {
-  module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
+  //module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
+  module_load_include('inc', 'islandora_solr', 'includes/utilities');
+
   // How many thumbnails are we displaying?
   $num_pics = 16;
   // Figure out when to break.
@@ -389,32 +391,51 @@ function __manidora_homepage_thumbnail_content() {
     $solr_query = '+PID:("' . implode('" "', $t_array) . '")';
     // Get the PID and dc.title.
     $solr_params = array('fl' => 'PID,title_sort_ms');
-    $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
-    // $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
-    $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
 
-    $solr->setCreateDocuments(0);
-    $results = $solr->search($solr_query, 0, 100, $solr_params);
+    $qp = new IslandoraSolrQueryProcessor();
+    $qp->buildQuery($solr_query, $solr_params);
+
+    try {
+      $qp->executeQuery(FALSE);
+      $results = $qp->islandoraSolrResult['response']['objects'];
+    }
+    catch (Exception $e) {
+      drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error');
+      $results = array();
+    }
+
     if ($results) {
-      $solr_results = json_decode($results->getRawResponse(), TRUE);
       $data = array();
-      foreach ($solr_results["response"]["docs"] as $key => $doc) {
-        $data[$doc['PID']] = (array_key_exists('title_sort_ms', $doc) ? $doc['title_sort_ms'][0] : "");
+      foreach ($results as $doc) {
+        $data[$doc['PID']] = $doc['object_label'];
       }
     }
-    if (count($t_array) >= $num_pics) {
-      $picked = array_rand($t_array, $num_pics);
-      $output = '<div id="manidora-homepage-thumbs">';
-      foreach ($picked as $pid) {
-        $title = '';
-        // If $data is an array and has a key of the current PID,
-        // then we know the title.
-        if (isset($data) && is_array($data) && array_key_exists($t_array[$pid], $data)) {
-          $title = 'title="' . check_plain($data[$t_array[$pid]]) . '" ';
-        }
-        $output .= '<a ' . $title . 'href="' . url("islandora/object/" . $t_array[$pid]) . '" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . $t_array[$pid] . "/datastream/TN/view") . '" alt="Object ' . check_plain($t_array[$pid]) . '" class="manidora-homepage-thumb-img" /></a>' . "\n";
+    if (count($results) >= $num_pics) {
+      $picked = array_rand($results, $num_pics);
+      $output = array(
+        '#type' => 'container',
+        '#id' => "manidora-homepage-thumbs",
+      );
+      foreach ($picked as $object) {
+        $output[$object['PID']] = array(
+          '#type' => 'link',
+          '#path' => $object['object_url'],
+          '#attributes' => array(
+            'title' => check_plain($object['object_label']),
+            'class' => array('manidora-homepage-thumb-link'),
+          ),
+          str_replace(':', '_', $object['PID']) . '_tn' => array(
+            '#type' => 'image',
+            '#path' => $object['object_thumbnail'],
+            '#attributes' => array(
+              'title' => check_plain($object['object_label']),
+              'class' => array("manidora-homepage-thumb-img"),
+            ),
+          ),
+        );
+        // '<a title' . $title . 'href="' . url("islandora/object/" . $t_array[$pid]) . '" class="manidora-homepage-thumb-link"><img src="' . url("islandora/object/" . $t_array[$pid] . "/datastream/TN/view") . '" alt="Object ' . check_plain($t_array[$pid]) . '" class="manidora-homepage-thumb-img" /></a>' . "\n";
       }
-      $output .= "</div> <!-- /#manidora-homepage-thumbs -->\n";
+      //$output .= "</div> <!-- /#manidora-homepage-thumbs -->\n";
     }
   }
   return $output;
@@ -424,8 +445,7 @@ function __manidora_homepage_thumbnail_content() {
  * Generate 4 most recently added items from Solr timestamp.
  */
 function __manidora_whats_new_content() {
-  module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
-  module_load_include('inc', 'islandora_solr', 'includes/query_processor');
+  module_load_include('inc', 'islandora_solr', 'includes/utilities');
   $solr_build = new IslandoraSolrQueryProcessor();
 
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
@@ -443,18 +463,13 @@ function __manidora_whats_new_content() {
     'rows' => 4,
     'limit' => 4,
   );
-  $solr->setCreateDocuments(0);
+  //$solr->setCreateDocuments(0);
   $solr_build->buildQuery($query, $params);
 
   $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $params);
   $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
-  
-  for ($foo = 0; $foo < count($solr_build->solrParams['fq']); $foo += 1) {
-    if ($solr_build->solrParams['fq'][$foo] == '-RELS_EXT_hasModel_uri_ms:"info:fedora/islandora:newspaperIssueCModel"') {
-      // We need to stop stripping out newspaperIssues from here too.
-      unset($solr_build->solrParams['fq'][$foo]);
-    }
-  }
+  $solr_build->solrParams = islandora_solr_remove_base_filters($solr_build->solrParams);
+
   try {
     $solr_query = ($solr_build->internalSolrQuery) ? $solr_build->internalSolrQuery : $solr_build->solrQuery;
     $method = 'GET';
@@ -493,7 +508,12 @@ function manidora_preprocess_manidora_whats_new_item(&$variables) {
   if ($object) {
     $variables['pid'] = $item['pid'];
     $tstamp = DateTime::createFromFormat('Y-m-d\TH:i:s.uZ', $item['date']);
-    $variables['timestamp'] = $tstamp;
+    if ($tstamp) {
+      $variables['timestamp'] = $tstamp->format('M j, Y');
+    }
+    else {
+      $variables['timestamp'] = '';
+    }
     $title = $item['title'];
     if (module_exists('islandora_restricted')) {
       module_load_include('inc', 'islandora_restricted', 'includes/utilities');
@@ -529,6 +549,7 @@ function manidora_preprocess_manidora_whats_new_item(&$variables) {
  * return int : 0 => public, 1 => restricted, 2 => hidden
  */
 function __manidora_check_restricted_permissions($doc, $roles) {
+  // TODO: Deprecate and remove
   if (array_key_exists('RELS_EXT_restrictedState_literal_ms', $doc)) {
     if (count(array_intersect($roles, $doc['RELS_EXT_canSeeRestricted_uri_ms'])) > 0) {
       // If the person has the role, then it is public to them
@@ -550,9 +571,6 @@ function __manidora_check_restricted_permissions($doc, $roles) {
  */
 function __manidora_preview_image() {
   global $user;
-  if (module_exists('islandora_restricted')) {
-    module_load_include('inc', 'islandora_restricted', 'includes/utilities');
-  }
   $path = current_path();
   $path_parts = explode('/', $path);
   $view = FALSE;
@@ -564,6 +582,7 @@ function __manidora_preview_image() {
       if (!is_null($obj) && FALSE !== $obj) {
         if ($obj->getDatastream('TN') !== FALSE) {
           if (module_exists('islandora_restricted')) {
+            module_load_include('inc', 'islandora_restricted', 'includes/utilities');
             if (islandora_restricted_retrieve_restrictions($obj, $user)) {
               $view = TRUE;
               break;
