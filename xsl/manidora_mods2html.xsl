@@ -215,7 +215,7 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="mods:relatedItem[@type = 'host' and mods:titleInfo/mods:title]">
+  <xsl:template match="mods:relatedItem[@type = 'host' and mods:titleInfo/mods:title and not(mods:location/mods:url)]">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Related Items</xsl:with-param>
         <xsl:with-param name="content"><a>
