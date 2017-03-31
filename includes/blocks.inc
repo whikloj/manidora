@@ -148,6 +148,7 @@ function __manidora_homepage_tabs_content() {
   $departments = array(
     // "Faculty of Architecture" => "",
     // "Faculty of Dentistry" => "uofm:dentalDAMS",
+    "Faculty of Law" => "uofm:faclaw",
     "Faculty of Medicine Archives" => "uofm:medArchives",
     "Libraries: Architecture/Fine Arts Library" => "uofm:archfa",
     "Libraries: Archives & Special Collections" => "uofm:archives",
@@ -188,7 +189,10 @@ EOF;
   $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:uofm* AND RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:collectionCModel" "info:fedora/islandora:newspaperCModel"))';
   $solr_params = array(
     "fl" => "PID,dc.title,fgs_label_s",
-    'fq' => '-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives" "uofm:archives")',
+    'fq' => array(
+      '-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives" "uofm:archives")',
+      '-RELS_EXT_isMemberOfCollection_uri_ms:("uofm:gardens")',
+    ),
     'rows' => 100000,
     'limit' => 100000,
     'facet' => 'false',

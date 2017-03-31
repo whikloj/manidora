@@ -28,6 +28,18 @@
         <xsl:with-param name="content"><xsl:value-of select="mods:titleInfo/mods:title"/></xsl:with-param>
         <xsl:with-param name="property">dc:title</xsl:with-param>
       </xsl:call-template>
+      <xsl:if test="mods:titleInfo/mods:subTitle[string-length(text()|*) &gt; 0]">
+        <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Subtitle</xsl:with-param>
+          <xsl:with-param name="content"><xsl:value-of select="mods:titleInfo/mods:subTitle"/></xsl:with-param>
+        </xsl:call-template>
+      </xsl:if>
+      <xsl:if test="mods:titleInfo/mods:subtitle[string-length(text()|*) &gt; 0]">
+        <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Subtitle</xsl:with-param>
+          <xsl:with-param name="content"><xsl:value-of select="mods:titleInfo/mods:subtitle"/></xsl:with-param>
+        </xsl:call-template>
+      </xsl:if>
       <xsl:if test="string-length($collections) &gt; 0">
         <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Collections</xsl:with-param>
