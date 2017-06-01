@@ -447,8 +447,8 @@
       <xsl:if test="string-length(text()|*) &gt; 0">
         <xsl:if test="position() &gt; 1">
           <xsl:text>, </xsl:text>
-          <xsl:value-of select="."/>
         </xsl:if>
+        <xsl:value-of select="."/>
       </xsl:if>
     </xsl:for-each>
   </xsl:template>
