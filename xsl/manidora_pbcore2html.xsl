@@ -2,7 +2,7 @@
 <xsl:stylesheet xmlns:pb="http://www.pbcore.org/PBCore/PBCoreNamespace.html" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" xmlns:lc_code="info:lc/xmlns/codelist-v1" version="1.0">
   <xsl:param name="islandoraUrl"/>
   <xsl:param name="collections"/>
-  
+
   <xsl:include href="string-utilities.xsl" />
 
   <xsl:param name="searchUrl">/islandora/search/</xsl:param>
@@ -15,12 +15,12 @@
   <xsl:param name="language_field">language_mt</xsl:param>
   <xsl:param name="member_field">RELS_EXT_isMemberOfCollection_uri_ms</xsl:param>
   <xsl:param name="related_field">related_item_title_mt</xsl:param>
-  
+
   <xsl:key name="creatorKeys" match="pb:pbcoreCreator" use="pb:creatorRole" />
   <xsl:key name="contributorKeys" match="pb:pbcoreContributor" use="pb:contributorRole" />
-  
+
   <xsl:key name="CCAccessKey" match="pb:accessCondition" use="concat(@type,'+',text())" />
-  
+
   <xsl:template match="pb:pbcoreDescriptionDocument">
     <table class="manidora-metadata">
       <xsl:call-template name="basic_output">
@@ -34,7 +34,7 @@
         </xsl:call-template>
       </xsl:if>
       <xsl:apply-templates select="pb:pbcoreDescription" />
-        
+
       <xsl:apply-templates select="pb:pbcoreCoverage[pb:coverageType='Temporal']" />
       <xsl:if test="count(pb:pbcoreSubject) &gt; 0">
         <xsl:call-template name="basic_output">
@@ -48,7 +48,7 @@
       <xsl:apply-templates select="pb:pbcoreRightsSummary" />
     </table>
   </xsl:template>
-  
+
   <!-- BASIC OUTPUT TEMPLATE -->
   <xsl:template name="basic_output">
     <xsl:param name="label"/>
@@ -61,7 +61,7 @@
     </xsl:if>
   </xsl:template>
   <!-- BASIC OUTPUT TEMPLATE -->
- 
+
   <xsl:template match="pb:pbcoreInstantiation">
     <xsl:choose>
       <xsl:when test="last() &gt; 1">
@@ -99,7 +99,7 @@
       <xsl:text>%22</xsl:text>
     </xsl:attribute>
   </xsl:template>
-  
+
   <xsl:template mode="search_link2" match="text()">
     <xsl:param name="field"/>
     <xsl:variable name="textValue" select="normalize-space(.)"/>
@@ -116,7 +116,7 @@
         <xsl:value-of select="."/>
     </a>
   </xsl:template>
-  
+
   <xsl:template name="searchLink">
     <xsl:param name="field"/>
     <xsl:param name="searchVal"/>
@@ -146,25 +146,25 @@
        </xsl:with-param>
      </xsl:call-template>
   </xsl:template>
-          
+
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="grouping">
     <xsl:apply-templates select="." mode="text_out" />
     <xsl:text> </xsl:text>
     <xsl:apply-templates select="descendant-or-self::pb:creatorRole|descendant-or-self::pb:contributorRole"/>
     <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
   </xsl:template>
-  
+
   <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="text_out">
     <!-- Output nameParts as text -->
     <xsl:apply-templates select="pb:creator|pb:contributor" mode="text_out"/>
     <xsl:if test="position() &gt; last()"><xsl:text>, </xsl:text></xsl:if>
   </xsl:template>
-  
+
   <xsl:template match="node()" mode="text_out" priority="-1">
     <xsl:value-of select="text()" />
   </xsl:template>
-  
-  
+
+
   <!-- BASIC template output -->
 
   <xsl:template match="pb:pbcoreDescription">
@@ -173,7 +173,7 @@
       <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
 
 
   <xsl:template match="pb:pbcorePublisher">
@@ -182,7 +182,7 @@
       <xsl:with-param name="content"><xsl:value-of select="pb:publisher"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match="pb:instantiationDate">
     <xsl:if test="not(ancestor::pb:pbcoreDescriptionDocument/pb:pbcoreCoverage/pb:coverageType = 'Spatial')">
       <xsl:call-template name="basic_output">
@@ -191,7 +191,7 @@
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
-  
+
   <xsl:template match="pb:instantiationIdentifier[@type='local']">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Local Identifier</xsl:with-param>
@@ -206,7 +206,7 @@
     </xsl:call-template>
     <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
   </xsl:template>
-  
+
   <xsl:template name="places">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Place(s)</xsl:with-param>
@@ -238,7 +238,7 @@
       </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template name="translateLang">
     <xsl:param name="langString" />
     <xsl:variable name="alpha">abcdefghijklmnopqrstuvwxyz</xsl:variable>
@@ -296,16 +296,18 @@
           <xsl:attribute name="target">_parent</xsl:attribute>
           <xsl:variable name="pidtmp" select="php:functionString('request_uri')"/>
           <xsl:variable name="pid" select="substring-before(substring-after($pidtmp,'uofm%3A'),'/manitoba_metadata')"/>
+<!--
           <xsl:attribute name="href"><xsl:value-of select="concat('http://hdl.handle.net/10719/',$pid)"/></xsl:attribute><xsl:text>
+-->
         </a>
       </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template match='pb:rightsSummary'>
      <xsl:value-of select="text()"/>
   </xsl:template>
-  
+
   <xsl:template match='pb:rightsLink'>
     <div class="manidora-commons-license">
       <a rel="license" target="_new">
@@ -334,7 +336,7 @@
         </xsl:choose>
       </xsl:with-param>
     </xsl:call-template>
-  </xsl:template> 
+  </xsl:template>
 
   <xsl:template match="pb:instantiationDuration">
     <xsl:call-template name="basic_output">
@@ -387,10 +389,10 @@
       <xsl:when test="$cleanBytes &gt;= $gigabyte">
         <xsl:value-of select="format-number($cleanBytes div $gigabyte, '0.##')" /><xsl:text> GB</xsl:text>
       </xsl:when>
-      <xsl:when test="$cleanBytes &gt;= $megabyte"> 
+      <xsl:when test="$cleanBytes &gt;= $megabyte">
         <xsl:value-of select="format-number($cleanBytes div $megabyte, '0.##')" /><xsl:text> MB</xsl:text>
       </xsl:when>
-      <xsl:when test="$cleanBytes &gt;= $kilobyte"> 
+      <xsl:when test="$cleanBytes &gt;= $kilobyte">
         <xsl:value-of select="format-number($cleanBytes div $kilobyte, '0.##')" /><xsl:text> KB</xsl:text>
       </xsl:when>
       <xsl:otherwise>

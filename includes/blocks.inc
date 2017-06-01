@@ -191,7 +191,7 @@ EOF;
     "fl" => "PID,dc.title,fgs_label_s",
     'fq' => array(
       '-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives" "uofm:archives")',
-      '-RELS_EXT_isMemberOfCollection_uri_ms:("uofm:gardens")',
+      '-RELS_EXT_isMemberOfCollection_uri_ms:("uofm:gardens" "uofm:icelandicveterans" "uofm:visitortalks")',
     ),
     'rows' => 100000,
     'limit' => 100000,

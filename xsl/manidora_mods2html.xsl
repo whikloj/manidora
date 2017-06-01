@@ -66,6 +66,7 @@
       </xsl:choose>
       <xsl:apply-templates select="mods:subject" />
       <xsl:apply-templates select="mods:subject/mods:hierarchicalGeographic" />
+      <xsl:apply-templates select="mods:subject/mods:cartographics/mods:coordinates" />
       <!--<xsl:apply-templates select="mods:name" />--><!-- 2013-09-04 (whikloj) : Trying to group Author/Creators/etc. -->
       <xsl:call-template name="groupNames" />
       <xsl:apply-templates select="mods:language" />
@@ -73,6 +74,7 @@
       <xsl:apply-templates select="mods:location/mods:physicalLocation" />
       <xsl:apply-templates select="mods:location/mods:shelfLocator" />
       <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
+      <xsl:apply-templates select="mods:physicalDescription/mods:extent/mods:total" />
       <xsl:apply-templates select="mods:identifier[@type='local']" />
       <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
       <xsl:apply-templates select="mods:identifier[@type='hdl']" />
@@ -278,12 +280,24 @@
     </xsl:call-template>
   </xsl:template>
 
+  <xsl:template match="mods:physicalDescription/mods:extent[@unit='page']/mods:total">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Page(s) </xsl:with-param>
+      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
   <xsl:template match="mods:relatedItem/mods:location/mods:url">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Source</xsl:with-param>
       <xsl:with-param name="content">
         <a><xsl:attribute name="href"><xsl:value-of select="text()"/></xsl:attribute>
         <xsl:choose>
+          <xsl:when test="contains(parent::node()/parent::node()/mods:titleInfo/mods:title,'Related Link')">
+            <xsl:value-of select="../../mods:titleInfo/mods:title" />
+            <xsl:text> - </xsl:text>
+            <xsl:value-of select="text()" />
+          </xsl:when>
           <xsl:when test="string-length(parent::node()/parent::node()/mods:titleInfo/mods:title) &gt; 0">
             <xsl:value-of select="../../mods:titleInfo/mods:title" />
           </xsl:when>
@@ -408,25 +422,51 @@
     </xsl:if>
   </xsl:template>
 
-
   <xsl:template match="mods:hierarchicalGeographic">
-    <xsl:if test="string-length(mods:country) &gt; 0 or string-length(mods:province) &gt; 0 or string-length(mods:city) &gt; 0">
+    <xsl:variable name="place_string">
+      <xsl:call-template name="list_with_commas">
+        <xsl:with-param name="list" select="*"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:comment><xsl:value-of select="$place_string"/></xsl:comment>
+    <xsl:if test="string-length($place_string) &gt; 0">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Place</xsl:with-param>
         <xsl:with-param name="content">
-          <xsl:if test="mods:country and string-length(mods:country) &gt; 0">
-            <xsl:value-of select="normalize-space(mods:country)"/>
-            <xsl:if test="(mods:province and string-length(mods:province) &gt; 0) or (mods:city and string-length(mods:city) &gt; 0)">, </xsl:if>
-          </xsl:if>
-          <xsl:if test="mods:province and string-length(mods:province) &gt; 0">
-            <xsl:value-of select="normalize-space(mods:province)"/>
-            <xsl:if test="mods:city and string-length(mods:city) &gt; 0">, </xsl:if>
-          </xsl:if>
-          <xsl:value-of select="normalize-space(mods:city)"></xsl:value-of>
+          <xsl:value-of select="$place_string"/>
         </xsl:with-param>
         <xsl:with-param name="property">dc:coverage</xsl:with-param>
       </xsl:call-template>
     </xsl:if>
+  </xsl:template>
+
+  <!-- This loops through the nodes and prints the values with a comma in front except the first.-->
+  <xsl:template name="list_with_commas">
+    <xsl:param name="list"/>
+    <xsl:for-each select="$list">
+      <xsl:if test="string-length(text()|*) &gt; 0">
+        <xsl:if test="position() &gt; 1">
+          <xsl:text>, </xsl:text>
+          <xsl:value-of select="."/>
+        </xsl:if>
+      </xsl:if>
+    </xsl:for-each>
+  </xsl:template>
+
+  <xsl:template match="mods:coordinates">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Map link</xsl:with-param>
+      <xsl:with-param name="content">
+        <a>
+          <xsl:attribute name="href">
+            <xsl:text>http://maps.google.com/?q=</xsl:text>
+            <xsl:value-of select="text()"></xsl:value-of>
+          </xsl:attribute>
+          <xsl:text>http://maps.google.com/?q=</xsl:text>
+            <xsl:value-of select="text()"></xsl:value-of>
+        </a>
+      </xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="mods:subject[@displayLabel='title']|mods:subject[@displayLabel = 'subject']|mods:subject[@displayLabel = 'general']|mods:subject[@displayLabel = 'removable']" priority="5">
