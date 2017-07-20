@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:php="http://php.net/xsl" xmlns:lc_code="info:lc/xmlns/codelist-v1" version="1.0">
+<xsl:stylesheet
+        xmlns:mods="http://www.loc.gov/mods/v3"
+        xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+        xmlns:php="http://php.net/xsl"
+        xmlns:lc_code="info:lc/xmlns/codelist-v1"
+        xmlns:exsl="http://exslt.org/common"
+        extension-element-prefixes="exsl"
+        exclude-result-prefixes="exsl"
+        version="1.0">
   <xsl:include href="string-utilities.xsl" />
 
   <xsl:param name="islandoraUrl"/>
@@ -160,7 +168,7 @@
   <xsl:template match="mods:typeOfResource">
       <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Format</xsl:with-param>
-          <xsl:with-param name="content"><xsl:apply-templates mode="search_link2" match="text()">
+          <xsl:with-param name="content"><xsl:apply-templates mode="search_link2" select="text()">
               <xsl:with-param name="field" select="$type_of_resource_field"/>
           </xsl:apply-templates></xsl:with-param>
           <xsl:with-param name="property">dc:type</xsl:with-param>
@@ -425,7 +433,15 @@
   <xsl:template match="mods:hierarchicalGeographic">
     <xsl:variable name="place_string">
       <xsl:call-template name="list_with_commas">
-        <xsl:with-param name="list" select="*"/>
+        <xsl:with-param name="list">
+          <xsl:copy-of select="mods:citySection"/>
+          <xsl:copy-of select="mods:city"/>
+          <xsl:copy-of select="mods:county"/>
+          <xsl:copy-of select="mods:region"/>
+          <xsl:copy-of select="mods:state"/>
+          <xsl:copy-of select="mods:province"/>
+          <xsl:copy-of select="mods:country"/>
+        </xsl:with-param>
       </xsl:call-template>
     </xsl:variable>
     <xsl:comment><xsl:value-of select="$place_string"/></xsl:comment>
@@ -443,12 +459,12 @@
   <!-- This loops through the nodes and prints the values with a comma in front except the first.-->
   <xsl:template name="list_with_commas">
     <xsl:param name="list"/>
-    <xsl:for-each select="$list">
+    <xsl:for-each select="exsl:node-set($list)/node()">
       <xsl:if test="string-length(text()|*) &gt; 0">
         <xsl:if test="position() &gt; 1">
           <xsl:text>, </xsl:text>
         </xsl:if>
-        <xsl:value-of select="."/>
+        <xsl:value-of select="text()"/>
       </xsl:if>
     </xsl:for-each>
   </xsl:template>
@@ -602,6 +618,7 @@
   <xsl:template name="groupAll">
     <xsl:param name="label" />
     <xsl:param name="nodes" />
+    <xsl:param name="property"></xsl:param>
 
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label" select="$label"/>
@@ -611,6 +628,7 @@
           <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
         </xsl:for-each>
       </xsl:with-param>
+      <xsl:with-param name="property" select="$property"/>
     </xsl:call-template>
   </xsl:template>
 
