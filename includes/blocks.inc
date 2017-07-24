@@ -196,18 +196,23 @@ EOF;
   $excluded_children = $expand_combine_pid(manidora_collection_get_excluded(True));
   $solr_params = array(
     "fl" => "PID,dc.title,fgs_label_s",
-    'fq' => array(
-      format_string("-PID:(!excluded)", ['!excluded' => $excluded_pids]),
-      format_string("-!ancestor_field:(!ancestors)", [
-        '!ancestor_field' => variable_get('manidora_omit_collection_ancestor_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
-        '!ancestors' => $excluded_children
-      ]),
-    ),
     'rows' => 100000,
     'limit' => 100000,
     'facet' => 'false',
     'hl' => 'false',
   );
+  if (!empty($excluded_pids) || !empty($excluded_children)) {
+    $solr_params['fq'] = [];
+    if (!empty($excluded_pids)) {
+      $solr_params['fq'][] = format_string("-PID:(!excluded)", ['!excluded' => $excluded_pids]);
+    }
+    if (!empty($excluded_children)) {
+      $solr_params['fq'][] = format_string("-!ancestor_field:(!ancestors)", [
+        '!ancestor_field' => variable_get('manidora_omit_collection_ancestor_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
+        '!ancestors' => $excluded_children
+      ]);
+    }
+  }
   $solr_build->buildQuery($solr_query, $solr_params);
   $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $solr_params);
   // We don't need faceting or highlighting here.
