@@ -4,8 +4,8 @@
     Author     : dgi
     Description:
         Purpose of the stylesheet follows.
-    
-    2013-06-14 (whikloj) : 
+
+    2013-06-14 (whikloj) :
         XSL was changed from list to table
 */
 
@@ -104,3 +104,17 @@
     border: 1px solid black;
     cursor: move;
 }
+
+.block ul.manidora-omit-collections-list {
+    list-style: none outside;
+    margin-left: 0px;
+}
+
+.block ul.manidora-omit-collections-list li {
+    display: inline;
+}
+
+.block ul.manidora-omit-collections-list li.first:after {
+    content: ' |';
+}
+

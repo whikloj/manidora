@@ -124,6 +124,29 @@ function manidora_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/admin_form.inc',
   );
+  $items['admin/islandora/manidora/collections'] = array(
+    'title' => 'Manidora Collection listing',
+    'description' => 'Configure the collection listing.',
+    'page callback' => 'drupal_get_form',
+    'access arguments' => array('administer site configuration'),
+    'page arguments' => array('manidora_collection_list_form'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/admin_form.inc',
+  );
+  $items['admin/islandora/manidora/collections/%/edit'] = [
+    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['manidora_omit_collections_edit_form', 4],
+    'access arguments' => ['administer site configuration'],
+    'file' => 'includes/admin_form.inc',
+  ];
+  $items['admin/islandora/manidora/collections/%/delete'] = [
+    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['manidora_omit_collections_delete_form', 4],
+    'access arguments' => ['administer site configuration'],
+    'file' => 'includes/admin_form.inc',
+  ];
   $items['islandora/manitoba/pdf/print'] = array(
     'type' => MENU_CALLBACK,
     'page callback' => 'manidora_printable_pdf',
@@ -170,6 +193,13 @@ function manidora_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
+  $items['islandora/manidora/collection_autocomplete'] = [
+    'page callback' => 'manidora_autocomplete_collections',
+    'page arguments' => [3],
+    'access arguments' => ['administer site configuration'],
+    'file' => 'includes/admin_form.inc',
+    'type' => MENU_CALLBACK,
+  ];
   return $items;
 }
 
@@ -345,11 +375,14 @@ function manidora_download_table($islandora_object) {
   foreach ($islandora_object as $ds) {
     if ($ds->size > 0) {
       $rows[] = array(
-        'ID' => l($ds->id, islandora_datastream_get_url($ds, 'view')),
+        'ID' => l($ds->id, islandora_datastream_get_url($ds, 'view'), array('attributes' => array('rel' => 'alternate'))),
         'label' => $ds->label,
         'mime' => $ds->mimeType,
         'size' => islandora_datastream_get_human_readable_size($ds),
-        'download' => l(t('download'), islandora_datastream_get_url($ds, 'download'), array('attributes' => array('onclick' => "manidora_trackDownloadLink('" . $ds->ID . "');"))),
+        'download' => l(t('download'), islandora_datastream_get_url($ds, 'download'), array('attributes' => array(
+          'onclick' => "manidora_trackDownloadLink('" . $ds->ID . "');",
+          'rel' => 'alternate',
+          ))),
       );
     }
   }
@@ -658,7 +691,7 @@ function manidora_islandora_derivative(AbstractObject $object) {
   );
   if (array_intersect($object->models, $image_content_models)) {
     // We are changing an image...
-    if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1)) {
+    //if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1)) {
       $base = array(
         'source_dsid' => 'OBJ',
         'file' => drupal_get_path('module', 'islandora_ocr') . '/includes/derivatives.inc',
@@ -671,7 +704,7 @@ function manidora_islandora_derivative(AbstractObject $object) {
         'destination_dsid' => 'HOCR',
         'function' => array('islandora_ocr_derive_hocr'),
       );
-    }
+    //}
   }
 
   $derivatives[] = array(

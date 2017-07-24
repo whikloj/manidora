@@ -67,8 +67,6 @@ function manidora_block_view($delta = '') {
  * Drupal. Unfortunately, due to time-constraints we are hard-coding.
  */
 function __manidora_homepage_tabs_content() {
-  module_load_include('php', 'islandora_solr', 'SolrPhpClient/Apache/Solr/Service');
-  module_load_include('inc', 'islandora_solr', 'includes/query_processor');
 
   $subjects = array(
     "Aboriginal Peoples",
@@ -187,11 +185,23 @@ EOF;
 
   $solr_build = new IslandoraSolrQueryProcessor();
   $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:uofm* AND RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:collectionCModel" "info:fedora/islandora:newspaperCModel"))';
+  $expand_combine_pid = function($pids) {
+    $pid_string = '';
+    foreach ($pids as $pid) {
+      $pid_string .= format_string('"info:fedora/!pid" "!pid" ', ['!pid' => $pid]);
+    }
+    return $pid_string;
+  };
+  $excluded_pids = $expand_combine_pid(manidora_collection_get_excluded());
+  $excluded_children = $expand_combine_pid(manidora_collection_get_excluded(True));
   $solr_params = array(
     "fl" => "PID,dc.title,fgs_label_s",
     'fq' => array(
-      '-PID:("uofm:libraries" "uofm:architecture" "uofm:medArchives" "uofm:archives")',
-      '-RELS_EXT_isMemberOfCollection_uri_ms:("uofm:gardens" "uofm:icelandicveterans" "uofm:visitortalks")',
+      format_string("-PID:(!excluded)", ['!excluded' => $excluded_pids]),
+      format_string("-!ancestor_field:(!ancestors)", [
+        '!ancestor_field' => variable_get('manidora_omit_collection_ancestor_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
+        '!ancestors' => $excluded_children
+      ]),
     ),
     'rows' => 100000,
     'limit' => 100000,

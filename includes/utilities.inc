@@ -8,13 +8,13 @@
 
 /**
  * Removes, replaces or adds XML elements from an XML string.
- * 
+ *
  * Replace will add if the element is not found.
- * 
+ *
  * @param $patch mixed
  *   Array of changes of the format.
  *   $change = array(
- *     'ns' => array('prefix' => 'uri'), 
+ *     'ns' => array('prefix' => 'uri'),
  *     'changes' => array(
  *        'replace' => array('old xpath', 'parent xpath', 'new xml'),
  *        'remove' => array('old xpath'),
@@ -135,7 +135,7 @@ function __manidora_xml_patcher_makeXMLChange(&$mods, $xpath, $type, $change, $n
         $hit->parentNode->removeChild($hit);
       }
       break;
-    
+
   }
 }
 
@@ -143,7 +143,7 @@ function __manidora_xml_patcher_makeXMLChange(&$mods, $xpath, $type, $change, $n
  * Insert namespace URI in element.
  *
  * Insert all namespaces not already defined in the XML
- * from the original XML document to ensure this XML 
+ * from the original XML document to ensure this XML
  * snippet will load.
  *
  * @param $element string
@@ -241,4 +241,25 @@ function manidora_retrieve_header_text($pid) {
   else {
     return FALSE;
   }
+}
+
+/**
+ * Get an array of excluded PIDs.
+ *
+ * @param bool $children
+ *    Whether to get objects that are excluded or their children are.
+ * @return array
+ *    Pids to be excluded
+ */
+function manidora_collection_get_excluded($children=False) {
+  $query = 'select pid from {manidora_omit_collections} where exclude_object = 1';
+  if ($children) {
+    $query = 'select pid from {manidora_omit_collections} where exclude_children = 1';
+  }
+  $results = db_query($query);
+  $pids = [];
+  foreach ($results as $result) {
+    $pids[] = $result->pid;
+  }
+  return $pids;
 }
