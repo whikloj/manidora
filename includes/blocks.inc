@@ -257,14 +257,18 @@ EOF;
     $tmpobjects = array_map($clean, $solr_results);
 
     // Solr can't sort by multivalued elements, so sort by title.
-    usort($tmpobjects, create_function('$a,$b', 'return strcasecmp($a["title"],$b["title"]);'));
+    usort($tmpobjects, create_function('$a,$b', 'return strcasecmp(preg_replace("/^the\s?/i", "", $a["title"]),preg_replace("/^the\s?/i", "", $b["title"]));'));
     $objects = array();
     $cl = "";
     /* Move the items so each letter that exists is an array of
     those collections. */
     array_walk($tmpobjects, function($v, $k) use (&$objects, &$cl) {
-      if (substr(strtolower(preg_replace('/^the\s?/i', "", $v['title'])), 0, 1) != $cl) {
-        $cl = substr(strtolower(preg_replace('/^the\s?/i', "", $v['title'])), 0, 1);
+      if (strpos(strtolower($v['title']), "the ") === 0) {
+        // Move "The" to the end
+        $v['title'] = preg_replace('/^the\s?/i', "", $v['title']) . ', The';
+      }
+      if (substr(strtolower($v['title']), 0, 1) != $cl) {
+        $cl = substr(strtolower($v['title']), 0, 1);
       }
       if (array_key_exists($cl, $objects) && !is_array($objects[$cl])) {
         $objects[$cl] = array();
