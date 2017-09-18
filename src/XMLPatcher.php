@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Patch class object 
+ * Patch class object
  */
 
 /**
@@ -10,7 +10,7 @@
  *   'ns' => array(
  *      'prefix1' => 'uri1',
  *      'prefix2' => 'uri2',
- *   ), 
+ *   ),
  *   'changes' => array(
  *      array('type' => 'replace', 'old' => '<old xpath>', 'new' => '<new XML string>', 'insert_ns' => <bool insert the namespace on the element added>),
  *      array('type' => 'add', 'parent' => '<parent xpath>', 'new' => '<new XML string>', 'insert_ns' => <bool insert the namespace on the element added>),
@@ -23,17 +23,14 @@ namespace Drupal\manidora;
 
 class XMLPatcher {
     private $patch;
-    private $original_xml;
-    
+
     private $namespaces = array();
     private $dom;
     private $xpath;
-    
+
     /**
      * Constructor
      *
-     * @param string $xml
-     *   The XML to patch.
      * @param array $patch
      *   The patch object.
      */
@@ -41,17 +38,20 @@ class XMLPatcher {
       $this->validate_patch($patch);
       $this->patch = $patch;
     }
-    
+
     /**
      * Static initializor.
      *
      * @param array $patch
      *   The patch object.
+     *
+     * @return \Drupal\manidora\XMLPatcher
+     *   A new patcher object.
      */
     public static function create(array $patch) {
       return new XMLPatcher($patch);
     }
-    
+
     /**
      * Static instant patch function
      * @param string $xml
@@ -66,29 +66,32 @@ class XMLPatcher {
       $p = XMLPatcher::create($patch);
       return $p->apply_patch($xml);
     }
-    
+
     /**
-     * Apply the patch 
+     * Apply the patch
      *
      * @param string $xml
      *   The XML to patch.
      *
      * @return string
      *   The modified XML string.
+     *
+     * @throws \Drupal\manidora\XMLPatcherException
+     *   Can't load the xml document.
      */
     public function apply_patch($xml) {
-      
+
       $this->validate_xml($xml);
-      
+
       $this->dom = new \DOMDocument();
       $this->dom->loadXML($xml);
-      
+
       if (!$this->dom) {
         throw new XMLPatcherException("Unable to load XML to DOMDocument", 905);
       }
 
       $this->xpath = new \DOMXpath($this->dom);
-      
+
       if (isset($this->patch['ns'])) {
         $this->namespaces = $this->patch['ns'];
         foreach ($this->patch['ns'] as $ns => $uri) {
@@ -113,7 +116,7 @@ class XMLPatcher {
       // If nothing changes just return the source doc.
       return $this->changed ? $this->dom->saveXML() : $xml;
     }
-    
+
     /**
      * Replace one or more nodes from the document, with a new element.
      *
@@ -142,7 +145,7 @@ class XMLPatcher {
         }
       }
     }
-    
+
     /**
      * Remove one or more nodes from the document.
      *
@@ -187,7 +190,7 @@ class XMLPatcher {
         }
       }
     }
-    
+
     /**
      * Insert the namespaces to the element to allow us to parse an entire element.
      *
@@ -225,12 +228,15 @@ class XMLPatcher {
 
     /**
      * Validate that the patch has been constructed correctly and populates the $this->operations array.
-     * 
+     *
      * @param array $patch
      *   The patch.
      *
      * @return void
      *   Throws an Exception if patch is incorrect.
+     *
+     * @throws \Drupal\manidora\XMLPatcherException
+     *   On invalid patch structure or missing elements.
      */
     private function validate_patch(array $patch) {
       $namespaces = array();
@@ -267,16 +273,16 @@ class XMLPatcher {
             }
           }
         }
-      }        
+      }
     }
-    
+
     /**
      * Validate the input XML.
      *
      * @param string $xml
      *   The input XML.
      *
-     * @return void
+     * @throws \Drupal\manidora\XMLPatcherException
      *   Throws a ParserException on error.
      */
     private function validate_xml($xml) {
@@ -288,7 +294,7 @@ class XMLPatcher {
 
       if ($doc === FALSE) {
         $errors = libxml_get_errors();
-        
+
         $exception = "";
         foreach ($errors as $error) {
             $exception .= XMLPatcher::display_xml_error($error, $xml_lines);
@@ -348,5 +354,5 @@ class XMLPatcherException extends \Exception {
    * 904 - Patch namespace syntax error
    * 905 - Bad XML
    */
-  
+
 }

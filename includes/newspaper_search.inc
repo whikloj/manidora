@@ -2,7 +2,7 @@
 /**
  * @file
  *
- * Newspaper Search form 
+ * Newspaper Search form
  */
 
 /**
@@ -34,7 +34,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
   try {
     $solr_build->executeQuery(FALSE);
     $results = $solr_build->islandoraSolrResult["response"]["objects"];
-  } 
+  }
   catch (Exception $e) {
     $results = array();
     drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error', FALSE);
@@ -60,7 +60,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
         try {
           $solr_build->executeQuery(FALSE);
           $years = $solr_build->islandoraSolrResult['stats']['stats_fields']['mods_originInfo_dateIssued_dt'];
-        } 
+        }
         catch (Exception $e) {
           $years = array();
           drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error', FALSE);
@@ -259,7 +259,7 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
         $query_string .= '(' . $word;
       }
       else {
-        $query_string .= ' && ' . $word;
+        $query_string .= ' AND ' . $word;
       }
       $count++;
     }
@@ -274,7 +274,7 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
       $query_string .= '(' . $exact_phrase . ')';
     }
     else {
-      $query_string .= ' && (' . $exact_phrase . ')';
+      $query_string .= ' AND (' . $exact_phrase . ')';
     }
   }
 
@@ -284,14 +284,14 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     $least_array = explode(' ', $least_one);
     $count = 0;
     if (strlen($query_string)) {
-      $query_string .= ' && ';
+      $query_string .= ' AND ';
     }
     foreach ($least_array as $word) {
       if ($count == 0) {
         $query_string .= '(' . $word;
       }
       else {
-        $query_string .= ' || ' . $word;
+        $query_string .= ' OR ' . $word;
       }
       $count++;
     }
@@ -304,14 +304,14 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     $without_array = explode(' ', $without_words);
     $count = 0;
     if (strlen($query_string)) {
-      $query_string .= ' && ';
+      $query_string .= ' AND ';
     }
     foreach ($without_array as $word) {
       if ($count == 0) {
         $query_string .= '-(' . $word;
       }
       else {
-        $query_string .= ' && ' . $word;
+        $query_string .= ' AND ' . $word;
       }
       $count++;
     }
@@ -355,11 +355,11 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
     }
   }
 
-  $hidden_filter = array('RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:newspaperCModel" "info:fedora/islandora:newspaperIssueCModel")');
+  $hidden_filter = array('RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" OR "info:fedora/islandora:newspaperCModel" OR "info:fedora/islandora:newspaperIssueCModel")');
   if (count($selected_papers) > 0 && count($selected_papers) < count($form_state['values']['titles'])) {
-    $hidden_filter = array('ancestors_ms:("' . implode('" "', $selected_papers) . '")');
+    $hidden_filter = array('ancestors_ms:("' . implode('" OR "', $selected_papers) . '")');
     // To show the facet.
-    /* $query['f'] = array('ancestors_ms:("'.implode('" "', $selected_papers).'")'); */
+    /* $query['f'] = array('ancestors_ms:("'.implode('" OR "', $selected_papers).'")'); */
   }
   $query_string = str_replace('/', '~slsh~', $query_string);
   /* $query = array(
@@ -369,18 +369,7 @@ function manidora_newspaper_search_form_submit($form, &$form_state) {
   $params['type'] = 'edismax';
   $params['hidden_filter'] = $hidden_filter;
   // Set date filter key if there are no date filters included.
-  if (isset($params['f'])) {
-    foreach ($params['f'] as $key => $f) {
-      if (strpos($f, $facet_field) !== FALSE) {
-        array_splice($params['f'], $key);
-      }
-    }
-    if (isset($date_limit)) {
-      $params['f'][] = $date_limit;
-    }
-    $query = array_merge_recursive($params);
-  }
-  elseif (isset($date_limit)) {
+  if (isset($date_limit)) {
     $query = array_merge_recursive($params, array('f' => array($date_limit)));
   }
   else {

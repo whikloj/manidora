@@ -184,16 +184,15 @@ EOF;
 EOF;
 
   $solr_build = new IslandoraSolrQueryProcessor();
-  $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:uofm* AND RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:collectionCModel" "info:fedora/islandora:newspaperCModel"))';
-  $expand_combine_pid = function($pids) {
-    $pid_string = '';
-    foreach ($pids as $pid) {
-      $pid_string .= format_string('"info:fedora/!pid" "!pid" ', ['!pid' => $pid]);
-    }
-    return $pid_string;
+  $solr_query = '(RELS_EXT_isMemberOfCollection_uri_mt:uofm* AND RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:collectionCModel" OR "info:fedora/islandora:newspaperCModel"))';
+  $expand_combine_pid = function(&$pid) {
+    $pid = format_string('"info:fedora/!pid" OR "!pid"', ['!pid' => $pid]);
   };
-  $excluded_pids = $expand_combine_pid(manidora_collection_get_excluded());
-  $excluded_children = $expand_combine_pid(manidora_collection_get_excluded(True));
+
+  $excluded_pids = manidora_collection_get_excluded();
+  array_walk($excluded_pids, $expand_combine_pid);
+  $excluded_children = manidora_collection_get_excluded(True);
+  array_walk($excluded_children, $expand_combine_pid);
   $solr_params = array(
     "fl" => "PID,dc.title,fgs_label_s",
     'rows' => 100000,
@@ -201,15 +200,15 @@ EOF;
     'facet' => 'false',
     'hl' => 'false',
   );
-  if (!empty($excluded_pids) || !empty($excluded_children)) {
+  if (count($excluded_pids) > 0 || count($excluded_children) > 0) {
     $solr_params['fq'] = [];
-    if (!empty($excluded_pids)) {
-      $solr_params['fq'][] = format_string("-PID:(!excluded)", ['!excluded' => $excluded_pids]);
+    if (count($excluded_pids) > 0) {
+      $solr_params['fq'][] = format_string("-PID:(!excluded)", ['!excluded' => implode(' OR ', $excluded_pids)]);
     }
-    if (!empty($excluded_children)) {
+    if (count($excluded_children) > 0) {
       $solr_params['fq'][] = format_string("-!ancestor_field:(!ancestors)", [
         '!ancestor_field' => variable_get('manidora_omit_collection_ancestor_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
-        '!ancestors' => $excluded_children
+        '!ancestors' => implode(' OR ', $excluded_children)
       ]);
     }
   }
@@ -411,7 +410,7 @@ function __manidora_homepage_thumbnail_content() {
     /* End temporary extension. */
     // We want to have the image title as mouseover in the block.
     // Search for all the possible PIDs.
-    $solr_query = '+PID:("' . implode('" "', $t_array) . '")';
+    $solr_query = '+PID:("' . implode('" OR "', $t_array) . '")';
     // Get the PID and dc.title.
     $solr_params = array('fl' => 'PID,title_sort_ms');
     $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
@@ -460,7 +459,7 @@ function __manidora_whats_new_content() {
     'fl' => 'PID,fgs_label_s,fgs_createdDate_dt,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms',
     'sort' => 'fgs_createdDate_dt desc',
     'fq' => array(
-      '-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" "info:fedora/islandora:pageCModel")',
+      '-RELS_EXT_hasModel_uri_ms:("info:fedora/islandora:newspaperPageCModel" OR "info:fedora/islandora:pageCModel")',
     ),
     'facet' => 'false',
     'hl' => 'false',
@@ -614,4 +613,143 @@ function __manidora_preview_image() {
 EOF;
   }
   return $output;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Alters the advanced search form to get the role search into it.
+ *
+ * @param $form
+ *   The Drupal form.
+ * @param $form_state
+ *   The Drupal form state.
+ */
+function manidora_form_islandora_solr_advanced_search_form_alter(&$form, &$form_state) {
+  $cache = cache_get('manidora_solr_advanced_roleterm_list');
+  if ($cache === FALSE) {
+    $roleterms = _manidora_advanced_role_get_terms();
+    $roleterms = array_merge(array('none' => 'Choose a role'), $roleterms);
+    cache_set('manidora_solr_advanced_roleterm_list', $roleterms);
+  }
+  else {
+    $roleterms = $cache->data;
+  }
+  $role_array = array(
+    '#tree' => TRUE,
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+    'field' => array(),
+    'search' => array(),
+    'role' => array(
+      '#type' => 'select',
+      '#options' => $roleterms,
+      '#states' => array(
+        'visible' => array(
+        ),
+      ),
+    ),
+    'hidden_submit' => array(),
+    'add' => array(),
+  );
+  if (isset($form['terms'])) {
+    foreach ($form['terms'] as $key => &$term) {
+      if (is_numeric($key)) {
+        if (!in_array('Role/Term', $term['field']['#options'])) {
+          $new = array_replace($role_array, $term);
+          $new['field']['#options']['name_and_role_term'] = t('Name and Role');
+          $new['role']['#states']['visible']["select[name=\"terms[$key][field]\"]"] = array( 'value' => 'name_and_role_term');
+          $term = $new;
+        }
+      }
+    }
+  }
+  if (!in_array('manidora_advanced_role_search_validate', $form['#validate'])) {
+    $form['#validate'][] = 'manidora_advanced_role_search_validate';
+  }
+  if (!in_array('manidora_advanced_role_search_submit', $form['#submit'])) {
+    $form['#submit'] = array_merge(array('manidora_advanced_role_search_submit'), $form['#submit']);
+  }
+}
+
+/**
+ * Implements hook_form_validate().
+ *
+ * Check that you have selected a role if you are searching Name/Role.
+ *
+ * @param $form
+ *   The Drupal form.
+ * @param $form_state
+ *   The Drupal form state.
+ */
+function manidora_advanced_role_search_validate($form, &$form_state) {
+  if (isset($form_state['clicked_button']) && strpos($form_state['clicked_button']['#name'], 'op') == 0) {
+    if (isset($form_state['values']['terms'])) {
+      foreach ($form_state['values']['terms'] as $key => $term) {
+        if ($term['field'] == 'name_and_role_term' && $term['role'] == 'none') {
+          form_set_error("terms][{$key}][role", t("You must select a role."));
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_submit().
+ *
+ * Alter the form if you are searching a Name/Role.
+ *
+ * @param $form
+ *   The Drupal form.
+ * @param $form_state
+ *   The Drupal form state.
+ */
+function manidora_advanced_role_search_submit($form, &$form_state) {
+  // The Solr field with name and role in it.
+  $solr_role_field = 'name_personal_mt';
+
+  if (isset($form_state['clicked_button']) && strpos($form_state['clicked_button']['#name'], 'op') == 0) {
+    if (isset($form_state['values']['terms'])) {
+      foreach ($form_state['values']['terms'] as $key => &$term) {
+        if ($term['field'] == 'name_and_role_term') {
+          $term['field'] = $solr_role_field;
+          $term['search'] = $term['search'] . " AND " . $term['role'];
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Generate a list of role terms from Solr.
+ *
+ * @return array
+ *   Unique proper case role terms.
+ */
+function _manidora_advanced_role_get_terms() {
+  $solr_field = 'mods_name_personal_author_role_roleTerm_text_ms';
+  // $solr_field = 'mods_roleterm_ms';
+
+  $query = '*:*';
+  $params = array(
+    'facet' => 'true',
+    'facet.field' => $solr_field,
+    "facet.{$solr_field}.mincount" => 1,
+    "facet.{$solr_field}.sort" => 'index',
+    'rows' => 0,
+  );
+
+  $solr = new IslandoraSolrQueryProcessor();
+  $solr->buildQuery($query, $params);
+  $solr->solrParams = array_replace_recursive($solr->solrParams, $params);
+  $solr->executeQuery();
+
+  $results = array();
+  if (isset($solr->islandoraSolrResult['facet_counts']['facet_fields'][$solr_field])) {
+    $results = array_keys($solr->islandoraSolrResult['facet_counts']['facet_fields'][$solr_field]);
+    array_walk($results, function(&$o) { $o = ucfirst(strtolower($o)); });
+    $results = array_unique($results);
+    $results = array_combine($results, $results);
+  }
+  return $results;
 }
