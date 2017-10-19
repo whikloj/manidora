@@ -691,7 +691,7 @@ function manidora_islandora_derivative(AbstractObject $object) {
   );
   if (array_intersect($object->models, $image_content_models)) {
     // We are changing an image...
-    if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'doImageOCR', 'true', 1)) {
+    if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'true', 1)) {
       $base = array(
         'source_dsid' => 'OBJ',
         'file' => drupal_get_path('module', 'islandora_ocr') . '/includes/derivatives.inc',
