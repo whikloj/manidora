@@ -67,6 +67,9 @@ function manidora_uninstall() {
   $variables = array(
     'manidora_collection_solr_field',
     'manidora_omit_collection_ancestor_field',
+    'manidora_name_role_search_field',
+    'manidora_name_role_roles_field',
+    'manidora_thumbnail_pids',
   );
   foreach ($variables as $variable) {
     variable_del($variable);

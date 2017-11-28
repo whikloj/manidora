@@ -626,49 +626,55 @@ EOF;
  *   The Drupal form state.
  */
 function manidora_form_islandora_solr_advanced_search_form_alter(&$form, &$form_state) {
-  $cache = cache_get('manidora_solr_advanced_roleterm_list');
-  if ($cache === FALSE) {
-    $roleterms = _manidora_advanced_role_get_terms();
-    $roleterms = array_merge(array('none' => 'Choose a role'), $roleterms);
-    cache_set('manidora_solr_advanced_roleterm_list', $roleterms);
-  }
-  else {
-    $roleterms = $cache->data;
-  }
-  $role_array = array(
-    '#tree' => TRUE,
-    '#prefix' => '<div>',
-    '#suffix' => '</div>',
-    'field' => array(),
-    'search' => array(),
-    'role' => array(
-      '#type' => 'select',
-      '#options' => $roleterms,
-      '#states' => array(
-        'visible' => array(
-        ),
-      ),
-    ),
-    'hidden_submit' => array(),
-    'add' => array(),
-  );
-  if (isset($form['terms'])) {
-    foreach ($form['terms'] as $key => &$term) {
-      if (is_numeric($key)) {
-        if (!in_array('Role/Term', $term['field']['#options'])) {
-          $new = array_replace($role_array, $term);
-          $new['field']['#options']['name_and_role_term'] = t('Name and Role');
-          $new['role']['#states']['visible']["select[name=\"terms[$key][field]\"]"] = array( 'value' => 'name_and_role_term');
-          $term = $new;
+  $solr_role_field = variable_get('manidora_name_role_search_field', NULL);
+  $solr_roles_fields = variable_get('manidora_name_role_roles_field', NULL);
+  // Make sure we have set the fields before we even try.
+  if (!is_null($solr_role_field) && !empty($solr_role_field) &&
+    !is_null($solr_roles_fields) && !empty($solr_roles_fields)) {
+    $cache = cache_get('manidora_solr_advanced_roleterm_list');
+    if ($cache === FALSE) {
+      $roleterms = _manidora_advanced_role_get_terms();
+      $roleterms = array_merge(['none' => 'Choose a role'], $roleterms);
+      cache_set('manidora_solr_advanced_roleterm_list', $roleterms);
+    }
+    else {
+      $roleterms = $cache->data;
+    }
+    $role_array = [
+      '#tree' => TRUE,
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+      'field' => [],
+      'search' => [],
+      'role' => [
+        '#type' => 'select',
+        '#options' => $roleterms,
+        '#states' => [
+          'visible' => [
+          ],
+        ],
+      ],
+      'hidden_submit' => [],
+      'add' => [],
+    ];
+    if (isset($form['terms'])) {
+      foreach ($form['terms'] as $key => &$term) {
+        if (is_numeric($key)) {
+          if (!in_array('Role/Term', $term['field']['#options'])) {
+            $new = array_replace($role_array, $term);
+            $new['field']['#options']['name_and_role_term'] = t('Name and Role');
+            $new['role']['#states']['visible']["select[name=\"terms[$key][field]\"]"] = ['value' => 'name_and_role_term'];
+            $term = $new;
+          }
         }
       }
     }
-  }
-  if (!in_array('manidora_advanced_role_search_validate', $form['#validate'])) {
-    $form['#validate'][] = 'manidora_advanced_role_search_validate';
-  }
-  if (!in_array('manidora_advanced_role_search_submit', $form['#submit'])) {
-    $form['#submit'] = array_merge(array('manidora_advanced_role_search_submit'), $form['#submit']);
+    if (!in_array('manidora_advanced_role_search_validate', $form['#validate'])) {
+      $form['#validate'][] = 'manidora_advanced_role_search_validate';
+    }
+    if (!in_array('manidora_advanced_role_search_submit', $form['#submit'])) {
+      $form['#submit'] = array_merge(['manidora_advanced_role_search_submit'], $form['#submit']);
+    }
   }
 }
 
@@ -706,14 +712,15 @@ function manidora_advanced_role_search_validate($form, &$form_state) {
  */
 function manidora_advanced_role_search_submit($form, &$form_state) {
   // The Solr field with name and role in it.
-  $solr_role_field = 'name_personal_mt';
-
-  if (isset($form_state['clicked_button']) && strpos($form_state['clicked_button']['#name'], 'op') == 0) {
-    if (isset($form_state['values']['terms'])) {
-      foreach ($form_state['values']['terms'] as $key => &$term) {
-        if ($term['field'] == 'name_and_role_term') {
-          $term['field'] = $solr_role_field;
-          $term['search'] = $term['search'] . " AND " . $term['role'];
+  $solr_role_field =  variable_get('manidora_name_role_search_field', NULL);
+  if (!is_null($solr_role_field) && !empty($solr_role_field)) {
+    if (isset($form_state['clicked_button']) && strpos($form_state['clicked_button']['#name'], 'op') == 0) {
+      if (isset($form_state['values']['terms'])) {
+        foreach ($form_state['values']['terms'] as $key => &$term) {
+          if ($term['field'] == 'name_and_role_term') {
+            $term['field'] = $solr_role_field;
+            $term['search'] = $term['search'] . " AND " . $term['role'];
+          }
         }
       }
     }
@@ -727,29 +734,33 @@ function manidora_advanced_role_search_submit($form, &$form_state) {
  *   Unique proper case role terms.
  */
 function _manidora_advanced_role_get_terms() {
-  $solr_field = 'mods_name_personal_author_role_roleTerm_text_ms';
-  // $solr_field = 'mods_roleterm_ms';
-
-  $query = '*:*';
-  $params = array(
-    'facet' => 'true',
-    'facet.field' => $solr_field,
-    "facet.{$solr_field}.mincount" => 1,
-    "facet.{$solr_field}.sort" => 'index',
-    'rows' => 0,
-  );
-
-  $solr = new IslandoraSolrQueryProcessor();
-  $solr->buildQuery($query, $params);
-  $solr->solrParams = array_replace_recursive($solr->solrParams, $params);
-  $solr->executeQuery();
-
+  //$solr_field = 'mods_name_personal_author_role_roleTerm_text_ms';
+  $solr_field = variable_get('manidora_name_role_roles_field', NULL);
   $results = array();
-  if (isset($solr->islandoraSolrResult['facet_counts']['facet_fields'][$solr_field])) {
-    $results = array_keys($solr->islandoraSolrResult['facet_counts']['facet_fields'][$solr_field]);
-    array_walk($results, function(&$o) { $o = ucfirst(strtolower($o)); });
-    $results = array_unique($results);
-    $results = array_combine($results, $results);
+  if (!is_null($solr_field) && !empty($solr_field)) {
+    $query = '*:*';
+    $params = [
+      'facet' => 'true',
+      'facet.field' => $solr_field,
+      "facet.{$solr_field}.mincount" => 1,
+      "facet.{$solr_field}.sort" => 'index',
+      'rows' => 0,
+    ];
+
+    $solr = new IslandoraSolrQueryProcessor();
+    $solr->buildQuery($query, $params);
+    $solr->solrParams = array_replace_recursive($solr->solrParams, $params);
+    $solr->executeQuery();
+
+    $results = [];
+    if (isset($solr->islandoraSolrResult['facet_counts']['facet_fields'][$solr_field])) {
+      $results = array_keys($solr->islandoraSolrResult['facet_counts']['facet_fields'][$solr_field]);
+      array_walk($results, function (&$o) {
+        $o = ucfirst(strtolower($o));
+      });
+      $results = array_unique($results);
+      $results = array_combine($results, $results);
+    }
   }
   return $results;
 }

@@ -25,6 +25,22 @@ function manidora_admin($form, &$form_state) {
     '#default_value' => variable_get('manidora_secondary_collection_solr_field', 'RELS_EXT_isMemberOf_uri_ms'),
     '#size' => 30,
   );
+  $form['manidora_name_role_search_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr field to search for names and roles'),
+    '#description' => t('The advanced search contains a Name/Role option, this combines the text with a role and searches this field.'),
+    '#default_value' => variable_get('manidora_name_role_search_field'),
+    '#size' => 30,
+    '#autocomplete_path' => 'islandora_solr/autocomplete_luke',
+  );
+  $form['manidora_name_role_roles_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr field containing roles'),
+    '#description' => t('The above search populates a list of roles, it is created by returning all unique values in this field.'),
+    '#default_value' => variable_get('manidora_name_role_roles_field'),
+    '#size' => 30,
+    '#autocomplete_path' => 'islandora_solr/autocomplete_luke',
+  );
 
   return system_settings_form($form);
 }
