@@ -10,13 +10,17 @@ $module_path = drupal_get_path('module', 'manidora');
 @require_once "$module_path/includes/blocks.inc";
 
 /**
+ * @deprecated No longer used internally and not recommended.
+ *
  * API call to insert a link to a printer friendly version of something.
  *
  * @param string $path
  *   path to page we want a printer friendly version of
+ * @return string
+ *   The link to the printer friendly version of this object.
  */
 function manidora_print_insert_link($path) {
-  return l(t("Printer Friendly Version"), $path . '/print', array('attributes' => array('class' => array('print-link'), 'id' => 'clip')));
+  return "";
 }
 
 /**
