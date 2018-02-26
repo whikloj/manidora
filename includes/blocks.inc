@@ -24,7 +24,7 @@ function manidora_block_info() {
   );
   $blocks['manidora_preview_image'] = array(
     'info' => t('Manidora preview thumbnail'),
-    'cache' => DRUPAL_CACHE_PER_USER,
+    'cache' => DRUPAL_NO_CACHE,
   );
   return $blocks;
 }

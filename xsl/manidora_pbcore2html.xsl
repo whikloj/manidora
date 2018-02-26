@@ -6,6 +6,7 @@
   <xsl:include href="string-utilities.xsl" />
 
   <xsl:param name="searchUrl">/islandora/search/</xsl:param>
+  <xsl:param name="pid"/>
 
   <!-- XXX: Should probably be tied to some config in the front-end. -->
   <xsl:param name="type_of_resource_field">type_of_resource_mt</xsl:param>
@@ -46,6 +47,7 @@
       <xsl:call-template name="groupNames"/>
       <xsl:apply-templates select="pb:pbcoreInstantiation" />
       <xsl:apply-templates select="pb:pbcoreRightsSummary" />
+      <xsl:call-template name="generate_handle"/>
     </table>
   </xsl:template>
 
@@ -289,19 +291,22 @@
         <xsl:apply-templates select="pb:rightsSummary|pb:rightsLink" />
       </xsl:with-param>
     </xsl:call-template>
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Permalink</xsl:with-param>
-      <xsl:with-param name="content">
-        <a>
-          <xsl:attribute name="target">_parent</xsl:attribute>
-          <xsl:variable name="pidtmp" select="php:functionString('request_uri')"/>
-          <xsl:variable name="pid" select="substring-before(substring-after($pidtmp,'uofm%3A'),'/manitoba_metadata')"/>
-<!--
-          <xsl:attribute name="href"><xsl:value-of select="concat('http://hdl.handle.net/10719/',$pid)"/></xsl:attribute><xsl:text>
--->
-        </a>
-      </xsl:with-param>
-    </xsl:call-template>
+  </xsl:template>
+
+  <!-- Dynamically generate a Permalink link using the PID -->
+  <xsl:template name="generate_handle">
+    <xsl:if test="string-length($pid) &gt; 0">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Permalink</xsl:with-param>
+        <xsl:with-param name="content">
+          <a>
+            <xsl:attribute name="target">_parent</xsl:attribute>
+            <xsl:attribute name="href"><xsl:value-of select="concat('http://hdl.handle.net/10719/',substring-after($pid, ':'))"/></xsl:attribute>
+            <xsl:value-of select="concat('http://hdl.handle.net/10719/',substring-after($pid, ':'))"/>
+          </a>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match='pb:rightsSummary'>

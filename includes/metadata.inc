@@ -71,13 +71,14 @@ function manidora_mods_transform($object) {
         $xslt_processor->importStylesheet($xsl);
         $param_array = array(
             'islandoraUrl' => $base_url,
+            'pid' => $object->id,
         );
         if (isset($collections)) {
         $param_array['collections'] = '<span>' . $collections . '</span>';
         }
         $xslt_processor->setParameter('', $param_array);
         $mods_transformed = $xslt_processor->transformToXml($input);
-        return manidora_print_insert_link('print/islandora/object/' . $object->id . "/manitoba_metadata") . $mods_transformed;
+        return $mods_transformed;
     }
     else {
         return FALSE;
@@ -120,13 +121,14 @@ function manidora_pbcore_transform($object) {
       $xslt_processor->importStylesheet($xsl);
       $param_array = array(
         'islandoraUrl' => $base_url,
+        'pid' => $object->id,
       );
       if (isset($collections)) {
         $param_array['collections'] = '<span>' . $collections . '</span>';
       }
       $xslt_processor->setParameter('', $param_array);
       $mods_transformed = $xslt_processor->transformToXml($input);
-      return manidora_print_insert_link('print/islandora/object/' . $object->id . "/manitoba_metadata") . $mods_transformed;
+      return $mods_transformed;
     }
   }
   else {

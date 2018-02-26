@@ -8,11 +8,13 @@
         extension-element-prefixes="exsl"
         exclude-result-prefixes="exsl"
         version="1.0">
+  <xsl:output method="html" encoding="utf-8" omit-xml-declaration="yes"/>
   <xsl:include href="string-utilities.xsl" />
 
   <xsl:param name="islandoraUrl"/>
   <xsl:param name="collections"/>
   <xsl:param name="language" select="'eng'"/>
+  <xsl:param name="pid"/>
 
   <xsl:param name="searchUrl">/islandora/search/</xsl:param>
 
@@ -28,6 +30,8 @@
   <xsl:key name="nameKeys" match="mods:name" use="mods:role/mods:roleTerm" />
 
   <xsl:key name="CCAccessKey" match="mods:accessCondition" use="concat(@type,'+',text())" />
+
+  <xsl:variable name="handle" select="/mods:mods/mods:identifier[@type='hdl']" />
 
   <xsl:template match="mods:mods">
     <table class="manidora-metadata" vocab="http://purl.org/dc/terms/" prefix="dc: http://purl.org/dc/elements/1.1/" typeof="Article">
@@ -86,6 +90,9 @@
       <xsl:apply-templates select="mods:identifier[@type='local']" />
       <xsl:apply-templates select="mods:relatedItem/mods:location/mods:url" />
       <xsl:apply-templates select="mods:identifier[@type='hdl']" />
+      <xsl:if test="not($handle)">
+        <xsl:call-template name="generate_handle" />
+      </xsl:if>
       <xsl:apply-templates select="mods:originInfo"/>
       <xsl:apply-templates select="mods:accessCondition" /><!-- Copyright -->
 
@@ -378,6 +385,20 @@
 	          http://hdl.handle.net/<xsl:value-of select="normalize-space(text())"/></a></xsl:with-param>
           <xsl:with-param name="property">dc:identifier</xsl:with-param>
 	</xsl:call-template>
+  </xsl:template>
+
+  <!-- this generates a dynamic handle from the PID -->
+  <xsl:template name="generate_handle">
+    <xsl:if test="string-length($pid) &gt; 0">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Permalink</xsl:with-param>
+        <xsl:with-param name="content"><a>
+          <xsl:attribute name="target">_parent</xsl:attribute>
+          <xsl:attribute name="href">http://hdl.handle.net/10719/<xsl:value-of select="normalize-space(substring-after($pid, ':'))"/></xsl:attribute>
+          http://hdl.handle.net/10719/<xsl:value-of select="normalize-space(substring-after($pid, ':'))"/></a></xsl:with-param>
+        <xsl:with-param name="property">dc:identifier</xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="mods:subject">
