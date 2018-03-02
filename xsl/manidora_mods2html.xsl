@@ -205,7 +205,7 @@
   </xsl:template>
 
   <xsl:template match="mods:name" mode="basic">
-    <xsl:if test="string-length(text()) &gt; 0">
+    <xsl:if test="string-length(.) &gt; 0">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Name</xsl:with-param>
         <xsl:with-param name="content">
