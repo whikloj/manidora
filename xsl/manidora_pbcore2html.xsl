@@ -36,7 +36,8 @@
       </xsl:if>
       <xsl:apply-templates select="pb:pbcoreDescription" />
 
-      <xsl:apply-templates select="pb:pbcoreCoverage[pb:coverageType='Temporal']" />
+      <xsl:call-template name="coverageTemporal" />
+      <!--<xsl:apply-templates select="pb:pbcoreCoverage[pb:coverageType='Temporal']" />-->
       <xsl:if test="count(pb:pbcoreSubject) &gt; 0">
         <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Subjects</xsl:with-param>
@@ -225,11 +226,18 @@ and not(./preceding-sibling::node()//pb:contributorRole = descendant-or-self::pb
     <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
   </xsl:template>
 
-  <xsl:template match="pb:pbcoreCoverage[pb:coverageType='Temporal']">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Date</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="pb:coverage"/></xsl:with-param>
-    </xsl:call-template>
+  <xsl:template name="coverageTemporal">
+    <xsl:if test="count(//pb:pbcoreCoverage[pb:coverageType='Temporal']) &gt; 0">
+        <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Date</xsl:with-param>
+          <xsl:with-param name="content">
+          <xsl:for-each select="//pb:pbcoreCoverage[pb:coverageType='Temporal']/pb:coverage">
+            <xsl:value-of select="text()"/>
+            <xsl:if test="position() &lt; last()">, </xsl:if>
+          </xsl:for-each>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="pb:instantiationLanguage">
