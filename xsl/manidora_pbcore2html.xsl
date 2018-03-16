@@ -27,16 +27,29 @@
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Title</xsl:with-param>
         <xsl:with-param name="content"><xsl:value-of select="pb:pbcoreTitle"/></xsl:with-param>
+        <xsl:with-param name="property">dc:title</xsl:with-param>
       </xsl:call-template>
       <xsl:if test="string-length($collections) &gt; 0">
         <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Collections</xsl:with-param>
           <xsl:with-param name="content"><xsl:copy-of select="php:functionString('manidora_return_collection_nodeset', $collections)"/></xsl:with-param>
+          <xsl:with-param name="property">dc:related</xsl:with-param>
         </xsl:call-template>
       </xsl:if>
       <xsl:apply-templates select="pb:pbcoreDescription" />
 
-      <xsl:call-template name="coverageTemporal" />
+      <xsl:choose>
+        <xsl:when test="count(pb:pbcoreCoverage[pb:coverageType='Temporal' and string-length(text()|*) &gt; 0]) &gt; 1">
+          <xsl:call-template name="groupAll">
+            <xsl:with-param name="label">Date(s)</xsl:with-param>
+            <xsl:with-param name="nodes" select="pb:pbcoreCoverage[pb:coverageType='Temporal']/pb:coverage"/>
+            <xsl:with-param name="property">dc:date</xsl:with-param>
+          </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="pb:pbcoreCoverage[pb:coverageType='Temporal']/pb:coverage" />
+        </xsl:otherwise>
+      </xsl:choose>
       <!--<xsl:apply-templates select="pb:pbcoreCoverage[pb:coverageType='Temporal']" />-->
       <xsl:if test="count(pb:pbcoreSubject) &gt; 0">
         <xsl:call-template name="basic_output">
@@ -56,14 +69,41 @@
   <xsl:template name="basic_output">
     <xsl:param name="label"/>
     <xsl:param name="content" />
+    <xsl:param name="property"></xsl:param>
     <xsl:if test="string-length($label) &gt; 0 and string-length($content) &gt; 0">
       <tr>
           <td class="label"><xsl:value-of select="$label"/>:</td>
-          <td><xsl:copy-of select="$content"/></td>
+          <td>
+            <xsl:if test="not(string-length($property) = 0)">
+              <xsl:attribute name="property"><xsl:value-of select="$property"/></xsl:attribute>
+            </xsl:if>
+            <xsl:copy-of select="$content"/>
+          </td>
       </tr>
     </xsl:if>
   </xsl:template>
   <!-- BASIC OUTPUT TEMPLATE -->
+
+
+  <!-- BASIC GROUPING TEMPLATE -->
+  <xsl:template name="groupAll">
+    <xsl:param name="label" />
+    <xsl:param name="nodes" />
+    <xsl:param name="property"></xsl:param>
+
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label" select="$label"/>
+      <xsl:with-param name="content">
+        <xsl:for-each select="$nodes">
+          <xsl:value-of select="."/>
+          <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
+        </xsl:for-each>
+      </xsl:with-param>
+      <xsl:with-param name="property" select="$property"/>
+    </xsl:call-template>
+  </xsl:template>
+  <!-- BASIC GROUPING TEMPLATE -->
+
 
   <xsl:template match="pb:pbcoreInstantiation">
     <xsl:choose>
@@ -226,18 +266,13 @@ and not(./preceding-sibling::node()//pb:contributorRole = descendant-or-self::pb
     <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
   </xsl:template>
 
-  <xsl:template name="coverageTemporal">
-    <xsl:if test="count(//pb:pbcoreCoverage[pb:coverageType='Temporal']) &gt; 0">
+  <xsl:template match="pb:coverage">
         <xsl:call-template name="basic_output">
-        <xsl:with-param name="label">Date</xsl:with-param>
+        <xsl:with-param name="label">Date(s)</xsl:with-param>
           <xsl:with-param name="content">
-          <xsl:for-each select="//pb:pbcoreCoverage[pb:coverageType='Temporal']/pb:coverage">
             <xsl:value-of select="text()"/>
-            <xsl:if test="position() &lt; last()">, </xsl:if>
-          </xsl:for-each>
         </xsl:with-param>
       </xsl:call-template>
-    </xsl:if>
   </xsl:template>
 
   <xsl:template match="pb:instantiationLanguage">
@@ -651,4 +686,6 @@ and not(./preceding-sibling::node()//pb:contributorRole = descendant-or-self::pb
   <xsl:template match="text()" mode="subject"/>
   <xsl:template match="text()" mode="subjectTitle"/>
   <xsl:template match="node()" priority="-1"/>
+
+
 </xsl:stylesheet>
