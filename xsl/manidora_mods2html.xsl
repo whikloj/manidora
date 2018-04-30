@@ -82,7 +82,9 @@
       <!--<xsl:apply-templates select="mods:name" />--><!-- 2013-09-04 (whikloj) : Trying to group Author/Creators/etc. -->
       <xsl:call-template name="groupNames" />
       <xsl:apply-templates select="mods:language" />
-      <xsl:apply-templates select="mods:note[not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID')]" />
+      <xsl:apply-templates select="mods:note[@type ='biographical/historical']" />
+      <xsl:apply-templates select="mods:note[@type ='citation']" />
+      <xsl:apply-templates select="mods:note[not(@type) or (not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID') and not(@type = 'citation') and not(@type = 'biographical/historical'))]" />
       <xsl:apply-templates select="mods:location/mods:physicalLocation" />
       <xsl:apply-templates select="mods:location/mods:shelfLocator" />
       <xsl:apply-templates select="mods:physicalDescription/mods:internetMediaType" />
