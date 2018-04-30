@@ -361,13 +361,13 @@ and not(./preceding-sibling::node()//pb:contributorRole = descendant-or-self::pb
   <xsl:template match='pb:rightsLink'>
     <div class="manidora-commons-license">
       <a rel="license" target="_new">
-        <xsl:attribute name="href"><xsl:value-of select="concat('http://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
+        <xsl:attribute name="href"><xsl:value-of select="concat('https://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
         <img alt="Creative Commons License" style="border-width:0;">
-          <xsl:attribute name="src"><xsl:value-of select="concat('http://i.creativecommons.org/l/',normalize-space(text()),'88x31.png')"/></xsl:attribute>
+          <xsl:attribute name="src"><xsl:value-of select="concat('https://i.creativecommons.org/l/',normalize-space(text()),'88x31.png')"/></xsl:attribute>
         </img>
       </a>
       This work is licensed under a <a rel="license" target="_new">
-        <xsl:attribute name="href"><xsl:value-of select="concat('http://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
+        <xsl:attribute name="href"><xsl:value-of select="concat('https://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
         Creative Commons License</a>
     </div>
   </xsl:template>
