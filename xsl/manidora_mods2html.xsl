@@ -83,7 +83,9 @@
       <xsl:call-template name="groupNames" />
       <xsl:apply-templates select="mods:language" />
       <xsl:apply-templates select="mods:note[@type ='biographical/historical']" />
-      <xsl:apply-templates select="mods:note[@type ='citation']" />
+      <xsl:apply-templates select="mods:note[@type ='citation']">
+              <xsl:sort />
+      </xsl:apply-templates>
       <xsl:apply-templates select="mods:note[not(@type) or (not(@type ='cid') and not(@type = 'objectID') and not(@type = 'imageID') and not(@type = 'citation') and not(@type = 'biographical/historical'))]" />
       <xsl:apply-templates select="mods:location/mods:physicalLocation" />
       <xsl:apply-templates select="mods:location/mods:shelfLocator" />
@@ -129,6 +131,22 @@
   </xsl:template>
 
   <!-- BASIC OUTPUT TEMPLATE -->
+  <xsl:template name="basic_sorted_output">
+    <xsl:param name="label"/>
+    <xsl:param name="content" />
+    <xsl:param name="property"></xsl:param>
+    <xsl:if test="string-length($label) &gt; 0 and string-length($content) &gt; 0">
+      <tr>
+        <td class="label"><xsl:value-of select="$label"/>:</td>
+        <td>
+          <xsl:if test="not(string-length($property) = 0)">
+            <xsl:attribute name="property"><xsl:value-of select="$property"/></xsl:attribute>
+          </xsl:if>
+          <xsl:copy-of select="$content"/></td>
+      </tr>
+    </xsl:if>
+  </xsl:template>
+
   <xsl:template name="basic_output">
     <xsl:param name="label"/>
     <xsl:param name="content" />
@@ -263,7 +281,10 @@
   </xsl:template>
 
   <xsl:template match="mods:name" mode="grouping">
-    <xsl:apply-templates select="." mode="text_out" />
+    <xsl:value-of select="mods:namePart" />
+    <xsl:if test="position() &lt; last()">
+      <xsl:text>; </xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="mods:name" mode="text_out">
@@ -279,7 +300,7 @@
         <xsl:for-each select="mods:namePart">
           <xsl:value-of select="text()" />
           <xsl:if test="position() &lt; last()">
-            <xsl:text> </xsl:text>
+            <xsl:text>, </xsl:text>
           </xsl:if>
         </xsl:for-each>
       </xsl:otherwise>
@@ -662,6 +683,15 @@
     </xsl:call-template>
   </xsl:template>
 
+  <xsl:template match="mods:note[@type='citation']">
+    <xsl:call-template name="basic_output">
+      <xsl:with-param name="label">Citation</xsl:with-param>
+      <xsl:with-param name="content">
+        <xsl:value-of select="."/>
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
   <xsl:template match="mods:note">
     <xsl:choose>
       <xsl:when test="@type = 'biographical/historical'">
@@ -670,40 +700,42 @@
           <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
         </xsl:call-template>
       </xsl:when>
-      <xsl:when test="@type = 'citation'">
+<!-- robyj - just ignore this for now, k?
+          <xsl:when test="@type = 'citation'">
+            <xsl:call-template name="basic_output">
+              <xsl:with-param name="label">Citation</xsl:with-param>
+              <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+            </xsl:call-template>
+          </xsl:when>
+-->
+          <xsl:otherwise>
+            <xsl:call-template name="basic_output">
+              <xsl:with-param name="label">Note</xsl:with-param>
+              <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+            </xsl:call-template>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:template>
+
+      <xsl:template name="groupAll">
+        <xsl:param name="label" />
+        <xsl:param name="nodes" />
+        <xsl:param name="property"></xsl:param>
+
         <xsl:call-template name="basic_output">
-          <xsl:with-param name="label">Citation</xsl:with-param>
-          <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+          <xsl:with-param name="label" select="$label"/>
+          <xsl:with-param name="content">
+            <xsl:for-each select="$nodes">
+              <xsl:value-of select="."/>
+              <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
+            </xsl:for-each>
+          </xsl:with-param>
+          <xsl:with-param name="property" select="$property"/>
         </xsl:call-template>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:call-template name="basic_output">
-          <xsl:with-param name="label">Note</xsl:with-param>
-          <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
-        </xsl:call-template>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
+      </xsl:template>
 
-  <xsl:template name="groupAll">
-    <xsl:param name="label" />
-    <xsl:param name="nodes" />
-    <xsl:param name="property"></xsl:param>
-
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label" select="$label"/>
-      <xsl:with-param name="content">
-        <xsl:for-each select="$nodes">
-          <xsl:value-of select="."/>
-          <xsl:if test="position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
-        </xsl:for-each>
-      </xsl:with-param>
-      <xsl:with-param name="property" select="$property"/>
-    </xsl:call-template>
-  </xsl:template>
-
-  <xsl:template match="mods:roleTerm">
-    <!-- <xsl:text>(</xsl:text> -->
+      <xsl:template match="mods:roleTerm">
+        <!-- <xsl:text>(</xsl:text> -->
     <xsl:choose>
       <xsl:when test="normalize-space(text()) = 'act'">Actor</xsl:when>
       <xsl:when test="normalize-space(text()) = 'adp'">Adapter</xsl:when>
