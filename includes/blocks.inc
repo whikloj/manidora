@@ -449,11 +449,9 @@ function __manidora_homepage_thumbnail_content() {
  * Generate 4 most recently added items from Solr timestamp.
  */
 function __manidora_whats_new_content() {
-  module_load_include('inc', 'islandora_solr', 'includes/utilities');
   $solr_build = new IslandoraSolrQueryProcessor();
 
-  $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
-  $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
+  $item_limit = 4;
 
   $query = 'fgs_label_s:* AND fgs_createdDate_dt:* AND fedora_datastreams_ms:TN';
   $params = array(
@@ -464,35 +462,34 @@ function __manidora_whats_new_content() {
     ),
     'facet' => 'false',
     'hl' => 'false',
-    'rows' => 4,
-    'limit' => 4,
+    'rows' => $item_limit,
+    'limit' => $item_limit,
   );
-  //$solr->setCreateDocuments(0);
   $solr_build->buildQuery($query, $params);
 
-  $solr_build->solrParams = array_merge_recursive($solr_build->solrParams, $params);
+  $solr_build->solrParams['fq'] = array_merge($solr_build->solrParams['fq'], $params['fq']);
   $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
   $solr_build->solrParams = islandora_solr_remove_base_filters($solr_build->solrParams);
 
   try {
-    $solr_query = ($solr_build->internalSolrQuery) ? $solr_build->internalSolrQuery : $solr_build->solrQuery;
-    $method = 'GET';
-    $results = $solr->search($solr_query, $solr_build->solrStart, $solr_build->solrParams['rows'], $solr_build->solrParams, $method);
-    $solr_results = json_decode($results->getRawResponse(), TRUE);
+    $solr_build->executeQuery(FALSE);
+    $solr_results = $solr_build->islandoraSolrResult['response']['objects'];
   }
   catch (Exception $e) {
     drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error');
+    $solr_results = array();
   }
   $output = "<div class=\"manidora-whats-new-content\">";
   $map = function($o) {
     return array(
       'pid' => $o['PID'],
-      'title' => $o['fgs_label_s'],
-      'date' => $o['fgs_createdDate_dt'],
+      'title' => $o['object_label'],
+      'date' => $o['solr_doc']['fgs_createdDate_dt'],
     );
   };
   if ($solr_results) {
-    $results = array_map($map, $solr_results['response']['docs']);
+    $solr_results = array_slice($solr_results, 0, $item_limit);
+    $results = array_map($map, $solr_results);
     foreach ($results as $result) {
       $output .= theme('manidora_whats_new_item', array('item' => $result));
     }
