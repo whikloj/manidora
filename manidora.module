@@ -669,18 +669,19 @@ function manidora_element_info_alter(&$type) {
  * @return string
  *   The license URI.
  */
-function manidora_creative_commons_hack_up_url_value_callback(&$element, $input, &$form_state) {
-  module_load_include('inc', 'xml_form_elements', 'includes/creative_commons');
-  return manidora_creative_commons_hack_up_url(
-    xml_form_elements_creative_commons_value_callback($element, $input, $form_state)
-  );
-}
+#function manidora_creative_commons_hack_up_url_value_callback(&$element, $input, &$form_state) {
+#  module_load_include('inc', 'xml_form_elements', 'includes/creative_commons');
+#  return manidora_creative_commons_hack_up_url(
+#    xml_form_elements_creative_commons_value_callback($element, $input, $form_state)
+#  );
+#}
 
 /**
  * Hacks up the URL to fit with existing manitoba URLs.
  */
 function manidora_creative_commons_hack_up_url($url) {
-  return str_replace('http://creativecommons.org/licenses/', '', $url);
+  #return str_replace('http://creativecommons.org/licenses/', '', $url);
+  return $url;
 }
 
 /**
