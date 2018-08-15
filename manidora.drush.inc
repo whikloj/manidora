@@ -83,7 +83,34 @@ function manidora_drush_command() {
       'drush -u 1 uom_compound_fix --pid="uofm:1234"' => 'Run ONLY against uofm:1234',
     ),
   );
-
+  $items['parse_collection_json'] = array(
+    'aliases' => array('parse_collection_json'),
+    'description' => 'parse a collections json to find orphan items',
+    'drupal_dependencies' => array('islandora', 'manidora'),
+    'options' => array(
+      'json_file' => array(
+        'description' => 'file containing json',
+        'required' => TRUE,
+      ),
+      'patch_file' => array(
+        'description' => 'patch file containing compounding info',
+        'required' => TRUE,
+      ),
+    ),
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
+  );
+  $items['patch_items'] = array(
+    'aliases' => array('patch_items'),
+    'description' => 'patch items based on a file',
+    'drupal_dependencies' => array('islandora', 'manidora'),
+    'options' => array(
+      'patch_file' => array(
+        'description' => 'patch file containing compounding info',
+        'required' => TRUE,
+      ),
+    ),
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
+  );
   return $items;
 }
 
@@ -324,7 +351,7 @@ function manidora_regenerate_sequence_batch_setup() {
     $results[]['object']['value'] = $pid;
   }
   else {
-    $query = 'select $object $label from <#ri> where (
+    $query = 'select $object $label where (
     $object <fedora-model:label> $label and
     $object <info:fedora/fedora-system:def/model#hasModel> <info:fedora/islandora:compoundCModel> and
     $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>)
@@ -414,4 +441,132 @@ function manidora_regenerate_sequence_set_rels_ext($compound_object, &$context) 
 function manidora_regenerate_sequence_finished($success, $results, $operations) {
   // Print finished message to user.
   drush_log('Finished updating compound object sequence numbers.', 'ok');
+}
+
+function drush_manidora_patch_items() {
+  drupal_static_reset('islandora_get_tuque_connection');
+  #$connection = islandora_get_tuque_connection();
+  $connection = new IslandoraRepositoryConnection(FEDORA_URL,FEDORA_USER,FEDORA_PWD);
+  $connection->reuseConnection = TRUE;
+  $connection->repository = new FedoraRepository(new FedoraApi($connection), new SimpleCache());
+
+  $patchfile = drush_get_option('patch_file');
+  $patches = file_get_contents($patchfile);
+  $patches = explode("\n",$patches);
+  drush_log($patches, "ok");
+  foreach ($patches as $patch) {
+    $tok = explode("\t",$patch);
+    //[0] should be the parent pid
+    //[1] should be the child pid
+    //[2] should be the sequence index
+    //module_load_include('inc','islandora','includes/compound_ocr_aggregation');
+    $parent = islandora_object_load($tok[0]);
+    if ($parent !== false){
+      $child = islandora_object_load($tok[1]);
+      if ($child !== false){
+        $seq = intval($tok[2]);
+        $items = islandora_compound_object_get_parts($tok[0]);
+        if (count($items) > $tok[2]){
+          // re-indexing needed
+          //grab the existing items
+          //$parts = islandora_compound_object_get_parts($tok[0]);
+          $escaped_pid = str_replace(':','_',$tok[0]);
+          foreach ($items as $tmpitem){
+            //check the seq number. < tok[2] ? ignore; > tok[2] ? increment that number
+            $item = islandora_object_load($tmpitem);
+            if ($item !== FALSE){
+              //get the sequence number
+              $seqnum = $item->relationships->get(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid",NULL,NULL);
+              $seqnumint = intval($seqnum);
+              if ($seqnumint > $tok[2]){
+                $seqnumint = $seqnumint+1;
+                $item->relationships->remove(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid",NULL,NULL);
+                $item->relationships->add(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid",$seqnumint,RELS_TYPE_PLAIN_LITERAL);
+                $item->relationships->remove(FEDORA_RELS_EXT_URI,"isConstituentOf",NULL,NULL);
+                $item->relationships->add(FEDORA_RELS_EXT_URI,"isConstituentOf",$tok[0]);
+              }
+            }
+          }
+        }
+        //adding items onto the end of a sequence
+        $escaped_pid = str_replace(':','_',$tok[0]);
+        $child->relationships->remove(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid",NULL,NULL);
+        $child->relationships->add(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid",$tok[2],RELS_TYPE_PLAIN_LITERAL);
+        $child->relationships->remove(FEDORA_RELS_EXT_URI,"isConstituentOf",NULL,NULL);
+        $child->relationships->add(FEDORA_RELS_EXT_URI,"isConstituentOf",$tok[0]);
+      }
+    }
+  }
+}
+
+
+function drush_manidora_parse_collection_json() {
+  $jsonfilename = drush_get_option('json_file');
+  $patchfile = drush_get_option('patch_file');
+  // read in the file, convert the utf8 (as apparently it "works better"), convert to json arrays
+  $jsonfile = file_get_contents($jsonfilename);
+  $jsonfile = utf8_encode($jsonfile);
+  $results = json_decode($jsonfile,TRUE);
+  // sort the array of objects based on the local identifier
+  usort( $results, function( $a, $b ) { return strnatcmp( $a["local_id"], $b["local_id"] ); });
+  /* process the items, so forth:
+  //
+  // *_0001, no *_0002 - no sequence, continue
+  // *_0001, *_0002, same parent - everything is as expected
+  // *_0001, *_0002, different parent - log as the 0002 will have to be orphaned and compounded
+  // *_0001, *_0002, 0002 no parent - add to file that will control next script to auto compound
+  */
+  for ($cnt=0; $cnt < sizeof($results)-1; $cnt++) {
+    $id = substr($results[$cnt]["local_id"],-4);
+
+    //drush_log($results[$cnt]["local_id"]." vs ".$results[$cnt+1]["local_id"],"ok");
+
+    $parent1 = $results[$cnt]["relationships"]["isConstituentOf"];
+    $parent2 = $results[$cnt+1]["relationships"]["isConstituentOf"];
+    $itempre = substr($results[$cnt]["local_id"],0,strlen($results[$cnt]["local_id"])-5);
+    $itempost = $id;
+    $nxtitempre = substr($results[$cnt+1]["local_id"],0,strlen($results[$cnt+1]["local_id"])-5);
+    $nxtitempost = substr($results[$cnt+1]["local_id"],-4);
+
+    if (strcmp($itempre,$nxtitempre) == 0) {
+      $cur = intval($nxtitempost);
+      $nxt = intval($itempost)+1;
+      if ($nxt >= $cur) {
+        //expected subsequent id
+        /* check if the 2 items have the same parent(s) */
+        for ($relcnt=0; $relcnt < sizeof($parent1); $relcnt++){
+          if (sizeof($parent2) > 0){
+            $found = array_search($parent1[$relcnt],$parent2);
+            //drush_log($results[$cnt]["local_id"]." ".$results[$cnt+1]["local_id"],"ok");
+            if ($found === FALSE) {
+              // items dont share a parent, check prefix
+              drush_log("        adding ".$results[$cnt+1]["local_id"]." ".$results[$cnt+1]["pid"],"ok");
+              //$fil = fopen($patchfile,"a+");
+              //if ($fil !== FALSE){
+              //  $cmpitem = $parent1[0];
+              //  $patchstr = sprintf("%s\t%s\t%s\r\n",$cmpitem,$results[$cnt+1]["pid"],intval($nxtitempost)$
+              //  fwrite($fil,$patchstr);
+              //  fclose($file);
+              //}
+            }
+          } else {
+            //check if item is a compound or not
+            if ($nxtitempost != "0001"){
+              drush_log("        Adding ".$results[$cnt+1]["local_id"]." ".$results[$cnt+1]["pid"],"ok");
+              //add to patch file
+              //format
+              //[parent_pid]    [child_pid]     [sequence#]
+              $fil = fopen($patchfile,"a+");
+              if ($fil !== FALSE){
+                $cmpitem = $parent1[0];
+                $patchstr = sprintf("%s\t%s\t%s\r\n",$cmpitem,$results[$cnt+1]["pid"],intval($nxtitempost));
+                fwrite($fil,$patchstr);
+                fclose($file);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
