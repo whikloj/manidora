@@ -445,10 +445,10 @@ function manidora_regenerate_sequence_finished($success, $results, $operations) 
 
 function drush_manidora_patch_items() {
   drupal_static_reset('islandora_get_tuque_connection');
-  #$connection = islandora_get_tuque_connection();
-  $connection = new IslandoraRepositoryConnection(FEDORA_URL,FEDORA_USER,FEDORA_PWD);
-  $connection->reuseConnection = TRUE;
-  $connection->repository = new FedoraRepository(new FedoraApi($connection), new SimpleCache());
+  $connection = islandora_get_tuque_connection();
+  #$connection = new IslandoraRepositoryConnection(FEDORA_URL,FEDORA_USER,FEDORA_PWD);
+  #$connection->reuseConnection = TRUE;
+  #$connection->repository = new FedoraRepository(new FedoraApi($connection), new SimpleCache());
 
   $patchfile = drush_get_option('patch_file');
   $patches = file_get_contents($patchfile);
@@ -478,7 +478,7 @@ function drush_manidora_patch_items() {
               //get the sequence number
               $seqnum = $item->relationships->get(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid",NULL,NULL);
               $seqnumint = intval($seqnum);
-              if ($seqnumint > $tok[2]){
+              if ($seqnumint > $seq){
                 $seqnumint = $seqnumint+1;
                 $item->relationships->remove(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid",NULL,NULL);
                 $item->relationships->add(ISLANDORA_RELS_EXT_URI,"isSequenceNumberOf$escaped_pid",$seqnumint,RELS_TYPE_PLAIN_LITERAL);
@@ -508,65 +508,98 @@ function drush_manidora_parse_collection_json() {
   $jsonfile = utf8_encode($jsonfile);
   $results = json_decode($jsonfile,TRUE);
   // sort the array of objects based on the local identifier
-  usort( $results, function( $a, $b ) { return strnatcmp( $a["local_id"], $b["local_id"] ); });
+  usort( $results, function( $a, $b ) {
+    if (strnatcmp(trim($a["local_id"]), trim($b["local_id"])) === 0) {
+      return strnatcmp($a['pid'], $b['pid']);
+    }
+    return strnatcmp( trim($a["local_id"]), trim($b["local_id"]) );
+
+  });
+
+  // Pull last 4 digits off the local identifier
+  $get_sequence = function($o) {
+    return substr($o,-4);
+  };
+  // Get everything except the underscore and last 4 digits
+  $get_main_identifier = function($o) {
+    return substr($o,0,-5);
+  };
+
   /* process the items, so forth:
   //
   // *_0001, no *_0002 - no sequence, continue
   // *_0001, *_0002, same parent - everything is as expected
   // *_0001, *_0002, different parent - log as the 0002 will have to be orphaned and compounded
   // *_0001, *_0002, 0002 no parent - add to file that will control next script to auto compound
-  */
-  for ($cnt=0; $cnt < sizeof($results)-1; $cnt++) {
-    $id = substr($results[$cnt]["local_id"],-4);
+     */
+  $file = fopen($patchfile,"w");
 
-    //drush_log($results[$cnt]["local_id"]." vs ".$results[$cnt+1]["local_id"],"ok");
+  if ($file === FALSE) {
+    drush_log("Unable to open patch file $patchfile", "error");
+  }
+  else {
+    for ($cnt = 0; $cnt < sizeof($results) - 1; $cnt++) {
 
-    $parent1 = $results[$cnt]["relationships"]["isConstituentOf"];
-    $parent2 = $results[$cnt+1]["relationships"]["isConstituentOf"];
-    $itempre = substr($results[$cnt]["local_id"],0,strlen($results[$cnt]["local_id"])-5);
-    $itempost = $id;
-    $nxtitempre = substr($results[$cnt+1]["local_id"],0,strlen($results[$cnt+1]["local_id"])-5);
-    $nxtitempost = substr($results[$cnt+1]["local_id"],-4);
+      $first = $results[$cnt];
+      $second = $results[$cnt + 1];
 
-    if (strcmp($itempre,$nxtitempre) == 0) {
-      $cur = intval($nxtitempost);
-      $nxt = intval($itempost)+1;
-      if ($nxt >= $cur) {
-        //expected subsequent id
-        /* check if the 2 items have the same parent(s) */
-        for ($relcnt=0; $relcnt < sizeof($parent1); $relcnt++){
-          if (sizeof($parent2) > 0){
-            $found = array_search($parent1[$relcnt],$parent2);
-            //drush_log($results[$cnt]["local_id"]." ".$results[$cnt+1]["local_id"],"ok");
-            if ($found === FALSE) {
-              // items dont share a parent, check prefix
-              drush_log("        adding ".$results[$cnt+1]["local_id"]." ".$results[$cnt+1]["pid"],"ok");
-              //$fil = fopen($patchfile,"a+");
-              //if ($fil !== FALSE){
-              //  $cmpitem = $parent1[0];
-              //  $patchstr = sprintf("%s\t%s\t%s\r\n",$cmpitem,$results[$cnt+1]["pid"],intval($nxtitempost)$
-              //  fwrite($fil,$patchstr);
-              //  fclose($file);
-              //}
+      drush_log($first["local_id"] . " vs " . $second["local_id"], "ok");
+
+      if ($first["local_id"] == $second["local_id"]) {
+        drush_log(format_string("models\n!a\n ---\n!b", array(
+          '!a' => var_export($first['models'], TRUE),
+          '!b' => var_export($second['models'], TRUE),
+        )), "ok");
+        drush_log(format_string("\t!pid1 has same local id as !pid2", array(
+          '!pid1' => $first['pid'],
+          '!pid2' => $second['pid'],
+        )), "ok");
+
+        continue;
+      }
+
+      $parent1 = $first["relationships"]["isConstituentOf"];
+      $parent2 = $second["relationships"]["isConstituentOf"];
+      $id = call_user_func($get_sequence, $first["local_id"]);
+      $itempre = call_user_func($get_main_identifier, $first["local_id"]);
+      $itempost = $id;
+      $nxtitempre = call_user_func($get_main_identifier, $second["local_id"]);
+      $nxtitempost = call_user_func($get_sequence, $second["local_id"]);
+
+      if (strcmp($itempre, $nxtitempre) == 0) {
+        $cur = intval($nxtitempost);
+        $nxt = intval($itempost) + 1;
+        if ($nxt >= $cur) {
+          //expected subsequent id
+          /* check if the 2 items have the same parent(s) */
+          for ($relcnt = 0; $relcnt < sizeof($parent1); $relcnt++) {
+            if (sizeof($parent2) > 0) {
+              $found = array_search($parent1[$relcnt], $parent2);
+              //drush_log($results[$cnt]["local_id"]." ".$results[$cnt+1]["local_id"],"ok");
+              if ($found === FALSE) {
+                // items dont share a parent, check prefix
+                drush_log("        adding " . $results[$cnt + 1]["local_id"] . " " . $results[$cnt + 1]["pid"], "ok");
+              }
             }
-          } else {
-            //check if item is a compound or not
-            if ($nxtitempost != "0001"){
-              drush_log("        Adding ".$results[$cnt+1]["local_id"]." ".$results[$cnt+1]["pid"],"ok");
-              //add to patch file
-              //format
-              //[parent_pid]    [child_pid]     [sequence#]
-              $fil = fopen($patchfile,"a+");
-              if ($fil !== FALSE){
-                $cmpitem = $parent1[0];
-                $patchstr = sprintf("%s\t%s\t%s\r\n",$cmpitem,$results[$cnt+1]["pid"],intval($nxtitempost));
-                fwrite($fil,$patchstr);
-                fclose($file);
+            else {
+              //check if item is a compound or not
+              if ($nxtitempost != "0001") {
+                drush_log("\tAdding " . $results[$cnt + 1]["local_id"] . " " . $results[$cnt + 1]["pid"] . " to " . $parent1[0], "ok");
+                //add to patch file
+                //format
+                //[parent_pid]    [child_pid]     [sequence#]
+
+                if ($file !== FALSE) {
+                  $cmpitem = $parent1[0];
+                  $patchstr = sprintf("%s\t%s\t%s\r\n", $cmpitem, $results[$cnt + 1]["pid"], intval($nxtitempost));
+                  fwrite($file, $patchstr);
+                }
               }
             }
           }
         }
       }
     }
+    fclose($file);
   }
 }
