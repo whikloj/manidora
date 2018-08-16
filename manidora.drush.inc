@@ -524,8 +524,8 @@ function drush_manidora_parse_collection_json() {
   $get_main_identifier = function($o) {
     return substr($o,0,-5);
   };
-  $is_islandora_cmodel = function($o, $v) {
-    return (strpos($v, 'islandora:') === 0);
+  $is_islandora_cmodel = function($o) {
+    return (strpos($o, 'islandora:') === 0);
   };
 
   /* process the items, so forth:
@@ -549,17 +549,10 @@ function drush_manidora_parse_collection_json() {
       drush_log($first["local_id"] . " vs " . $second["local_id"], "ok");
 
       if ($first["local_id"] == $second["local_id"]) {
-        drush_log(format_string("models\n!a\n ---\n!b", array(
-          '!a' => var_export($first['models'], TRUE),
-          '!b' => var_export($second['models'], TRUE),
-        )), "ok");
         $models_1 = array_filter($first['models'], $is_islandora_cmodel);
         $models_2 = array_filter($second['models'], $is_islandora_cmodel);
-        drush_log(format_string("models\n!a\n ---\n!b", array(
-          '!a' => var_export($models_1, TRUE),
-          '!b' => var_export($models_2, TRUE),
-        )), "ok");
-
+        // If two items share a local identifier but not content-models,
+        // Then one is probably a compound.
         if (count(array_diff($models_1, $models_2)) === 0 &&
           count(array_diff($models_2, $models_1)) === 0) {
           drush_log(format_string("\t!pid1 has same local id as !pid2", array(
