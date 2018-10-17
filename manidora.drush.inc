@@ -96,6 +96,18 @@ function manidora_drush_command() {
         'description' => 'patch file containing compounding info',
         'required' => TRUE,
       ),
+      'dup_file' => array(
+        'description' => 'file to write duplicate IDs to',
+        'required' => TRUE,
+      ),
+      'zero_file' => array(
+        'description' => 'file to write all files with zero length TIF/OBJ datastreams',
+        'required' => TRUE,
+      ),
+      'corrupt_file' => array(
+        'description' => 'file to write items with no TIF/OBJ/JPG datastreams',
+        'required' => TRUE,
+      ),
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
   );
@@ -503,6 +515,9 @@ function drush_manidora_patch_items() {
 function drush_manidora_parse_collection_json() {
   $jsonfilename = drush_get_option('json_file');
   $patchfile = drush_get_option('patch_file');
+  $_dupfile = drush_get_option('dup_file');
+  $_zerofile = drush_get_option('zero_file');
+  $_corruptfile = drush_get_option('corrupt_file');
   // read in the file, convert the utf8 (as apparently it "works better"), convert to json arrays
   $jsonfile = file_get_contents($jsonfilename);
   $jsonfile = utf8_encode($jsonfile);
@@ -536,6 +551,9 @@ function drush_manidora_parse_collection_json() {
   // *_0001, *_0002, 0002 no parent - add to file that will control next script to auto compound
      */
   $file = fopen($patchfile,"w");
+  $dupfile = fopen($_dupfile,"w");
+  $zerofile = fopen($_zerofile,"w");
+  $corruptfile = fopen($_corruptfile,"w");
 
   if ($file === FALSE) {
     drush_log("Unable to open patch file $patchfile", "error");
@@ -559,6 +577,57 @@ function drush_manidora_parse_collection_json() {
             '!pid1' => $first['pid'],
             '!pid2' => $second['pid'],
           )), "ok");
+          //check if the TIF/OBJ datastream is zero length or corrupt or duplicate
+          $item1 = islandora_object_load($first['pid']);
+          if ($item1 !== false) {
+            $item2 = islandora_object_load($second['pid']);
+            if ($item2 !== false) {
+              if (isset($item1['TIFF']))
+                $item1obj = $item1['TIFF'];
+              else {
+                if (isset($item1['OBJ']))
+                  $item1obj = $item1['OBJ'];
+                else {
+                  //add to corrupt file
+                  $outstr = sprintf("%s\n",$first['pid']);
+                  fwrite($corruptfile, $outstr);
+                }
+              }
+              if (isset($item2['TIFF']))
+                $item2obj = $item2['TIFF'];
+              else {
+                if (isset($item2['OBJ']))
+                  $item2obj = $item2['OBJ'];
+                else {
+                  //add to corrupt file
+                  $outstr = sprintf("%s\n",$second['pid']);
+                  fwrite($corruptfile, $outstr);
+                }
+              }
+              if ($item1obj->size == 0) {
+                //add item to zero_file
+                $outstr = sprintf("%s\n",$first['pid']);
+                fwrite($zerofile, $outstr);
+              } else {
+                if ($item2obj->size == 0) {
+                  //add item to zero_file
+                  $outstr = sprintf("%s\n",$second['pid']);
+                  fwrite($zerofile, $outstr);
+                } else {
+                  //compare the SHA checksums
+                  if ($item1obj && $item2obj) {
+                    $item1hash = sha1($item1obj->content);
+                    $item2hash = sha1($item2obj->content);
+                    if ($item1hash === $item2hash) {
+                      //add to dup file
+                      $outstr = sprintf("%s\t%s\n",$first['pid'],$second['pid']);
+                      fwrite($dupfile, $outstr);
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
         continue;
       }
@@ -606,5 +675,8 @@ function drush_manidora_parse_collection_json() {
       }
     }
     fclose($file);
+    fclose($dupfile);
+    fclose($zerofile);
+    fclose($corruptfile);
   }
 }
