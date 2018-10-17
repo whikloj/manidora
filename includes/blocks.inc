@@ -453,7 +453,7 @@ function __manidora_whats_new_content() {
 
   $item_limit = 4;
 
-  $query = 'fgs_label_s:* AND fgs_createdDate_dt:* AND fedora_datastreams_ms:TN';
+  $query = 'fgs_label_s:* AND fgs_createdDate_dt:[ * TO * ] AND fedora_datastreams_ms:TN';
   $params = array(
     'fl' => 'PID,fgs_label_s,fgs_createdDate_dt,fedora_datastreams_ms,RELS_EXT_canSeeRestricted_uri_ms,RELS_EXT_restrictedState_literal_ms',
     'sort' => 'fgs_createdDate_dt desc',
