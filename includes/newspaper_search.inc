@@ -78,7 +78,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
     }
   }
 
-  usort($tmpobjects, function($a ,$b) {
+  uasort($tmpobjects, function($a ,$b) {
     return strcasecmp(
       preg_replace("/^the\s?/i", "", $a),
       preg_replace("/^the\s?/i", "", $b));
