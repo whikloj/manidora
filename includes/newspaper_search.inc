@@ -30,7 +30,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
 
   $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
   $solr_build->solrParams = islandora_solr_remove_base_filters($solr_build->solrParams);
-  $solr_build->solrParams['sort'] = "fgs_label_s+ASC";
+  $solr_build->solrParams['sort'] = "fgs_label_s ASC";
 
   try {
     $solr_build->executeQuery(FALSE);
