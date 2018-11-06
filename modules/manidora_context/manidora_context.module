@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * Implements hook_context_registry().
+ */
+function manidora_context_context_registry() {
+  return array(
+    'reactions' => array(
+      'manidora_context_reaction_alter_music' => array(
+        'title' => t('Alter objects for Faculty of Music'),
+        'description' => t("Alter the object display to use special Faculty of Music display."),
+        'plugin' => 'manidora_context_reaction_alter_music',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_context_plugins().
+ */
+function manidora_context_context_plugins() {
+  return array(
+    'manidora_context_reaction_alter_music' => array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'manidora_context') . '/plugins',
+        'file' => 'manidora_context_reaction_music_compound.inc',
+        'class' => 'ManidoraContextReactionMusicCompound',
+        'parent' => 'context_reaction',
+      ),
+    ),
+  );
+}
+
+function manidora_context_islandora_compoundcmodel_islandora_view_object_alter(AbstractObject $object, &$rendered) {
+  $output = array();
+  if ($plugin = context_get_plugin('reaction', 'manidora_context_reaction_alter_music')) {
+    $output = array_merge($output, $plugin->execute($object));
+  }
+  if (is_array($rendered) && count($rendered) == 1) {
+    $rendered = $output;
+  }
+}

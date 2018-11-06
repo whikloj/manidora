@@ -1,0 +1,7 @@
+name = Manidora - Context
+description = University of Manitoba - Custom Context Rules and Reactions
+package = Islandora
+version = 7.x-dev
+core = 7.x
+dependencies[] = manidora
+dependencies[] = islandora_context
