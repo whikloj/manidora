@@ -32,11 +32,11 @@ function manidora_context_context_plugins() {
 }
 
 function manidora_context_islandora_compoundcmodel_islandora_view_object_alter(AbstractObject $object, &$rendered) {
-  $output = array();
   if ($plugin = context_get_plugin('reaction', 'manidora_context_reaction_alter_music')) {
-    $output = array_merge($output, $plugin->execute($object));
-  }
-  if (is_array($rendered) && count($rendered) == 1) {
-    $rendered = $output;
+    if ($markup = $plugin->execute($object)) {
+      if (isset($rendered[NULL])) {
+        $rendered[NULL]['#markup'] = drupal_render($markup);
+      }
+    }
   }
 }

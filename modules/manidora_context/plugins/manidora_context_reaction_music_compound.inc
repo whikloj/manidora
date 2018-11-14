@@ -12,18 +12,22 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
 
   function execute($object) {
     $markup = array();
-    $parts = islandora_compound_object_get_parts($object);
-    $markup['manidora_context_reaction_music_compound'] = array();
-    foreach ($parts as $part) {
-      $object = islandora_object_load($part);
-      if (in_array('islandora:sp_pdf', $object->models)) {
-        $markup['manidora_context_reaction_music_compound'][] = $this->makePdf($object);
-      }
-      elseif (in_array('islandora:sp-audioCModel', $object->models)) {
-        $markup['manidora_context_reaction_music_compound'][] = $this->makeAudioPlayer($object);
-      }
-      elseif (in_array('islandora:sp_videoCModel', $object->models)) {
-        $markup['manidora_context_reaction_music_compound'][] = $this->makeVideoPlayer($object);
+    foreach ($this->get_contexts() as $context) {
+      if ($context->reactions['manidora_context_reaction_alter_music']['display_as_music_compound']) {
+        $parts = islandora_compound_object_get_parts($object);
+        $markup['manidora_context_reaction_music_compound'] = array();
+        foreach ($parts as $part) {
+          $object = islandora_object_load($part);
+          if (in_array('islandora:sp_pdf', $object->models)) {
+            $markup['manidora_context_reaction_music_compound'][] = $this->makePdf($object);
+          }
+          elseif (in_array('islandora:sp-audioCModel', $object->models)) {
+            $markup['manidora_context_reaction_music_compound'][] = $this->makeAudioPlayer($object);
+          }
+          elseif (in_array('islandora:sp_videoCModel', $object->models)) {
+            $markup['manidora_context_reaction_music_compound'][] = $this->makeVideoPlayer($object);
+          }
+        }
       }
     }
     return $markup;
@@ -31,13 +35,19 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
 
   private function makePdf(AbstractObject $object) {
     return array(
-      '#type' => 'link',
-      '#title' => t('View Program'),
-      '#href' => url(format_string('islandora/object/!pid/datastream/!dsid/content',
-        array(
-          '!pid' => $object->id,
-          '!dsid' => 'OBJ',
-        )), array('absolute' => TRUE)),
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => 'manidora-music-compounds-pdf-link',
+      ),
+      'program_link' => array(
+        '#type' => 'link',
+        '#title' => t('View Program'),
+        '#href' => url(format_string('islandora/object/!pid/datastream/!dsid/content',
+          array(
+            '!pid' => $object->id,
+            '!dsid' => 'OBJ',
+          )), array('absolute' => TRUE)),
+      )
     );
   }
 
