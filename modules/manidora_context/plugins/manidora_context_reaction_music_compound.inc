@@ -2,11 +2,17 @@
 
 class ManidoraContextReactionMusicCompound extends context_reaction {
 
+  function options_form($context) {
+    return array('display_as_music_compound' => array('#type' => 'value', '#value' => TRUE));
+  }
 
+  function options_form_submit($values) {
+    return array('display_as_music_compound' => 1);
+  }
 
   function execute($object) {
-    $parts = islandora_compound_object_get_parts($object);
     $markup = array();
+    $parts = islandora_compound_object_get_parts($object);
     $markup['manidora_context_reaction_music_compound'] = array();
     foreach ($parts as $part) {
       $object = islandora_object_load($part);
