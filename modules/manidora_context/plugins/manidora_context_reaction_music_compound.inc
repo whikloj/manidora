@@ -52,6 +52,8 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
   }
 
   private function makeAudioPlayer(AbstractObject $object) {
+    module_load_include('inc', 'manidora', 'includes/metadata');
+    $metadata = manidora_get_correct_metadata($object);
     // Possible DSIDs in order of preference
     $possible_dsids = array(
       'PROXY_MP3',
@@ -87,6 +89,9 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
 
       return array(
         '#type' => 'container',
+        '#attrbutes' => array(
+          'class' => array('manidora-music-compound-audio-wrapper'),
+        ),
         'label' => array(
           '#type' => 'html_tag',
           '#tag' => 'p',
@@ -105,6 +110,15 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           ),
           '#value' => $source . 'Your browser does not support the HTML 5 audio element.',
         ),
+        'details' => array(
+          '#type' => 'fieldset',
+          '#title' => t('Details'),
+          '#attributes' => array('class' => array('collapsible', 'collapsed')),
+          'content' => array(
+            '#markup' => $metadata,
+          ),
+        ),
+        '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
       );
     }
     else {
@@ -113,6 +127,8 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
   }
 
   private function makeVideoPlayer(AbstractObject $object) {
+    module_load_include('inc', 'manidora', 'includes/metadata');
+    $metadata = manidora_get_correct_metadata($object);
     // Possible DSIDs in order of preference
     $possible_dsids = array(
       'MP4',
@@ -157,7 +173,30 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           ),
         ));
       }
-      return $output;
+      return array(
+        '#type' => 'container',
+        '#attrbutes' => array(
+          'class' => array('manidora-music-compound-video-wrapper'),
+        ),
+        'label' => array(
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#attributes' => array(
+            'class' => array('manidora-music-compound-video-label'),
+          ),
+          '#value' => t($object->label),
+        ),
+        'video_player' => $output,
+        'details' => array(
+          '#type' => 'fieldset',
+          '#title' => t('Details'),
+          '#attributes' => array('class' => array('collapsible', 'collapsed')),
+          'content' => array(
+            '#markup' => $metadata,
+          ),
+        ),
+        '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
+      );
     }
     else {
       return array();

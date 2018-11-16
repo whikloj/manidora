@@ -14,8 +14,25 @@ function manidora_retrieve_metadata_form(AbstractObject $object) {
   drupal_set_title($object->label . " Metadata");
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
+  $output = manidora_get_correct_metadata($object);
+  $form = array(
+    '#type' => 'item',
+    '#markup' => $output,
+    '#weight' => 10,
+  );
+  return $form;
+}
+
+/**
+ * Utility function to get the correct metadata table.
+ *
+ * @param \AbstractObject $object
+ *   The object to get the metadata form for.
+ * @return bool|string
+ *   Transformed metadata or FALSE.
+ */
+function manidora_get_correct_metadata(AbstractObject $object) {
   $output = '';
-  $form = array();
   // Video and audio objects get PBCORE.
   if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models) && isset($object['PBCORE'])) {
     // $output = manidora_pbcore_metadata($object);
@@ -25,12 +42,7 @@ function manidora_retrieve_metadata_form(AbstractObject $object) {
   elseif (isset($object['MODS'])) {
     $output = manidora_mods_transform($object);
   }
-  $form = array(
-    '#type' => 'item',
-    '#markup' => $output,
-    '#weight' => 10,
-  );
-  return $form;
+  return $output;
 }
 
 /**
