@@ -87,18 +87,22 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         ),
       ));
 
+      $value = t($object->label);
+      $this->makeAdminLink($object, $value);
+
       return array(
         '#type' => 'container',
         '#attrbutes' => array(
           'class' => array('manidora-music-compound-audio-wrapper'),
         ),
+        '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
         'label' => array(
           '#type' => 'html_tag',
           '#tag' => 'p',
           '#attributes' => array(
             'class' => array('manidora-music-compound-audio-label'),
           ),
-          '#value' => t($object->label),
+          '#value' => $value,
         ),
         'audio_player' => array(
           '#type' => 'html_tag',
@@ -117,8 +121,7 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           'content' => array(
             '#markup' => $metadata,
           ),
-        ),
-        '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
+        )
       );
     }
     else {
@@ -173,18 +176,21 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           ),
         ));
       }
+      $value = t($object->label);
+      $this->makeAdminLink($object, $value);
       return array(
         '#type' => 'container',
         '#attrbutes' => array(
           'class' => array('manidora-music-compound-video-wrapper'),
         ),
+        '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
         'label' => array(
           '#type' => 'html_tag',
           '#tag' => 'p',
           '#attributes' => array(
             'class' => array('manidora-music-compound-video-label'),
           ),
-          '#value' => t($object->label),
+          '#value' => $value,
         ),
         'video_player' => $output,
         'details' => array(
@@ -195,7 +201,6 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
             '#markup' => $metadata,
           ),
         ),
-        '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
       );
     }
     else {
@@ -203,4 +208,40 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
     }
   }
 
+  /**
+   * Make and add an admin link to the value string.
+   *
+   * @param \AbstractObject $object
+   *   The object to administer.
+   * @param $value
+   *   The current label string
+
+   * @throws \Exception
+   *   When calling theme().
+   */
+  private function makeAdminLink(AbstractObject $object, &$value) {
+    if (islandora_object_manage_access_callback(array(
+      ISLANDORA_MANAGE_PROPERTIES,
+      ISLANDORA_METADATA_EDIT,
+      ISLANDORA_ADD_DS,
+      ISLANDORA_PURGE,
+      ISLANDORA_INGEST,
+    ), $object)) {
+      $value .= " " .
+        theme('html_tag', array(
+          'element' => array(
+            '#type' => 'html_tag',
+            '#tag' => 'span',
+            '#attributes' => array(
+              'class' => array('manidora-music-compound-admin-part'),
+            ),
+            '#value' => l(
+              'Edit this object',
+              format_string('islandora/object/!pid/manage', array(
+                '!pid' => $object->id,
+              ))
+            ),
+          )));
+    }
+  }
 }
