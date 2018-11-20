@@ -321,10 +321,18 @@ function manidora_technical_metadata_access($object) {
  * @TODO: Expand on the restriction?
  */
 function manidora_download_access($object) {
+  $permission = FALSE;
   if (!in_array('islandora:collectionCModel', $object->models)) {
-    return TRUE;
+    $permission = TRUE;
   }
-  return FALSE;
+  if ($permission === TRUE) {
+    $hook_permissions = module_invoke_all('manidora_download_access', $object);
+    $hook_permissions = array_unique($hook_permissions);
+    if (in_array(FALSE, $hook_permissions)) {
+      $permission = FALSE;
+    }
+  }
+  return $permission;
 }
 
 /**

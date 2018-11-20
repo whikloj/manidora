@@ -34,6 +34,8 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
   }
 
   private function makePdf(AbstractObject $object) {
+    $admin = "";
+    $this->makeAdminLink($object, $admin);
     return array(
       '#type' => 'container',
       '#attributes' => array(
@@ -47,7 +49,10 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
             '!pid' => $object->id,
             '!dsid' => 'OBJ',
           )), array('absolute' => TRUE)),
-      )
+      ),
+      'admin_link' => array(
+        '#markup' => $admin,
+      ),
     );
   }
 
@@ -111,6 +116,7 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
             'controls' => 'controls',
             'id' => drupal_html_id($pid),
             'class' => array('manidora-context', 'manidora-music-compound-audio'),
+            'controlsList' => 'nodownload',
           ),
           '#value' => $source . 'Your browser does not support the HTML 5 audio element.',
         ),
@@ -162,6 +168,7 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           'controls' => 'controls',
           'id' => drupal_html_id($pid),
           'class' => array('manidora-context', 'manidora-music-compound-video'),
+          'controlsList' => 'nodownload',
         ),
         '#value' => 'Your browser does not support the HTML 5 video element.',
       );

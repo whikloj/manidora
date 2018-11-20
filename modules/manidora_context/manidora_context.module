@@ -11,6 +11,11 @@ function manidora_context_context_registry() {
         'description' => t("Alter the object display to use special Faculty of Music display."),
         'plugin' => 'manidora_context_reaction_alter_music',
       ),
+      'manidora_context_reaction_display_download' => array(
+        'title' => t('Disable the Download tab'),
+        'description' => t('For the matching objects do not display the Download tab, does NOT restrict direct access'),
+        'plugin' => 'manidora_context_reaction_display_download',
+      ),
     ),
   );
 }
@@ -28,6 +33,14 @@ function manidora_context_context_plugins() {
         'parent' => 'context_reaction',
       ),
     ),
+    'manidora_context_reaction_display_download' => array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'manidora_context') . '/plugins',
+        'file' => 'manidora_context_reaction_disable_download.inc',
+        'class' => 'ManidoraContextReactionDisableDownload',
+        'parent' => 'context_reaction',
+      ),
+    ),
   );
 }
 
@@ -39,4 +52,11 @@ function manidora_context_islandora_compoundcmodel_islandora_view_object_alter(A
       }
     }
   }
+}
+
+function manidora_context_manidora_download_access(AbstractObject $object) {
+  if ($plugin = context_get_plugin('reaction', 'manidora_context_reaction_display_download')) {
+    return $plugin->execute();
+  }
+  return NULL;
 }
