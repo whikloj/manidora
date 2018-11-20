@@ -20,3 +20,23 @@ function hook_manidora_download_access(AbstractObject $object) {
   }
   return NULL;
 }
+
+/**
+ * Essentially for calling contexts.
+ *
+ * @param \AbstractObject $object
+ *   The islandora object.
+ */
+function hook_manidora_detail_view(AbstractObject $object) {
+  // Do something when you are viewing the Details tab for this object.
+}
+
+/**
+ * Essentially for calling contexts conditions against $object.
+ *
+ * @param \AbstractObject $object
+ *   The islandora object.
+ */
+function hook_manidora_download_view(AbstractObject $object) {
+  // Do something when you are viewing the Download tab for this object.
+}

@@ -60,3 +60,17 @@ function manidora_context_manidora_download_access(AbstractObject $object) {
   }
   return NULL;
 }
+
+/**
+ * Implements hook_manidora_detail_view().
+ */
+function manidora_context_manidora_detail_view(AbstractObject $object) {
+  islandora_context_islandora_view_object($object);
+}
+
+/**
+ * Implements hook_manidora_download_view().
+ */
+function manidora_context_manidora_download_view(AbstractObject $object) {
+  islandora_context_islandora_view_object($object);
+}

@@ -419,6 +419,7 @@ function manidora_download_table($islandora_object) {
     '#header' => $headers,
     '#rows' => $rows,
   );
+  module_invoke_all('manidora_download_view', $islandora_object);
   return $table;
 }
 

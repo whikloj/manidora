@@ -20,6 +20,7 @@ function manidora_retrieve_metadata_form(AbstractObject $object) {
     '#markup' => $output,
     '#weight' => 10,
   );
+  module_invoke_all('manidora_detail_view', $object);
   return $form;
 }
 
