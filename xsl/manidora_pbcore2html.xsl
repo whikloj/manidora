@@ -174,7 +174,7 @@
   <xsl:template match="pb:instantiationMediaType">
       <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Format</xsl:with-param>
-          <xsl:with-param name="content"><xsl:apply-templates mode="search_link2" match="text()">
+          <xsl:with-param name="content"><xsl:apply-templates mode="search_link2" select="text()">
               <xsl:with-param name="field" select="$type_of_resource_field"/>
           </xsl:apply-templates></xsl:with-param>
       </xsl:call-template>
@@ -185,24 +185,32 @@
       <xsl:for-each select="//pb:pbcoreCreator|//pb:pbcoreContributor">
         <xsl:if test="not(./preceding-sibling::node()//pb:creatorRole = descendant-or-self::pb:creatorRole[1])
 and not(./preceding-sibling::node()//pb:contributorRole = descendant-or-self::pb:contributorRole[1])">
+          <xsl:variable name="groupNameLabel">
+              <xsl:choose>
+                  <xsl:when test="string-length(descendant-or-self::pb:creatorRole[1]) &gt; 0 or string-length(descendant-or-self::pb:contributorRole[1]) &gt; 0">
+                      <xsl:apply-templates select="descendant-or-self::pb:creatorRole|descendant-or-self::pb:contributorRole"/>
+                  </xsl:when>
+                  <xsl:otherwise>
+                      <xsl:text>Names</xsl:text>
+                  </xsl:otherwise>
+              </xsl:choose>
+          </xsl:variable>
           <xsl:call-template name="basic_output">
             <xsl:with-param name="label">
-              <xsl:apply-templates select="descendant-or-self::pb:creatorRole|descendant-or-self::pb:contributorRole"/>
+                <xsl:value-of select="$groupNameLabel"/>
             </xsl:with-param>
             <xsl:with-param name="content">
-              <xsl:for-each select="key('creatorKeys', descendant-or-self::pb:creatorRole|descendant-or-self::pb:contributorRole)">
-                <xsl:apply-templates select="./pb:creator|./pb:contributor" mode="grouping"/>
-              </xsl:for-each>
+                <xsl:apply-templates select="key('creatorKeys', descendant-or-self::pb:creatorRole|descendant-or-self::pb:contributorRole)" mode="grouping"/>
             </xsl:with-param>
           </xsl:call-template>
         </xsl:if>
       </xsl:for-each>
   </xsl:template>
 
-  <xsl:template match="pb:creator|pb:contributor" mode="grouping">
+  <xsl:template match="pb:pbcoreCreator|pb:pbcoreContributor" mode="grouping">
     <!-- Output nameParts as text -->
-    <xsl:value-of select="text()"/>
-    <xsl:if test="position() &gt; last()"><xsl:text>; </xsl:text></xsl:if>
+    <xsl:apply-templates select="pb:creator|pb:contributor" mode="text_out"/>
+    <xsl:if test="position() &lt; last()"><xsl:text>; </xsl:text></xsl:if>
   </xsl:template>
 
   <xsl:template match="node()" mode="text_out" priority="-1">
