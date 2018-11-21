@@ -63,7 +63,10 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         '#type' => 'html_tag',
         '#tag' => 'p',
         '#attributes' => array(
-          'class' => array('manidora-music-compound-pdf-label'),
+          'class' => array(
+            'manidora-music-compound-pdf-label',
+            'manidora-music-compound-label',
+            ),
         ),
         '#value' => $admin,
       ),
@@ -115,7 +118,10 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         '#type' => 'html_tag',
         '#tag' => 'p',
         '#attributes' => array(
-          'class' => array('manidora-music-compound-audio-label'),
+          'class' => array(
+            'manidora-music-compound-audio-label',
+            'manidora-music-compound-label',
+          ),
         ),
         '#value' => $value,
       ),
@@ -232,7 +238,10 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           '#type' => 'html_tag',
           '#tag' => 'p',
           '#attributes' => array(
-            'class' => array('manidora-music-compound-video-label'),
+            'class' => array(
+              'manidora-music-compound-video-label',
+              'manidora-music-compound-label',
+            ),
           ),
           '#value' => $value,
         ),
