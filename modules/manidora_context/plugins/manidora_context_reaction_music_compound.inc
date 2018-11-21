@@ -46,6 +46,7 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           'manidora-music-compounds-pdf-link',
         ),
       ),
+      '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
       'program_link' => array(
         '#type' => 'link',
         '#title' => t('View Program'),
@@ -91,6 +92,27 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
       }
     }
 
+    $value = t($object->label);
+    $this->makeAdminLink($object, $value);
+    $form = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array(
+          'manidora-music-compound-wrapper',
+          'manidora-music-compound-audio-wrapper',
+        ),
+      ),
+      '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
+      'label' => array(
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#attributes' => array(
+          'class' => array('manidora-music-compound-audio-label'),
+        ),
+        '#value' => $value,
+      ),
+    );
+
     if (!is_null($url)) {
       // theme_html_tag does not render children.
       $source = theme('html_tag', array(
@@ -105,50 +127,38 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         ),
       ));
 
-      $value = t($object->label);
-      $this->makeAdminLink($object, $value);
-
-      return array(
-        '#type' => 'container',
+      $form['audio_player'] = array(
+        '#type' => 'html_tag',
+        '#tag' => 'audio',
         '#attributes' => array(
-          'class' => array(
-            'manidora-music-compound-wrapper',
-            'manidora-music-compound-audio-wrapper',
-          ),
+          'controls' => 'controls',
+          'id' => drupal_html_id($pid),
+          'class' => array('manidora-context', 'manidora-music-compound-audio'),
+          'controlsList' => 'nodownload',
         ),
-        '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
-        'label' => array(
-          '#type' => 'html_tag',
-          '#tag' => 'p',
-          '#attributes' => array(
-            'class' => array('manidora-music-compound-audio-label'),
-          ),
-          '#value' => $value,
-        ),
-        'audio_player' => array(
-          '#type' => 'html_tag',
-          '#tag' => 'audio',
-          '#attributes' => array(
-            'controls' => 'controls',
-            'id' => drupal_html_id($pid),
-            'class' => array('manidora-context', 'manidora-music-compound-audio'),
-            'controlsList' => 'nodownload',
-          ),
-          '#value' => $source . 'Your browser does not support the HTML 5 audio element.',
-        ),
-        'details' => array(
-          '#type' => 'fieldset',
-          '#title' => t('Details'),
-          '#attributes' => array('class' => array('collapsible', 'collapsed')),
-          'content' => array(
-            '#markup' => $metadata,
-          ),
-        ),
+        '#value' => $source . 'Your browser does not support the HTML 5 audio element.',
       );
     }
     else {
-      return array();
+      $form['audio'] = array(
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#attributes' => array(
+          'class' => array('manidora-music-unavailable'),
+        ),
+        '#value' => t('This track is not available.'),
+      );
     }
+    $form['details'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Details'),
+      '#attributes' => array('class' => array('collapsible', 'collapsed')),
+      'content' => array(
+        '#markup' => $metadata,
+      ),
+    );
+    dsm($form);
+    return $form;
   }
 
   private function makeVideoPlayer(AbstractObject $object) {
