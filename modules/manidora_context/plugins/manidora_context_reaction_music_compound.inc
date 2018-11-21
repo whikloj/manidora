@@ -97,8 +97,8 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
 
       return array(
         '#type' => 'container',
-        '#attrbutes' => array(
-          'class' => array('manidora-music-compound-audio-wrapper'),
+        '#attributes' => array(
+          'class' => array('manidora-music-compound-wrapper', 'manidora-music-compound-audio-wrapper'),
         ),
         '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
         'label' => array(
@@ -187,8 +187,8 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
       $this->makeAdminLink($object, $value);
       return array(
         '#type' => 'container',
-        '#attrbutes' => array(
-          'class' => array('manidora-music-compound-video-wrapper'),
+        '#attributes' => array(
+          'class' => array('manidora-music-compound-wrapper', 'manidora-music-compound-video-wrapper'),
         ),
         '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
         'label' => array(
