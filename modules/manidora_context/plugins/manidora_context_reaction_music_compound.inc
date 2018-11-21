@@ -34,12 +34,17 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
   }
 
   private function makePdf(AbstractObject $object) {
+    module_load_include('inc', 'manidora', 'includes/metadata');
+    $metadata = manidora_get_correct_metadata($object);
     $admin = "";
     $this->makeAdminLink($object, $admin);
     return array(
       '#type' => 'container',
       '#attributes' => array(
-        'class' => 'manidora-music-compounds-pdf-link',
+        'class' => array(
+          'manidora-music-compound-wrapper',
+          'manidora-music-compounds-pdf-link',
+        ),
       ),
       'program_link' => array(
         '#type' => 'link',
@@ -52,6 +57,14 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
       ),
       'admin_link' => array(
         '#markup' => $admin,
+      ),
+      'details' => array(
+        '#type' => 'fieldset',
+        '#title' => t('Details'),
+        '#attributes' => array('class' => array('collapsible', 'collapsed')),
+        'content' => array(
+          '#markup' => $metadata,
+        ),
       ),
     );
   }
@@ -98,7 +111,10 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
       return array(
         '#type' => 'container',
         '#attributes' => array(
-          'class' => array('manidora-music-compound-wrapper', 'manidora-music-compound-audio-wrapper'),
+          'class' => array(
+            'manidora-music-compound-wrapper',
+            'manidora-music-compound-audio-wrapper',
+          ),
         ),
         '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
         'label' => array(
@@ -127,7 +143,7 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           'content' => array(
             '#markup' => $metadata,
           ),
-        )
+        ),
       );
     }
     else {
@@ -167,7 +183,10 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         '#attributes' => array(
           'controls' => 'controls',
           'id' => drupal_html_id($pid),
-          'class' => array('manidora-context', 'manidora-music-compound-video'),
+          'class' => array(
+            'manidora-context',
+            'manidora-music-compound-video',
+          ),
           'controlsList' => 'nodownload',
         ),
         '#value' => 'Your browser does not support the HTML 5 video element.',
