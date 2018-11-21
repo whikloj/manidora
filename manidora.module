@@ -914,6 +914,13 @@ function manidora_xml_form_builder_get_self_transforms() {
   );
 }
 
+function manidora_xml_form_builder_get_transforms() {
+  $module_path = drupal_get_path('module', 'manidora');
+  return array(
+    'pbcore_to_dc.xsl' => "$module_path/xsl/pbcore_to_dc.xsl",
+  );
+}
+
 /**
  * Because we want the list display, but not the word "default" in the name.
  */

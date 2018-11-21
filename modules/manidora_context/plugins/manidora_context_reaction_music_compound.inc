@@ -131,6 +131,7 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         '#type' => 'html_tag',
         '#tag' => 'audio',
         '#attributes' => array(
+          'preload' => 'metadata',
           'controls' => 'controls',
           'id' => drupal_html_id($pid),
           'class' => array('manidora-context', 'manidora-music-compound-audio'),
@@ -157,7 +158,6 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         '#markup' => $metadata,
       ),
     );
-    dsm($form);
     return $form;
   }
 
