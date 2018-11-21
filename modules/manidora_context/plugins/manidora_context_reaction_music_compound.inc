@@ -36,8 +36,20 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
   private function makePdf(AbstractObject $object) {
     module_load_include('inc', 'manidora', 'includes/metadata');
     $metadata = manidora_get_correct_metadata($object);
-    $admin = "";
+
+    $link = array(
+      '#type' => 'link',
+      '#title' => t('View Program'),
+      '#href' => url(format_string('islandora/object/!pid/datastream/!dsid/content',
+        array(
+          '!pid' => $object->id,
+          '!dsid' => 'OBJ',
+        )), array('absolute' => TRUE)),
+    );
+
+    $admin = drupal_render($link);
     $this->makeAdminLink($object, $admin);
+
     return array(
       '#type' => 'container',
       '#attributes' => array(
@@ -47,17 +59,13 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         ),
       ),
       '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
-      'program_link' => array(
-        '#type' => 'link',
-        '#title' => t('View Program'),
-        '#href' => url(format_string('islandora/object/!pid/datastream/!dsid/content',
-          array(
-            '!pid' => $object->id,
-            '!dsid' => 'OBJ',
-          )), array('absolute' => TRUE)),
-      ),
-      'admin_link' => array(
-        '#markup' => $admin,
+      'program' => array(
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#attributes' => array(
+          'class' => array('manidora-music-compound-pdf-label'),
+        ),
+        '#value' => $admin,
       ),
       'details' => array(
         '#type' => 'fieldset',
