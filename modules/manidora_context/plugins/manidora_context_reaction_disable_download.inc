@@ -13,7 +13,7 @@ class ManidoraContextReactionDisableDownload extends context_reaction {
 
   function execute() {
     foreach ($this->get_contexts() as $context) {
-      if ($context->reactions['manidora_context_reaction_alter_music']['display_as_music_compound']) {
+      if ($context->reactions['manidora_context_reaction_display_download']['dont_display_download_tab']) {
         return False;
       }
     }

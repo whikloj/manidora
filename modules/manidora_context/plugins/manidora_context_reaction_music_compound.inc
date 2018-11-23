@@ -2,18 +2,38 @@
 
 class ManidoraContextReactionMusicCompound extends context_reaction {
 
+  private $track_unavailable_label = 'This track is not available.';
+
   function options_form($context) {
-    return array('display_as_music_compound' => array('#type' => 'value', '#value' => TRUE));
+    $settings = $this->fetch_from_context($context);
+    $label = isset($settings['track_unavailable_label']) ? $settings['track_unavailable_label'] : '';
+    return array(
+      'track_unavailable_label' => array(
+        '#type' => 'textfield',
+        '#length' => 200,
+        '#title' => t('Track not available message'),
+        '#description' => t('Message to display if the audio/video OBJ is missing. Defaults to "This track is not available"'),
+        '#default_value' => $label,
+      ),
+      'enabled' => array('#type' => 'value', '#value' => TRUE),
+    );
   }
 
   function options_form_submit($values) {
-    return array('display_as_music_compound' => 1);
+    if (isset($values['track_unavailable_label']) &&
+      empty($values['track_unavailable_label'])) {
+      unset($values['track_unavailable_label']);
+    }
+    return $values;
   }
 
   function execute($object) {
     $markup = array();
     foreach ($this->get_contexts() as $context) {
-      if ($context->reactions['manidora_context_reaction_alter_music']['display_as_music_compound']) {
+      if ($context->reactions['manidora_context_reaction_alter_music']['enabled']) {
+        if (isset($context->reactions['manidora_context_reaction_alter_music']['track_unavailable_label'])) {
+          $this->track_unavailable_label = $context->reactions['manidora_context_reaction_alter_music']['track_unavailable_label'];
+        }
         $parts = islandora_compound_object_get_parts($object);
         $markup['manidora_context_reaction_music_compound'] = array();
         foreach ($parts as $part) {
@@ -139,7 +159,7 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         '#attributes' => array(
           'class' => array('manidora-music-unavailable'),
         ),
-        '#value' => t('This track is not available.'),
+        '#value' => t($this->track_unavailable_label),
       );
     }
     $form['details'] = array(
@@ -215,7 +235,7 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         '#attributes' => array(
           'class' => array('manidora-music-unavailable'),
         ),
-        '#value' => t('This track is not available.'),
+        '#value' => t($this->track_unavailable_label),
       );
     }
 
