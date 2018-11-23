@@ -91,17 +91,7 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
     );
 
     $pid = $object->id;
-    $url = NULL;
-    foreach ($possible_dsids as $dsid) {
-      if (isset($object[$dsid])) {
-        $url = url(format_string('islandora/object/!pid/datastream/!dsid/content',
-          array(
-            '!pid' => $pid,
-            '!dsid' => $dsid,
-          )), array('absolute' => TRUE));
-        $mimetype = $object[$dsid]->mimetype;
-      }
-    }
+    $source = $this->getSources($object, $possible_dsids);
 
     $value = t($object->label);
     $this->makeAdminLink($object, $value);
@@ -127,20 +117,8 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
       ),
     );
 
-    if (!is_null($url)) {
+    if (!empty($source)) {
       // theme_html_tag does not render children.
-      $source = theme('html_tag', array(
-        'element' => array(
-          '#type' => 'html_tag',
-          '#tag' => 'source',
-          '#attributes' => array(
-            'mimetype' => $mimetype,
-            'src' => $url,
-          ),
-          '#value' => '',
-        ),
-      ));
-
       $form['audio_player'] = array(
         '#type' => 'html_tag',
         '#tag' => 'audio',
@@ -186,25 +164,39 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
     );
 
     $pid = $object->id;
-    $sources = array();
-    foreach ($possible_dsids as $dsid) {
-      if (isset($object[$dsid])) {
-        if (!array_key_exists($object[$dsid]->mimetype, $sources)) {
-          $sources[$object[$dsid]->mimetype] =  url(
-            format_string('islandora/object/!pid/datastream/!dsid/content',
-              array(
-                '!pid' => $pid,
-                '!dsid' => $dsid,
-              )), array('absolute' => TRUE));
-        }
-      }
-    }
+    $source = $this->getSources($object, $possible_dsids);
 
-    if (count($sources) > 0) {
-      $output = array(
+    $value = t($object->label);
+    $this->makeAdminLink($object, $value);
+    $form = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array(
+          'manidora-music-compound-wrapper',
+          'manidora-music-compound-video-wrapper',
+        ),
+      ),
+      '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
+      'label' => array(
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#attributes' => array(
+          'class' => array(
+            'manidora-music-compound-video-label',
+            'manidora-music-compound-label',
+          ),
+        ),
+        '#value' => $value,
+      ),
+    );
+
+    if (!empty($source)) {
+      // theme_html_tag does not render children.
+      $form['video_player'] = array(
         '#type' => 'html_tag',
         '#tag' => 'video',
         '#attributes' => array(
+          'preload' => 'metadata',
           'controls' => 'controls',
           'id' => drupal_html_id($pid),
           'class' => array(
@@ -213,52 +205,30 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           ),
           'controlsList' => 'nodownload',
         ),
-        '#value' => 'Your browser does not support the HTML 5 video element.',
-      );
-      foreach ($sources as $mimetype => $url) {
-        // theme_html_tag does not handle children, so render separately.
-        $output['#value'] .= theme('html_tag', array(
-          '#type' => 'html_tag',
-          '#tag' => 'source',
-          '#attributes' => array(
-            'mimetype' => $mimetype,
-            'src' => $url,
-          ),
-        ));
-      }
-      $value = t($object->label);
-      $this->makeAdminLink($object, $value);
-      return array(
-        '#type' => 'container',
-        '#attributes' => array(
-          'class' => array('manidora-music-compound-wrapper', 'manidora-music-compound-video-wrapper'),
-        ),
-        '#attached' => array('js' => array('misc/collapse.js', 'misc/form.js')),
-        'label' => array(
-          '#type' => 'html_tag',
-          '#tag' => 'p',
-          '#attributes' => array(
-            'class' => array(
-              'manidora-music-compound-video-label',
-              'manidora-music-compound-label',
-            ),
-          ),
-          '#value' => $value,
-        ),
-        'video_player' => $output,
-        'details' => array(
-          '#type' => 'fieldset',
-          '#title' => t('Details'),
-          '#attributes' => array('class' => array('collapsible', 'collapsed')),
-          'content' => array(
-            '#markup' => $metadata,
-          ),
-        ),
+        '#value' => $source . 'Your browser does not support the HTML 5 video element.',
       );
     }
     else {
-      return array();
+      $form['video'] = array(
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#attributes' => array(
+          'class' => array('manidora-music-unavailable'),
+        ),
+        '#value' => t('This track is not available.'),
+      );
     }
+
+    $form['details'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Details'),
+      '#attributes' => array('class' => array('collapsible', 'collapsed')),
+      'content' => array(
+        '#markup' => $metadata,
+      ),
+    );
+
+    return $form;
   }
 
   /**
@@ -297,4 +267,44 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
           )));
     }
   }
+
+  /**
+   * Get the any desired source datastreams and return rendered <source> tags.
+   *
+   * @param \AbstractObject $object
+   *   The object.
+   * @param array $valid_dsids
+   *   The desired DSIDs
+   *
+   * @return string
+   *   The <source> tags if any
+   * @throws \Exception
+   *   On theming.
+   */
+  private function getSources(AbstractObject $object, array $valid_dsids) {
+    $sources = '';
+    foreach ($valid_dsids as $dsid) {
+      if (isset($object[$dsid])) {
+        $url = url(format_string('islandora/object/!pid/datastream/!dsid/content',
+          array(
+            '!pid' => $object->id,
+            '!dsid' => $dsid,
+          )), array('absolute' => TRUE));
+        $mimetype = $object[$dsid]->mimetype;
+        $sources .= theme('html_tag', array(
+          'element' => array(
+            '#type' => 'html_tag',
+            '#tag' => 'source',
+            '#attributes' => array(
+              'mimetype' => $mimetype,
+              'src' => $url,
+            ),
+            '#value' => '',
+          ),
+        ));
+      }
+    }
+    return $sources;
+  }
+
 }
