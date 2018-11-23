@@ -26,9 +26,18 @@
     <table class="manidora-metadata">
       <xsl:call-template name="basic_output">
         <xsl:with-param name="label">Title</xsl:with-param>
-        <xsl:with-param name="content"><xsl:value-of select="pb:pbcoreTitle"/></xsl:with-param>
+        <xsl:with-param name="content"><xsl:value-of select="pb:pbcoreTitle[not(@titleType)]"/></xsl:with-param>
         <xsl:with-param name="property">dc:title</xsl:with-param>
       </xsl:call-template>
+
+      <xsl:if test="pb:pbcoreTitle[@titleType='alternative' and string-length(text()) &gt; 0]">
+        <xsl:call-template name="basic_output">
+          <xsl:with-param name="label">Alternative/Uniform Title</xsl:with-param>
+          <xsl:with-param name="content"><xsl:value-of select="pb:pbcoreTitle[@titleType='alternative']"/></xsl:with-param>
+          <xsl:with-param name="property">dc:title</xsl:with-param>
+        </xsl:call-template>
+      </xsl:if>
+
       <xsl:if test="string-length($collections) &gt; 0">
         <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Collections</xsl:with-param>
