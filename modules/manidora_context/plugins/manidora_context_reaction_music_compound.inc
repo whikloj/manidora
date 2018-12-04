@@ -38,14 +38,16 @@ class ManidoraContextReactionMusicCompound extends context_reaction {
         $markup['manidora_context_reaction_music_compound'] = array();
         foreach ($parts as $part) {
           $object = islandora_object_load($part);
-          if (in_array('islandora:sp_pdf', $object->models)) {
-            $markup['manidora_context_reaction_music_compound'][] = $this->makePdf($object);
-          }
-          elseif (in_array('islandora:sp-audioCModel', $object->models)) {
-            $markup['manidora_context_reaction_music_compound'][] = $this->makeAudioPlayer($object);
-          }
-          elseif (in_array('islandora:sp_videoCModel', $object->models)) {
-            $markup['manidora_context_reaction_music_compound'][] = $this->makeVideoPlayer($object);
+          if (islandora_object_access(ISLANDORA_VIEW_OBJECTS, $object)) {
+            if (in_array('islandora:sp_pdf', $object->models)) {
+              $markup['manidora_context_reaction_music_compound'][] = $this->makePdf($object);
+            }
+            elseif (in_array('islandora:sp-audioCModel', $object->models)) {
+              $markup['manidora_context_reaction_music_compound'][] = $this->makeAudioPlayer($object);
+            }
+            elseif (in_array('islandora:sp_videoCModel', $object->models)) {
+              $markup['manidora_context_reaction_music_compound'][] = $this->makeVideoPlayer($object);
+            }
           }
         }
       }
