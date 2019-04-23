@@ -414,16 +414,14 @@ function __manidora_homepage_thumbnail_content() {
     $solr_query = '+PID:("' . implode('" OR "', $t_array) . '")';
     // Get the PID and dc.title.
     $solr_params = array('fl' => 'PID,title_sort_ms');
-    $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
-    // $path_parts = parse_url('digitalcollections.lib.umanitoba.ca:8080/solr');
-    $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
+    $solr_build = new IslandoraSolrQueryProcessor();
 
-    $solr->setCreateDocuments(0);
-    $results = $solr->search($solr_query, 0, 100, $solr_params);
-    if ($results) {
-      $solr_results = json_decode($results->getRawResponse(), TRUE);
+    $solr_build->buildQuery($solr_query, $solr_params);
+    $solr_build->executeQuery(FALSE);
+
+    if (isset($solr_build->islandoraSolrResult['response']['objects'])) {
       $data = array();
-      foreach ($solr_results["response"]["docs"] as $key => $doc) {
+      foreach ($solr_build->islandoraSolrResult["response"]["objects"] as $doc) {
         $data[$doc['PID']] = (array_key_exists('title_sort_ms', $doc) ? $doc['title_sort_ms'][0] : "");
       }
     }
