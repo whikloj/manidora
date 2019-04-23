@@ -219,14 +219,8 @@ EOF;
   $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
 
   // Query is executed.
-  try {
-    $solr_build->executeQuery(FALSE);
-    $solr_results = $solr_build->islandoraSolrResult['response']['objects'];
-  }
-  catch (Exception $e) {
-    islandora_solr_technical_difficulties($e);
-    $solr_results = array();
-  }
+  $solr_build->executeQuery(FALSE);
+  $solr_results = (array) $solr_build->islandoraSolrResult['response']['objects'];
 
   if ($solr_results) {
     $get_nested = function($o, $name) {
@@ -419,7 +413,8 @@ function __manidora_homepage_thumbnail_content() {
     $solr_build->buildQuery($solr_query, $solr_params);
     $solr_build->executeQuery(FALSE);
 
-    if (isset($solr_build->islandoraSolrResult['response']['objects'])) {
+    $solr_results = (array) $solr_build->islandoraSolrResult['response']['objects'];
+    if ($solr_results) {
       $data = array();
       foreach ($solr_build->islandoraSolrResult["response"]["objects"] as $doc) {
         $data[$doc['PID']] = (array_key_exists('title_sort_ms', $doc) ? $doc['title_sort_ms'][0] : "");
@@ -469,14 +464,9 @@ function __manidora_whats_new_content() {
   $solr_build->solrParams['facet'] = $solr_build->solrParams['hl'] = 'false';
   $solr_build->solrParams = islandora_solr_remove_base_filters($solr_build->solrParams);
 
-  try {
-    $solr_build->executeQuery(FALSE);
-    $solr_results = $solr_build->islandoraSolrResult['response']['objects'];
-  }
-  catch (Exception $e) {
-    islandora_solr_technical_difficulties($e);
-    $solr_results = array();
-  }
+  $solr_build->executeQuery(FALSE);
+  $solr_results = (array) $solr_build->islandoraSolrResult['response']['objects'];
+
   $output = "<div class=\"manidora-whats-new-content\">";
   $map = function($o) {
     return array(
