@@ -38,7 +38,7 @@ function manidora_newspaper_search_form($form, &$form_state) {
   }
   catch (Exception $e) {
     $results = array();
-    drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error', FALSE);
+    islandora_solr_technical_difficulties($e);
   }
 
   $all_years = array('min' => 10000, 'max' => 0);

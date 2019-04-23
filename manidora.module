@@ -981,20 +981,3 @@ function manidora_metadata_markup_callback(AbstractObject $object, $print) {
 function manidora_description_markup_callback(AbstractObject $object) {
   return manidora_set_title($object);
 }
-
-/**
- * Make nice text for screen and log the exception to watchdog.
- *
- * @param \Exception $e
- *   The exception.
- */
-function manidora_technical_difficulties(Exception $e) {
-  $message = "We are experiencing technical difficulties and are working to fix the problem. Please try back later.";
-  drupal_set_message(t($message), 'warning');
-  watchdog("manidora", "Received exception @code: @message\nLine: @line in file: @file", array(
-    '@code' => $e->getCode(),
-    '@message' => $e->getMessage(),
-    '@file' => $e->getFile(),
-    '@line' => $e->getLine(),
-  ), WATCHDOG_ERROR);
-}

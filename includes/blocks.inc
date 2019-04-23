@@ -224,7 +224,7 @@ EOF;
     $solr_results = $solr_build->islandoraSolrResult['response']['objects'];
   }
   catch (Exception $e) {
-    manidora_technical_difficulties($e);
+    islandora_solr_technical_difficulties($e);
     $solr_results = array();
   }
 
@@ -476,7 +476,7 @@ function __manidora_whats_new_content() {
     $solr_results = $solr_build->islandoraSolrResult['response']['objects'];
   }
   catch (Exception $e) {
-    manidora_technical_difficulties($e);
+    islandora_solr_technical_difficulties($e);
     $solr_results = array();
   }
   $output = "<div class=\"manidora-whats-new-content\">";
