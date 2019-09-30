@@ -981,3 +981,13 @@ function manidora_metadata_markup_callback(AbstractObject $object, $print) {
 function manidora_description_markup_callback(AbstractObject $object) {
   return manidora_set_title($object);
 }
+
+/**
+ * Implements hook_islandora_oai_get_xsl_files().
+ */
+function manidora_islandora_oai_get_xsl_files() {
+  $mod_dir = drupal_get_path('module', 'manidora');
+  return array(
+    "{$mod_dir}/xsl/mods_to_mods_oai.xsl" => 'mods_to_mods_oai.xsl',
+  );
+}
