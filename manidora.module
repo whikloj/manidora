@@ -277,6 +277,8 @@ function manidora_menu_local_tasks_alter(&$data, $router_item, $root_path) {
 function manidora_metadata_access(AbstractObject $object) {
   // Now show Details tab for Collections
   //if (!in_array('islandora:collectionCModel', $object->models)) {
+  // You get a string if you don't have access to load the object.
+  if ($object instanceof AbstractObject) {
     if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models)) {
       if (isset($object['PBCORE']) || isset($object['MODS'])) {
         return TRUE;
@@ -287,7 +289,7 @@ function manidora_metadata_access(AbstractObject $object) {
         return TRUE;
       }
     }
-  //}
+  }
   return FALSE;
 }
 
@@ -560,7 +562,6 @@ function manidora_islandora_sp_large_image_cmodel_islandora_solr_object_result_a
  */
 function manidora_process_islandora_large_image(&$variables) {
   // Override the default text for UofM.
-  $islandora_object = $variables['islandora_object'];
   $variables['image_clip'] = "";
 }
 

@@ -652,72 +652,74 @@
   </xsl:template>
 
   <xsl:template match="mods:accessCondition[not(generate-id() = generate-id(key('CCAccessKey', concat(@type, '+', text()))[1])) or count(key('CCAccessKey',concat(@type,'+',text()))) = 1]">
-    <xsl:call-template name="basic_output">
-      <xsl:with-param name="label">Copyright</xsl:with-param>
-      <xsl:with-param name="content">
-        <xsl:choose>
-          <xsl:when test="normalize-space(@type) = 'Creative Commons License'">
-            <xsl:choose>
-              <xsl:when test="contains(text(), '://creativecommons.org/')">
+    <xsl:if test="string-length(text()) &gt; 0">
+      <xsl:call-template name="basic_output">
+        <xsl:with-param name="label">Copyright</xsl:with-param>
+        <xsl:with-param name="content">
+          <xsl:choose>
+            <xsl:when test="normalize-space(@type) = 'Creative Commons License'">
+              <xsl:choose>
+                <xsl:when test="contains(text(), '://creativecommons.org/')">
+                  <xsl:variable name="cc_string">
+                    <xsl:choose>
+                      <xsl:when test="contains(text(), '/international/')">
+                        <xsl:value-of select="concat(substring-before(substring-after(normalize-space(text()), '/licenses/'), '/international/'), '/')"/>
+                      </xsl:when>
+                      <xsl:otherwise>
+                        <xsl:value-of select="concat(substring-after(normalize-space(text()), '/licenses/'), '/')"/>
+                      </xsl:otherwise>
+                    </xsl:choose>
+                  </xsl:variable>
+                  <div class="manidora-commons-license">
+                  <a rel="license" target="_new">
+                  <xsl:attribute name="href"><xsl:value-of select="normalize-space(text())"/></xsl:attribute>
+                  <img alt="Creative Commons License" style="border-width:0;">
+                    <xsl:attribute name="src"><xsl:value-of select="concat('https://i.creativecommons.org/l/', $cc_string, '88x31.png')"/></xsl:attribute>
+                  </img>
+                  </a>
+                  This work is licensed under a <a rel="license" target="_new">
+                  <xsl:attribute name="href"><xsl:value-of select="normalize-space(text())"/></xsl:attribute>
+                  Creative Commons License</a>
+                </div>
+              </xsl:when>
+              <xsl:otherwise>
                 <xsl:variable name="cc_string">
                   <xsl:choose>
                     <xsl:when test="contains(text(), '/international/')">
-                      <xsl:value-of select="concat(substring-before(substring-after(normalize-space(text()), '/licenses/'), '/international/'), '/')"/>
+                      <xsl:value-of select="concat(substring-before(normalize-space(text()), '/international/'), '/')"/>
                     </xsl:when>
                     <xsl:otherwise>
-                      <xsl:value-of select="concat(substring-after(normalize-space(text()), '/licenses/'), '/')"/>
+                      <xsl:value-of select="normalize-space(text())"/>
                     </xsl:otherwise>
                   </xsl:choose>
                 </xsl:variable>
                 <div class="manidora-commons-license">
                 <a rel="license" target="_new">
-                <xsl:attribute name="href"><xsl:value-of select="normalize-space(text())"/></xsl:attribute>
-                <img alt="Creative Commons License" style="border-width:0;">
-                  <xsl:attribute name="src"><xsl:value-of select="concat('https://i.creativecommons.org/l/', $cc_string, '88x31.png')"/></xsl:attribute>
-                </img>
+                  <xsl:attribute name="href"><xsl:value-of select="concat('https://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
+                  <img alt="Creative Commons License" style="border-width:0;">
+                    <xsl:attribute name="src"><xsl:value-of select="concat('https://i.creativecommons.org/l/', $cc_string, '88x31.png')"/></xsl:attribute>
+                  </img>
                 </a>
                 This work is licensed under a <a rel="license" target="_new">
-                <xsl:attribute name="href"><xsl:value-of select="normalize-space(text())"/></xsl:attribute>
-                Creative Commons License</a>
-              </div>
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:variable name="cc_string">
-                <xsl:choose>
-                  <xsl:when test="contains(text(), '/international/')">
-                    <xsl:value-of select="concat(substring-before(normalize-space(text()), '/international/'), '/')"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:value-of select="normalize-space(text())"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-              </xsl:variable>
-              <div class="manidora-commons-license">
-              <a rel="license" target="_new">
-                <xsl:attribute name="href"><xsl:value-of select="concat('https://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
-                <img alt="Creative Commons License" style="border-width:0;">
-                  <xsl:attribute name="src"><xsl:value-of select="concat('https://i.creativecommons.org/l/', $cc_string, '88x31.png')"/></xsl:attribute>
-                </img>
-              </a>
-              This work is licensed under a <a rel="license" target="_new">
-                <xsl:attribute name="href"><xsl:value-of select="concat('https://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
-                Creative Commons License</a>
-              </div>
-            </xsl:otherwise>
-          </xsl:choose>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:if test="@type and string-length(@type) &gt; 0">
-              <strong>
-                <xsl:call-template name="toProperCase"><xsl:with-param name="text" select="@type" /></xsl:call-template>
-              : </strong>
-          </xsl:if>
-          <xsl:value-of select="text()"/>
-        </xsl:otherwise>
-      </xsl:choose>
-      </xsl:with-param>
-      <xsl:with-param name="property">dc:rights</xsl:with-param>
-    </xsl:call-template>
+                  <xsl:attribute name="href"><xsl:value-of select="concat('https://creativecommons.org/licenses/',normalize-space(text()))"/></xsl:attribute>
+                  Creative Commons License</a>
+                </div>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:if test="@type and string-length(@type) &gt; 0">
+                <strong>
+                  <xsl:call-template name="toProperCase"><xsl:with-param name="text" select="@type" /></xsl:call-template>
+                : </strong>
+            </xsl:if>
+            <xsl:apply-templates select="text()" mode="parseLinks"/>
+          </xsl:otherwise>
+        </xsl:choose>
+        </xsl:with-param>
+        <xsl:with-param name="property">dc:rights</xsl:with-param>
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="mods:note[@type='citation']">
