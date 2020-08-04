@@ -105,7 +105,7 @@
                 </xsl:attribute>
                 <xsl:choose>
                   <xsl:when test="string-length(text()) &gt; 0">
-                    <xsl:value-of select="text()"/>
+                    <xsl:apply-templates select="text()" mode="filter"/>
                   </xsl:when>
                   <xsl:otherwise>
                     <xsl:value-of select="./@xlink:href"/>
@@ -298,7 +298,7 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:for-each select="mods:namePart">
-          <xsl:value-of select="text()" />
+          <xsl:apply-templates select="text()" mode="filter"/>
           <xsl:if test="position() &lt; last()">
             <xsl:text>, </xsl:text>
           </xsl:if>
@@ -346,7 +346,7 @@
   <xsl:template match="mods:abstract">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Description</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter"/></xsl:with-param>
       <xsl:with-param name="property">dc:description</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
@@ -354,21 +354,21 @@
   <xsl:template match="mods:relatedItem/mods:part/mods:extent/mods:start">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Page Start</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="mods:physicalDescription/mods:extent[@unit='page']/mods:total">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Page(s) </xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="mods:form[@type='medium']">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Medium </xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter"/></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
@@ -376,18 +376,18 @@
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Source</xsl:with-param>
       <xsl:with-param name="content">
-        <a><xsl:attribute name="href"><xsl:value-of select="text()"/></xsl:attribute>
+        <a><xsl:attribute name="href"><xsl:apply-templates select="text()" mode="filter"/></xsl:attribute>
         <xsl:choose>
           <xsl:when test="contains(parent::node()/parent::node()/mods:titleInfo/mods:title,'Related Link')">
             <xsl:value-of select="../../mods:titleInfo/mods:title" />
             <xsl:text> - </xsl:text>
-            <xsl:value-of select="text()" />
+            <xsl:apply-templates select="text()" mode="filter"/>
           </xsl:when>
           <xsl:when test="string-length(parent::node()/parent::node()/mods:titleInfo/mods:title) &gt; 0">
             <xsl:value-of select="../../mods:titleInfo/mods:title" />
           </xsl:when>
           <xsl:otherwise>
-            <xsl:value-of select="text()"/>
+            <xsl:apply-templates select="text()" mode="filter"/>
           </xsl:otherwise>
         </xsl:choose>
         </a>
@@ -398,7 +398,7 @@
   <xsl:template match="mods:relatedItem/mods:part/mods:date">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Date</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
       <xsl:with-param name="property">dc:date</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
@@ -419,7 +419,7 @@
   <xsl:template match="mods:publisher">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Publisher</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
       <xsl:with-param name="property">dc:publisher</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
@@ -427,13 +427,13 @@
   <xsl:template match="mods:issuedDate|mods:dateCreated">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Publication date</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
       <xsl:with-param name="property">dc:date</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="mods:placeTerm">
-    <xsl:value-of select="text()"/>
+    <xsl:apply-templates select="text()" mode="filter" />
     <xsl:if test="last() &gt; 1 and position() &lt; last()"><xsl:text>, </xsl:text></xsl:if>
     <xsl:text> </xsl:text>
   </xsl:template>
@@ -441,7 +441,7 @@
   <xsl:template match="mods:identifier[@type='local']">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Local Identifier</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter"/></xsl:with-param>
       <xsl:with-param name="property">dc:identifier</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
@@ -555,7 +555,7 @@
         <xsl:if test="position() &gt; 1">
           <xsl:text>, </xsl:text>
         </xsl:if>
-        <xsl:value-of select="text()"/>
+        <xsl:apply-templates select="text()" mode="filter" />
       </xsl:if>
     </xsl:for-each>
   </xsl:template>
@@ -590,7 +590,7 @@
       <xsl:with-param name="label"><xsl:value-of select="$label"/></xsl:with-param>
       <xsl:with-param name="content">
         <xsl:for-each select="$node/mods:topic">
-          <xsl:value-of select="text()" /><xsl:if test="not(position() = last())"><br /></xsl:if>
+          <xsl:apply-templates select="text()" mode="filter" /><xsl:if test="not(position() = last())"><br /></xsl:if>
         </xsl:for-each>
       </xsl:with-param>
     </xsl:call-template>
@@ -599,7 +599,7 @@
   <xsl:template match="mods:temporal">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Date</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
       <xsl:with-param name="property">dc:date</xsl:with-param>
     </xsl:call-template>
   </xsl:template>
@@ -633,21 +633,21 @@
   <xsl:template match="mods:physicalLocation">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Physical Location</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="mods:shelfLocator">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Shelf Location</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="mods:internetMediaType">
     <xsl:call-template name="basic_output">
       <xsl:with-param name="label">Original File MIME Type</xsl:with-param>
-      <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+      <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
@@ -736,21 +736,21 @@
       <xsl:when test="@type = 'biographical/historical'">
         <xsl:call-template name="basic_output">
           <xsl:with-param name="label">Tagged By</xsl:with-param>
-          <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+          <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
         </xsl:call-template>
       </xsl:when>
 <!-- robyj - just ignore this for now, k?
           <xsl:when test="@type = 'citation'">
             <xsl:call-template name="basic_output">
               <xsl:with-param name="label">Citation</xsl:with-param>
-              <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+              <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
             </xsl:call-template>
           </xsl:when>
 -->
           <xsl:otherwise>
             <xsl:call-template name="basic_output">
               <xsl:with-param name="label">Note</xsl:with-param>
-              <xsl:with-param name="content"><xsl:value-of select="text()"/></xsl:with-param>
+              <xsl:with-param name="content"><xsl:apply-templates select="text()" mode="filter" /></xsl:with-param>
             </xsl:call-template>
           </xsl:otherwise>
         </xsl:choose>
@@ -1004,8 +1004,14 @@
     <!-- <xsl:text>)</xsl:text> -->
   </xsl:template>
 
+  <!-- do text filtering to remove specific characters -->
+  <!-- 8203 - zero-length space -->
+  <xsl:template match="text()" mode="filter">
+    <xsl:value-of select="translate(., '&#8203;', '')"/>
+  </xsl:template>
+
   <!-- Delete text which is not explicitly output. -->
-  <xsl:template match="text()"/>
+  <xsl:template match="text()" />
   <xsl:template match="text()" mode="subject"/>
   <xsl:template match="text()" mode="subjectTitle"/>
   <xsl:template match="node()" priority="-1"/>
