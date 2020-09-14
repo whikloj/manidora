@@ -251,7 +251,7 @@ EOF;
     $tmpobjects = array_map($clean, $solr_results);
 
     // Solr can't sort by multivalued elements, so sort by title.
-    usort($tmpobjects, create_function('$a,$b', 'return strcasecmp(preg_replace("/^the\s?/i", "", $a["title"]),preg_replace("/^the\s?/i", "", $b["title"]));'));
+    usort($tmpobjects, '_manidora_internal_titlesort');
     $objects = array();
     $cl = "";
     /* Move the items so each letter that exists is an array of
@@ -373,6 +373,16 @@ EOF;
 
   return $output;
 
+}
+
+/**
+ * Sort two titles disregarding the leading word "the"
+ * @param $a array first title
+ * @param $b array second title
+ * @return int < 0 if $a < $b, > 1 if $a > $b or 0 if $a == $b
+ */
+function _manidora_internal_titlesort($a, $b) {
+  return strcasecmp(preg_replace("/^the\s?/i", "", $a["title"]),preg_replace("/^the\s?/i", "", $b["title"]));
 }
 
 /**
