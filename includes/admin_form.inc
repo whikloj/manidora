@@ -185,7 +185,6 @@ function manidora_collection_list_form($form, &$form_state) {
     'actions' => array('data' => t('Actions')),
   );
   $query = db_select('manidora_omit_collections', 'n');
-  $total = $query->countQuery()->execute()->fetchField();
   $nids = $query
     ->fields('n',array('pid', 'title', 'exclude_object', 'exclude_children'))
     ->extend('TableSort')
@@ -381,7 +380,7 @@ function manidora_collection_list_form_submit($form, &$form_state) {
       $fields['exclude_object'] = 1;
       $fields['exclude_children'] = 1;
     }
-    $res = db_insert('manidora_omit_collections')->fields($fields)->execute();
+    db_insert('manidora_omit_collections')->fields($fields)->execute();
     drupal_set_message(format_string('Collection (@c) added to omit list.', ['@c' => $title], 'status'));
   }
   elseif (isset($form_state['clicked_button']) && $form_state['clicked_button']['#value'] == 'Save') {

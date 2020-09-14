@@ -1,7 +1,6 @@
 <?php
 
 use Drupal\manidora\XMLPatcher;
-use Drupal\manidora\XMLPatcherException;
 
 class XMLPatcherTest extends PHPUnit_Framework_TestCase
 {
@@ -18,10 +17,10 @@ class XMLPatcherTest extends PHPUnit_Framework_TestCase
             ),
         );
         $xml = "";
-        
-        $output = XMLPatcher::patch($xml, $patch);
+
+        XMLPatcher::patch($xml, $patch);
     }
-    
+
     /**
      * @expectedException Drupal\manidora\XMLPatcherException
      * @expectedExceptionCode 905
@@ -33,8 +32,8 @@ class XMLPatcherTest extends PHPUnit_Framework_TestCase
             ),
         );
         $xml = '<?xml version="1.0" ?><root><child>child one</child><child>child two</child></rot>';
-        
-        $output = XMLPatcher::patch($xml, $patch);
+
+        XMLPatcher::patch($xml, $patch);
     }
 
     public function testRemoveSingleNode()
@@ -52,20 +51,20 @@ EOF;
                 array('type' => 'remove', 'old' => '/root/child[@type="remove"]'),
             ),
         );
-        
-        
+
+
         $output = XMLPatcher::patch($xml, $patch);
-        
+
         $dom = new \DOMDocument();
         $dom->loadXML($output);
-        
+
         $xpath = new \DOMXPath($dom);
         $hits = $xpath->query('//child');
-        
+
         // Assert
         $this->assertEquals(2, $hits->length, 'Did not remove single node');
     }
-    
+
     public function testRemoveMultipleNodes()
     {
         $xml = <<<EOF
@@ -83,20 +82,20 @@ EOF;
                 array('type' => 'remove', 'old' => '/root/child'),
             ),
         );
-        
-        
+
+
         $output = XMLPatcher::patch($xml, $patch);
-        
+
         $dom = new \DOMDocument();
         $dom->loadXML($output);
-        
+
         $xpath = new \DOMXPath($dom);
         $hits = $xpath->query('//child');
-        
+
         // Assert
         $this->assertEquals(0, $hits->length, 'Did not remove all nodes');
     }
-    
+
     public function testAddNode() {
         $xml = <<<EOF
 <?xml version="1.0"?>
@@ -110,21 +109,21 @@ EOF;
                 array('type' => 'add', 'parent' => '/root', 'new' => '<child>new child</child>'),
             ),
         );
-        
-        
+
+
         $output = XMLPatcher::patch($xml, $patch);
-        
+
         $dom = new \DOMDocument();
         $dom->loadXML($output);
-        
+
         $xpath = new \DOMXPath($dom);
         $hits = $xpath->query('//child');
-        
+
         // Assert
         $this->assertEquals(3, $hits->length, 'Did not add a node');
-        
+
     }
-    
+
     public function testReplaceNode() {
         $xml = <<<EOF
 <?xml version="1.0"?>
@@ -138,23 +137,23 @@ EOF;
                 array('type' => 'replace', 'old' => '/root/child[@id="2"]', 'new' => '<child id="jared">new child</child>'),
             ),
         );
-        
-        
+
+
         $output = XMLPatcher::patch($xml, $patch);
-        
+
         $dom = new \DOMDocument();
         $dom->loadXML($output);
-        
+
         $xpath = new \DOMXPath($dom);
         $total_children = $xpath->query('//child');
         $match_jared = $xpath->query('//child[@id="jared"]');
-        
+
         // Assert
         $this->assertEquals(2, $total_children->length, 'Do not have correct number of child nodes');
         $this->assertEquals(1, $match_jared->length, 'Do not have a child with @id=jared');
         $this->assertEquals("new child", $match_jared->item(0)->textContent, 'Do not have correct content for child @id=jared');
     }
-  
+
     public function testMultipleProcesses() {
         $xml = <<<EOF
 <?xml version="1.0"?>
@@ -177,27 +176,27 @@ EOF;
                 array('type' => 'replace', 'old' => '/uman:root/uman:holder/uman:cellar[@type="root"]', 'new' => '<uman:cellar type="guns"/>', 'insert_ns' => TRUE),
             ),
         );
-        
+
         $output = XMLPatcher::patch($xml, $patch);
-        
+
         $dom = new \DOMDocument();
         $dom->loadXML($output);
-        
+
         $xpath = new \DOMXPath($dom);
         $xpath->registerNameSpace('uman', 'http://umanitoba.ca/libraries/test/');
-        
+
         $total_children = $xpath->query('//uman:child');
         $match_cellars = $xpath->query('//uman:cellar');
         $match_root = $xpath->query('//uman:cellar[@type="root"]');
         $match_guns = $xpath->query('//uman:cellar[@type="guns"]');
-        
+
         // One one child
         $this->assertEquals(1, $total_children->length, 'Expecting only one child');
-        
+
         $this->assertEquals(2, $match_cellars->length, 'Expecting two cellars');
-        
+
         $this->assertEquals(0, $match_root->length, 'Excepting no root cellars');
-        
+
         $this->assertEquals(1, $match_guns->length, 'Excepting one gun cellar');
 
     }
@@ -239,7 +238,7 @@ EOF;
                 array('type' => 'remove', 'old' => '//uman:child[@id="1"]'),
             ),
         );
-        
+
         $patcher = new XMLPatcher($patch);
 
         $output1 = $patcher->apply_patch($xml1);
@@ -257,7 +256,7 @@ EOF;
         $xpath->registerNameSpace('uman', 'http://umanitoba.ca/libraries/test/');
         $hits = $xpath->query('//uman:child');
         $this->assertEquals(2, $hits->length);
-        
+
         $output3 = $patcher->apply_patch($xml3);
         $dom = new \DOMDocument();
         $dom->loadXML($output3);
@@ -271,5 +270,5 @@ EOF;
 }
 
 
-  
+
 ?>

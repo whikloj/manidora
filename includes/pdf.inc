@@ -89,9 +89,6 @@ function manidora_printable_pdf($pid, $url = NULL) {
   // Set image scale factor.
   $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 
-  // Set some language-dependent strings.
-  $pdf->setLanguageArray($l);
-
   // Set font.
   $pdf->SetFont('times', 'BI', 12);
 

@@ -394,8 +394,6 @@ function __manidora_homepage_thumbnail_content() {
 
   // How many thumbnails are we displaying?
   $num_pics = 16;
-  // Figure out when to break.
-  $num_rows = 2;
   // Get the pids from the variable.
   $thumbs = variable_get('manidora_thumbnail_pids');
   $output = "";

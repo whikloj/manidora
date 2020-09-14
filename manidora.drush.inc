@@ -457,7 +457,7 @@ function manidora_regenerate_sequence_finished($success, $results, $operations) 
 
 function drush_manidora_patch_items() {
   drupal_static_reset('islandora_get_tuque_connection');
-  $connection = islandora_get_tuque_connection();
+  #$connection = islandora_get_tuque_connection();
   #$connection = new IslandoraRepositoryConnection(FEDORA_URL,FEDORA_USER,FEDORA_PWD);
   #$connection->reuseConnection = TRUE;
   #$connection->repository = new FedoraRepository(new FedoraApi($connection), new SimpleCache());

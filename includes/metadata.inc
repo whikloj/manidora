@@ -15,7 +15,6 @@ function manidora_retrieve_metadata_form(AbstractObject $object) {
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
   $output = '';
-  $form = array();
   // Video and audio objects get PBCORE.
   if (array_intersect(array('islandora:sp_videoCModel', 'islandora:sp-audioCModel'), $object->models) && isset($object['PBCORE'])) {
     // $output = manidora_pbcore_metadata($object);
